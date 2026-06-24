@@ -18,21 +18,28 @@ export function PoolsPage() {
   const isOwnerOrg = profile?.org.type === 'owner';
 
   const [pools, setPools] = useState<PoolRow[]>([]);
+  const [clientCount, setClientCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('pool')
-      .select('*, client!pool_client_id_org_id_fkey(name, is_self)')
-      .eq('archived', false)
-      .order('denominacion');
+    const [{ data, error }, { count }] = await Promise.all([
+      supabase
+        .from('pool')
+        .select('*, client!pool_client_id_org_id_fkey(name, is_self)')
+        .eq('archived', false)
+        .order('denominacion'),
+      supabase.from('client').select('id', { count: 'exact', head: true }).eq('archived', false),
+    ]);
     if (error) setError(t('common.genericError'));
     else setPools((data as PoolRow[]) ?? []);
+    setClientCount(count ?? 0);
     setLoading(false);
   }, [t]);
+
+  const needsClient = isOwnerOrg === false && clientCount === 0;
 
   useEffect(() => {
     void load();
@@ -45,13 +52,28 @@ export function PoolsPage() {
           <h1 className="text-2xl font-semibold text-text">{t('pools.title')}</h1>
           <p className="text-sm text-text-muted">{t('pools.subtitle')}</p>
         </div>
-        {canWrite && <Button onClick={() => setCreating(true)}>{t('pools.addPool')}</Button>}
+        {canWrite &&
+          !loading &&
+          (needsClient ? (
+            <Link to="/clients">
+              <Button variant="secondary">{t('pools.addClientFirst')}</Button>
+            </Link>
+          ) : (
+            <Button onClick={() => setCreating(true)}>{t('pools.addPool')}</Button>
+          ))}
       </div>
 
       {loading ? (
         <Spinner />
       ) : error ? (
         <Alert tone="error">{error}</Alert>
+      ) : needsClient ? (
+        <Card>
+          <p className="mb-4 text-text-muted">{t('pools.needClientHint')}</p>
+          <Link to="/clients">
+            <Button>{t('pools.addClientFirst')}</Button>
+          </Link>
+        </Card>
       ) : pools.length === 0 ? (
         <Card>
           <p className="text-text-muted">{t('pools.empty')}</p>

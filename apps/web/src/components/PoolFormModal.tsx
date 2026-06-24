@@ -1,12 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase.js';
-import { geocodeAddress } from '../lib/geocode.js';
 import { Modal } from './ui/Modal.js';
 import { Button } from './ui/Button.js';
 import { TextField } from './ui/TextField.js';
 import { SelectField, TextareaField } from './ui/fields.js';
 import { Alert } from './ui/feedback.js';
+import { AddressAutocomplete, type AddressSuggestion } from './AddressAutocomplete.js';
 import type { Enums, Tables } from '../lib/database.types.js';
 
 type Pool = Tables<'pool'>;
@@ -52,8 +52,6 @@ export function PoolFormModal({
   const [siloeCodP, setSiloeCodP] = useState(pool?.siloe_cod_p ?? '');
   const [observaciones, setObservaciones] = useState(pool?.observaciones ?? '');
 
-  const [geocoding, setGeocoding] = useState(false);
-  const [geoMsg, setGeoMsg] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,23 +75,13 @@ export function PoolFormModal({
     setAguas((prev) => (prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]));
   }
 
-  async function onGeocode() {
-    const query = [direccion, cp, localidad, provincia, 'España'].filter(Boolean).join(', ');
-    if (!query) return;
-    setGeocoding(true);
-    setGeoMsg(null);
-    const outcome = await geocodeAddress(query);
-    setGeocoding(false);
-    if (outcome.ok) {
-      setLat(outcome.result.lat.toFixed(8));
-      setLng(outcome.result.lng.toFixed(8));
-    } else {
-      setGeoMsg(
-        outcome.reason === 'unavailable'
-          ? t('pools.geocodeUnavailable')
-          : t('pools.geocodeNotFound'),
-      );
-    }
+  function onAddressSelect(s: AddressSuggestion) {
+    setDireccion(s.direccion);
+    if (s.cp) setCp(s.cp);
+    if (s.localidad) setLocalidad(s.localidad);
+    if (s.provincia) setProvincia(s.provincia);
+    setLat(s.lat.toFixed(8));
+    setLng(s.lng.toFixed(8));
   }
 
   async function onSubmit(e: FormEvent) {
@@ -195,11 +183,12 @@ export function PoolFormModal({
           ))}
         </fieldset>
 
-        <TextField
-          label={t('pools.address')}
+        <AddressAutocomplete
           value={direccion}
-          onChange={(e) => setDireccion(e.target.value)}
+          onTextChange={setDireccion}
+          onSelect={onAddressSelect}
         />
+        <p className="-mt-2 text-xs text-text-muted">{t('pools.addressManualHint')}</p>
         <div className="grid grid-cols-2 gap-3">
           <TextField label={t('pools.cp')} value={cp} onChange={(e) => setCp(e.target.value)} />
           <TextField
@@ -220,25 +209,19 @@ export function PoolFormModal({
         </div>
         <TextField label={t('pools.ccaa')} value={ccaa} onChange={(e) => setCcaa(e.target.value)} />
 
-        <div className="flex flex-col gap-2">
-          <Button type="button" variant="secondary" onClick={onGeocode} loading={geocoding}>
-            {t('pools.geocode')}
-          </Button>
-          {geoMsg && <Alert tone="info">{geoMsg}</Alert>}
-          <div className="grid grid-cols-2 gap-3">
-            <TextField
-              label={t('pools.lat')}
-              inputMode="decimal"
-              value={lat}
-              onChange={(e) => setLat(e.target.value)}
-            />
-            <TextField
-              label={t('pools.lng')}
-              inputMode="decimal"
-              value={lng}
-              onChange={(e) => setLng(e.target.value)}
-            />
-          </div>
+        <div className="grid grid-cols-2 gap-3">
+          <TextField
+            label={t('pools.lat')}
+            inputMode="decimal"
+            value={lat}
+            onChange={(e) => setLat(e.target.value)}
+          />
+          <TextField
+            label={t('pools.lng')}
+            inputMode="decimal"
+            value={lng}
+            onChange={(e) => setLng(e.target.value)}
+          />
         </div>
 
         <TextField
