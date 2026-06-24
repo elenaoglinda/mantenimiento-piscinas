@@ -13,6 +13,7 @@ import { PoolDetailPage } from './pages/PoolDetailPage.js';
 import { ReportsPage } from './pages/ReportsPage.js';
 import { ReportFormPage } from './pages/ReportFormPage.js';
 import { ReportDetailPage } from './pages/ReportDetailPage.js';
+import { SiloeExportPage } from './pages/SiloeExportPage.js';
 
 export function App() {
   return (
@@ -36,6 +37,7 @@ export function App() {
                 <Route path="/reports/new" element={<ReportFormPage />} />
                 <Route path="/reports/:reportId" element={<ReportDetailPage />} />
                 <Route path="/reports/:reportId/edit" element={<ReportFormPage />} />
+                <Route path="/siloe" element={<SiloeExportPage />} />
                 <Route path="/clients" element={<ClientsPage />} />
                 <Route path="/team" element={<TeamPage />} />
               </Route>

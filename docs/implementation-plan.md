@@ -91,22 +91,27 @@ Offline support (drafts in the field) comes in Phase 4.
 | 4.5 | Sync status UI (pending/synced/error) + conflict surfacing                                                 | Status indicators  | States visible per record              |
 
 **Phase 4 exit:** a technician with no coverage can do a full visit; data syncs when back online.
+**Status:** ⏭️ SKIPPED for now (Sara's call) — revisit after Phase 5+.
 
 ---
 
 ## Phase 5 — SILOE export (annual results + pool registration)
 
-| #   | Task                                                                                                                                            | Deliverable      | Acceptance                       |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | -------------------------------- |
-| 5.1 | DB: `annual_result`, `annual_result_param`, `xml_export`                                                                                        | Migrations       | —                                |
-| 5.2 | **Aggregation engine**: measurements → per-basin/season summary (daily-mean rule, deter/deter_c, dias_nc, med/min/max), supports `peraperturas` | Service + tests  | Matches manual's worked example  |
-| 5.3 | Aggregation **review/edit UI** before export                                                                                                    | Review screen    | Admin can adjust pre-export      |
-| 5.4 | **Annual-results XML builder** + XSD validation (`libxmljs`) + Spanish date/decimal formatting + catalog mapping                                | `/api` function  | Output validates vs XSD          |
-| 5.5 | **Pre-export validation** mirroring SILOE rules (errors 004/201/206/208/209/236/237/290–293…) with friendly messages                            | Validation layer | Bad data blocked w/ clear errors |
-| 5.6 | Download + `xml_export` history; (🔲 pool-registration XML — gated on §13.1 catalogs)                                                           | Export UI        | Annual XML downloadable          |
+| #      | Task                                                                                                                                            | Deliverable      | Acceptance                                             |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ------------------------------------------------------ |
+| ✅ 5.1 | DB: `annual_result`, `annual_result_param`, `annual_result_period`, `xml_export`                                                                | Migrations       | Org-scoped RLS, composite FKs                          |
+| ✅ 5.2 | **Aggregation engine**: measurements → per-basin/season summary (daily-mean rule, deter/deter_c, dias_nc, med/min/max), supports `peraperturas` | Service + tests  | ✅ matches manual's pH example (7.23)                  |
+| ✅ 5.3 | Aggregation **review/edit UI** before export                                                                                                    | Review screen    | Editable per-basin fields (lab, fechas, counts, punto) |
+| ✅ 5.4 | **Annual-results XML builder** + Spanish date/decimal formatting + catalog mapping                                                              | shared module    | XSD element names/order; unit-tested                   |
+| ✅ 5.5 | **Pre-export validation** mirroring SILOE rules (001/002/003/004/201/206/207/208/209/236/237/291…) with friendly messages                       | Validation layer | Bad data blocked w/ clear es-ES messages               |
+| 🟡 5.6 | Download + `xml_export` history; (🔲 pool-registration XML — gated on §13.1 catalogs)                                                           | Export UI        | Annual XML download + stored + logged; reg-XML pending |
 
-**Phase 5 exit:** an org can generate a valid SILOE annual-results XML for a year and download it.
-_(Pool-registration XML lands when the registration catalogs arrive — §13.1.)_
+**Phase 5 exit:** ✅ an org can generate a validated SILOE annual-results XML for a year and download it.
+_Note: validation is rule-based (mirrors the documented COD_ERROR list) rather than native-binary
+XSD validation, to keep the serverless build robust; the builder follows the XSD element names/order.
+XML is generated client-side via the shared module (no secrets); a server endpoint can wrap the
+same builder for future direct upload. Pool-registration XML lands when the registration catalogs
+arrive (§13.1)._
 
 ---
 

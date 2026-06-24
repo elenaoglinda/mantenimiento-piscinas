@@ -637,6 +637,213 @@ export type Database = {
           },
         ];
       };
+      annual_result: {
+        Row: {
+          analysis_type: Database['public']['Enums']['analysis_type'];
+          basin_id: string;
+          created_at: string;
+          dias_apertura: number | null;
+          fecha_apertura: string | null;
+          fecha_cierre: string | null;
+          generated_at: string;
+          id: string;
+          laboratorio: string | null;
+          n_iniciales: number;
+          n_periodicos: number;
+          n_rutina: number;
+          n_vigilancia: number | null;
+          observaciones: string | null;
+          org_id: string;
+          punto_muestreo: number;
+          updated_at: string;
+          year: number;
+        };
+        Insert: {
+          analysis_type?: Database['public']['Enums']['analysis_type'];
+          basin_id: string;
+          created_at?: string;
+          dias_apertura?: number | null;
+          fecha_apertura?: string | null;
+          fecha_cierre?: string | null;
+          generated_at?: string;
+          id?: string;
+          laboratorio?: string | null;
+          n_iniciales?: number;
+          n_periodicos?: number;
+          n_rutina?: number;
+          n_vigilancia?: number | null;
+          observaciones?: string | null;
+          org_id: string;
+          punto_muestreo?: number;
+          updated_at?: string;
+          year: number;
+        };
+        Update: {
+          analysis_type?: Database['public']['Enums']['analysis_type'];
+          basin_id?: string;
+          created_at?: string;
+          dias_apertura?: number | null;
+          fecha_apertura?: string | null;
+          fecha_cierre?: string | null;
+          generated_at?: string;
+          id?: string;
+          laboratorio?: string | null;
+          n_iniciales?: number;
+          n_periodicos?: number;
+          n_rutina?: number;
+          n_vigilancia?: number | null;
+          observaciones?: string | null;
+          org_id?: string;
+          punto_muestreo?: number;
+          updated_at?: string;
+          year?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'annual_result_basin_id_org_id_fkey';
+            columns: ['basin_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'basin';
+            referencedColumns: ['id', 'org_id'];
+          },
+        ];
+      };
+      annual_result_param: {
+        Row: {
+          annual_result_id: string;
+          created_at: string;
+          deter: number;
+          deter_c: number;
+          dias_nc: number;
+          id: string;
+          id_lugar: number;
+          id_metodo: number;
+          org_id: string;
+          siloe_param_id: number;
+          updated_at: string;
+          vc_max: number | null;
+          vc_med: number | null;
+          vc_min: number | null;
+        };
+        Insert: {
+          annual_result_id: string;
+          created_at?: string;
+          deter?: number;
+          deter_c?: number;
+          dias_nc?: number;
+          id?: string;
+          id_lugar?: number;
+          id_metodo?: number;
+          org_id: string;
+          siloe_param_id: number;
+          updated_at?: string;
+          vc_max?: number | null;
+          vc_med?: number | null;
+          vc_min?: number | null;
+        };
+        Update: {
+          annual_result_id?: string;
+          created_at?: string;
+          deter?: number;
+          deter_c?: number;
+          dias_nc?: number;
+          id?: string;
+          id_lugar?: number;
+          id_metodo?: number;
+          org_id?: string;
+          siloe_param_id?: number;
+          updated_at?: string;
+          vc_max?: number | null;
+          vc_med?: number | null;
+          vc_min?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'annual_result_param_annual_result_id_org_id_fkey';
+            columns: ['annual_result_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'annual_result';
+            referencedColumns: ['id', 'org_id'];
+          },
+        ];
+      };
+      annual_result_period: {
+        Row: {
+          annual_result_id: string;
+          created_at: string;
+          id: string;
+          org_id: string;
+          per_fecha_a: string;
+          per_fecha_c: string;
+          per_id_motivo: number | null;
+          per_num_dias: number;
+          per_observ_cierre: string | null;
+        };
+        Insert: {
+          annual_result_id: string;
+          created_at?: string;
+          id?: string;
+          org_id: string;
+          per_fecha_a: string;
+          per_fecha_c: string;
+          per_id_motivo?: number | null;
+          per_num_dias: number;
+          per_observ_cierre?: string | null;
+        };
+        Update: {
+          annual_result_id?: string;
+          created_at?: string;
+          id?: string;
+          org_id?: string;
+          per_fecha_a?: string;
+          per_fecha_c?: string;
+          per_id_motivo?: number | null;
+          per_num_dias?: number;
+          per_observ_cierre?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'annual_result_period_annual_result_id_org_id_fkey';
+            columns: ['annual_result_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'annual_result';
+            referencedColumns: ['id', 'org_id'];
+          },
+        ];
+      };
+      xml_export: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          file_path: string | null;
+          id: string;
+          item_count: number;
+          kind: string;
+          org_id: string;
+          period_year: number | null;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          file_path?: string | null;
+          id?: string;
+          item_count?: number;
+          kind: string;
+          org_id: string;
+          period_year?: number | null;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          file_path?: string | null;
+          id?: string;
+          item_count?: number;
+          kind?: string;
+          org_id?: string;
+          period_year?: number | null;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
