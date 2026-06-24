@@ -65,17 +65,18 @@ land later when the registration catalogs arrive (§13.1).
 
 ## Phase 3 — Reporting & traffic-light engine (online first)
 
-| #   | Task                                                                                              | Deliverable                        | Acceptance                       |
-| --- | ------------------------------------------------------------------------------------------------- | ---------------------------------- | -------------------------------- |
-| 3.1 | DB + RLS: `report`, `measurement`, `incident`, `attachment`                                       | Migrations                         | Constraints + status enum        |
-| 3.2 | **`evaluate(value, parameter_def)`** shared lib → `{status, compliant}` (green/amber/red)         | `packages/types` util + unit tests | Boundary cases tested            |
-| 3.3 | Report form: pick pool→basin, render only configured params, **live color feedback**, GPS capture | Report screen                      | Colors update as you type        |
-| 3.4 | Draft save / mark completed; required-field validation for completed                              | Status transitions                 | Draft resumable; completed gated |
-| 3.5 | Incidents + corrective actions; photo upload + **lab PDF attach** + manual lab values             | Sub-forms + Storage                | Files stored, linked to report   |
-| 3.6 | Signature capture (drawn) + name + DNI + GPS + timestamp → `signed`, **immutable**                | Signature modal                    | Signed report cannot be edited   |
-| 3.7 | Reports list + filters + detail view + on-screen PDF/print of a report                            | Reports UI                         | View any report's full detail    |
+| #      | Task                                                                                              | Deliverable                         | Acceptance                                          |
+| ------ | ------------------------------------------------------------------------------------------------- | ----------------------------------- | --------------------------------------------------- |
+| ✅ 3.1 | DB + RLS: `report`, `measurement`, `incident`, `attachment` (+ private storage bucket)            | Migrations                          | ✅ RLS + signed-immutability verified via SQL       |
+| ✅ 3.2 | **`evaluate(value, parameter_def)`** shared lib → `{status, compliant}` (green/amber/red)         | `packages/shared` util + unit tests | 6 boundary tests; DB resolver (CCAA override) added |
+| ✅ 3.3 | Report form: pick pool→basin, render only configured params, **live color feedback**, GPS capture | Report screen                       | Live chips per parameter; geolocation capture       |
+| ✅ 3.4 | Draft save / mark completed; required-field validation for completed                              | Status transitions                  | Draft resumable; completed requires ≥1 value        |
+| ✅ 3.5 | Incidents + corrective actions; photo upload + **lab PDF attach** + manual lab values             | Sub-forms + Storage                 | Incidents in form; attachments on detail page       |
+| ✅ 3.6 | Signature capture (drawn) + name + DNI + GPS + timestamp → `signed`, **immutable**                | Signature modal                     | Canvas pad + storage; immutability enforced by RLS  |
+| ✅ 3.7 | Reports list + filters + detail view + on-screen PDF/print of a report                            | Reports UI                          | List + status filter, detail, window.print()        |
 
-**Phase 3 exit:** technicians can create, complete, sign and view reports online.
+**Phase 3 exit:** ✅ technicians can create, complete, sign and view reports online.
+Offline support (drafts in the field) comes in Phase 4.
 
 ---
 

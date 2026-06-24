@@ -10,6 +10,9 @@ import { TeamPage } from './pages/TeamPage.js';
 import { ClientsPage } from './pages/ClientsPage.js';
 import { PoolsPage } from './pages/PoolsPage.js';
 import { PoolDetailPage } from './pages/PoolDetailPage.js';
+import { ReportsPage } from './pages/ReportsPage.js';
+import { ReportFormPage } from './pages/ReportFormPage.js';
+import { ReportDetailPage } from './pages/ReportDetailPage.js';
 
 export function App() {
   return (
@@ -29,6 +32,10 @@ export function App() {
                 <Route index element={<DashboardPage />} />
                 <Route path="/pools" element={<PoolsPage />} />
                 <Route path="/pools/:poolId" element={<PoolDetailPage />} />
+                <Route path="/reports" element={<ReportsPage />} />
+                <Route path="/reports/new" element={<ReportFormPage />} />
+                <Route path="/reports/:reportId" element={<ReportDetailPage />} />
+                <Route path="/reports/:reportId/edit" element={<ReportFormPage />} />
                 <Route path="/clients" element={<ClientsPage />} />
                 <Route path="/team" element={<TeamPage />} />
               </Route>

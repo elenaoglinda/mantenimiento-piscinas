@@ -15,6 +15,7 @@ export function AppShell() {
   const navItems: NavItem[] = [
     { to: '/', key: 'nav.dashboard', end: true },
     { to: '/pools', key: 'nav.pools' },
+    { to: '/reports', key: 'nav.reports' },
     // Companies manage multiple clients; owners only have their implicit self-client.
     ...(profile?.org.type === 'company' ? [{ to: '/clients', key: 'nav.clients' }] : []),
     { to: '/team', key: 'nav.team' },

@@ -422,6 +422,221 @@ export type Database = {
           },
         ];
       };
+      report: {
+        Row: {
+          analysis_type: Database['public']['Enums']['analysis_type'];
+          basin_id: string;
+          created_at: string;
+          id: string;
+          location_lat: number | null;
+          location_lng: number | null;
+          notes: string | null;
+          org_id: string;
+          pool_id: string;
+          punto_muestreo: number | null;
+          signature_path: string | null;
+          signed_at: string | null;
+          signed_by_dni: string | null;
+          signed_by_name: string | null;
+          status: Database['public']['Enums']['report_status'];
+          technician_id: string | null;
+          updated_at: string;
+          visited_at: string;
+        };
+        Insert: {
+          analysis_type?: Database['public']['Enums']['analysis_type'];
+          basin_id: string;
+          created_at?: string;
+          id?: string;
+          location_lat?: number | null;
+          location_lng?: number | null;
+          notes?: string | null;
+          org_id: string;
+          pool_id: string;
+          punto_muestreo?: number | null;
+          signature_path?: string | null;
+          signed_at?: string | null;
+          signed_by_dni?: string | null;
+          signed_by_name?: string | null;
+          status?: Database['public']['Enums']['report_status'];
+          technician_id?: string | null;
+          updated_at?: string;
+          visited_at?: string;
+        };
+        Update: {
+          analysis_type?: Database['public']['Enums']['analysis_type'];
+          basin_id?: string;
+          created_at?: string;
+          id?: string;
+          location_lat?: number | null;
+          location_lng?: number | null;
+          notes?: string | null;
+          org_id?: string;
+          pool_id?: string;
+          punto_muestreo?: number | null;
+          signature_path?: string | null;
+          signed_at?: string | null;
+          signed_by_dni?: string | null;
+          signed_by_name?: string | null;
+          status?: Database['public']['Enums']['report_status'];
+          technician_id?: string | null;
+          updated_at?: string;
+          visited_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'report_basin_id_org_id_fkey';
+            columns: ['basin_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'basin';
+            referencedColumns: ['id', 'org_id'];
+          },
+          {
+            foreignKeyName: 'report_pool_id_org_id_fkey';
+            columns: ['pool_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'pool';
+            referencedColumns: ['id', 'org_id'];
+          },
+          {
+            foreignKeyName: 'report_technician_id_fkey';
+            columns: ['technician_id'];
+            isOneToOne: false;
+            referencedRelation: 'app_user';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      measurement: {
+        Row: {
+          compliant: boolean | null;
+          created_at: string;
+          id: string;
+          lugar: Database['public']['Enums']['measurement_lugar'];
+          metodo: number | null;
+          org_id: string;
+          parameter_def_id: string;
+          report_id: string;
+          status: Database['public']['Enums']['measurement_status'];
+          updated_at: string;
+          value: number | null;
+        };
+        Insert: {
+          compliant?: boolean | null;
+          created_at?: string;
+          id?: string;
+          lugar?: Database['public']['Enums']['measurement_lugar'];
+          metodo?: number | null;
+          org_id: string;
+          parameter_def_id: string;
+          report_id: string;
+          status?: Database['public']['Enums']['measurement_status'];
+          updated_at?: string;
+          value?: number | null;
+        };
+        Update: {
+          compliant?: boolean | null;
+          created_at?: string;
+          id?: string;
+          lugar?: Database['public']['Enums']['measurement_lugar'];
+          metodo?: number | null;
+          org_id?: string;
+          parameter_def_id?: string;
+          report_id?: string;
+          status?: Database['public']['Enums']['measurement_status'];
+          updated_at?: string;
+          value?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'measurement_parameter_def_id_fkey';
+            columns: ['parameter_def_id'];
+            isOneToOne: false;
+            referencedRelation: 'parameter_def';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'measurement_report_id_org_id_fkey';
+            columns: ['report_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'report';
+            referencedColumns: ['id', 'org_id'];
+          },
+        ];
+      };
+      incident: {
+        Row: {
+          corrective_action: string | null;
+          created_at: string;
+          description: string;
+          id: string;
+          org_id: string;
+          report_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          corrective_action?: string | null;
+          created_at?: string;
+          description: string;
+          id?: string;
+          org_id: string;
+          report_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          corrective_action?: string | null;
+          created_at?: string;
+          description?: string;
+          id?: string;
+          org_id?: string;
+          report_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'incident_report_id_org_id_fkey';
+            columns: ['report_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'report';
+            referencedColumns: ['id', 'org_id'];
+          },
+        ];
+      };
+      attachment: {
+        Row: {
+          created_at: string;
+          id: string;
+          kind: Database['public']['Enums']['attachment_kind'];
+          org_id: string;
+          report_id: string;
+          storage_path: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          kind: Database['public']['Enums']['attachment_kind'];
+          org_id: string;
+          report_id: string;
+          storage_path: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          kind?: Database['public']['Enums']['attachment_kind'];
+          org_id?: string;
+          report_id?: string;
+          storage_path?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'attachment_report_id_org_id_fkey';
+            columns: ['report_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'report';
+            referencedColumns: ['id', 'org_id'];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -446,8 +661,13 @@ export type Database = {
       };
     };
     Enums: {
+      analysis_type: 'autocontrol' | 'vigilancia';
+      attachment_kind: 'photo' | 'lab_pdf';
       basin_class: 'cubierto' | 'descubierto' | 'mixto';
+      measurement_lugar: 'in_situ' | 'lab';
+      measurement_status: 'green' | 'amber' | 'red' | 'unknown';
       org_type: 'owner' | 'company';
+      report_status: 'draft' | 'completed' | 'signed';
       param_medium: 'water' | 'air';
       pool_type: 'tipo_1' | 'tipo_2' | 'tipo_3a';
       treatment_kind: 'filtracion' | 'desinfeccion' | 'coagulacion' | 'correccion_ph' | 'otros';

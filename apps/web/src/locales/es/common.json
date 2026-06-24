@@ -14,6 +14,7 @@
     "archive": "Archivar",
     "unarchive": "Recuperar",
     "back": "Volver",
+    "print": "Imprimir",
     "retry": "Reintentar",
     "optional": "opcional",
     "none": "—",
@@ -181,5 +182,77 @@
     "coagulacion": "Coagulación / Floculación",
     "correccion_ph": "Corrección de pH",
     "otros": "Otros"
+  },
+  "reports": {
+    "title": "Informes",
+    "subtitle": "Registros de mantenimiento del agua.",
+    "addReport": "Nuevo informe",
+    "newReport": "Nuevo informe",
+    "editReport": "Editar informe",
+    "empty": "Aún no hay informes.",
+    "pool": "Piscina",
+    "basin": "Vaso",
+    "selectPool": "Selecciona una piscina",
+    "selectBasin": "Selecciona un vaso",
+    "noBasins": "Esta piscina no tiene vasos. Añade uno primero.",
+    "analysisType": "Tipo de análisis",
+    "puntoMuestreo": "Punto de muestreo",
+    "visitedAt": "Fecha y hora de la visita",
+    "useLocation": "Usar mi ubicación",
+    "locationCaptured": "Ubicación capturada",
+    "locationError": "No se ha podido obtener la ubicación.",
+    "parameters": "Parámetros",
+    "value": "Valor",
+    "lugar": "Lugar",
+    "method": "Método",
+    "incidents": "Incidencias",
+    "addIncident": "Añadir incidencia",
+    "incidentDescription": "Descripción",
+    "correctiveAction": "Acción correctora",
+    "attachments": "Adjuntos",
+    "addPhoto": "Añadir foto",
+    "addLabPdf": "Adjuntar PDF de laboratorio",
+    "uploading": "Subiendo…",
+    "notes": "Notas",
+    "saveDraft": "Guardar borrador",
+    "markCompleted": "Marcar como completo",
+    "completedRequiresValues": "Introduce al menos un valor antes de completar.",
+    "statusFilter": "Estado",
+    "allStatuses": "Todos",
+    "viewReport": "Ver informe",
+    "createdOn": "Creado el",
+    "signAction": "Firmar"
+  },
+  "reportStatus": {
+    "draft": "Borrador",
+    "completed": "Completo",
+    "signed": "Firmado"
+  },
+  "analysisType": {
+    "autocontrol": "Autocontrol",
+    "vigilancia": "Vigilancia sanitaria"
+  },
+  "lugar": {
+    "in_situ": "In situ",
+    "lab": "Laboratorio"
+  },
+  "puntoMuestreo": {
+    "1": "En el circuito",
+    "2": "En el vaso",
+    "3": "Ambos",
+    "4": "Cada vez uno de ellos"
+  },
+  "sign": {
+    "title": "Firma del titular",
+    "intro": "El titular de la piscina firma para validar este informe.",
+    "signerName": "Nombre del firmante",
+    "signerDni": "DNI / NIF del firmante",
+    "drawHint": "Firma en el recuadro",
+    "clear": "Borrar",
+    "confirm": "Firmar informe",
+    "signedBy": "Firmado por",
+    "signedAt": "Fecha de firma",
+    "needSignature": "Falta la firma.",
+    "immutableNote": "Una vez firmado, el informe no se puede modificar."
   }
 }
