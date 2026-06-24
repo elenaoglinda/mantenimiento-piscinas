@@ -28,9 +28,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
+  // Round trip from the first coord (the start). Mapbox Optimization only supports open routes
+  // when BOTH ends are fixed; a round trip from a fixed start is the robust choice for a day plan.
   const url =
     `https://api.mapbox.com/optimized-trips/v1/mapbox/driving/${coords}` +
-    `?source=first&destination=any&roundtrip=false&geometries=geojson&overview=simplified&access_token=${token}`;
+    `?source=first&roundtrip=true&geometries=geojson&overview=simplified&access_token=${token}`;
 
   try {
     const resp = await fetch(url);
