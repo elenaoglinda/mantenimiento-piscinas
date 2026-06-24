@@ -1,0 +1,16 @@
+{
+  "app": {
+    "name": "Mantenimiento de Piscinas",
+    "tagline": "Control del agua y cumplimiento SILOÉ, sin complicaciones"
+  },
+  "status": {
+    "green": "Correcto",
+    "amber": "Atención",
+    "red": "Fuera de rango",
+    "unknown": "Sin dato"
+  },
+  "phase0": {
+    "ready": "Base del proyecto lista",
+    "description": "Aplicación, tokens de diseño y conexión a Supabase configurados."
+  }
+}
