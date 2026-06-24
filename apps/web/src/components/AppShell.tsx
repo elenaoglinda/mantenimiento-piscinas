@@ -8,14 +8,17 @@ interface NavItem {
   end?: boolean;
 }
 
-const navItems: NavItem[] = [
-  { to: '/', key: 'nav.dashboard', end: true },
-  { to: '/team', key: 'nav.team' },
-];
-
 export function AppShell() {
   const { t } = useTranslation();
   const { profile, signOut } = useAuth();
+
+  const navItems: NavItem[] = [
+    { to: '/', key: 'nav.dashboard', end: true },
+    { to: '/pools', key: 'nav.pools' },
+    // Companies manage multiple clients; owners only have their implicit self-client.
+    ...(profile?.org.type === 'company' ? [{ to: '/clients', key: 'nav.clients' }] : []),
+    { to: '/team', key: 'nav.team' },
+  ];
 
   return (
     <div className="flex min-h-screen flex-col">

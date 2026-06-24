@@ -45,15 +45,19 @@ member invite (part of 1.5) deferred to when team management is needed.
 
 ## Phase 2 — Core domain (clients, pools, basins, treatments)
 
-| #   | Task                                                                                                                              | Deliverable        | Acceptance                    |
-| --- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ----------------------------- |
-| 2.1 | DB + RLS: `client`, `pool`, `basin`, `treatment`, `siloe_catalog`                                                                 | Migrations         | RLS + FK constraints tested   |
-| 2.2 | Seed `siloe_catalog` with annual-results catalogs (PARAMETROS, LUGAR, METODO, TIPO_PM, TIPO_ANALISIS, MOTIVO_CIERRE — Appendix A) | Seed script        | Catalogs queryable            |
-| 2.3 | `parameter_def` table + seed RD 742/2013 national defaults + **Cataluña** overrides (thresholds/colors)                           | Seed script        | Thresholds drive color engine |
-| 2.4 | Clients CRUD (company); owner auto-self-client                                                                                    | Clients UI         | Create/edit/list/archive      |
-| 2.5 | Pools CRUD incl. address + **Mapbox geocoding** (lat/lng), pool type, water source, SILOE codes fields                            | Pools UI + map pin | Address → coords stored       |
-| 2.6 | Basins (`vaso`) CRUD nested under pool (class, type, volume, depths, SILOE codes)                                                 | Basin UI           | Multiple basins per pool      |
-| 2.7 | Treatments per basin (filtración/desinfección/coagulación/correcciónpH/otros)                                                     | Treatment UI       | Captured per Appendix data    |
+| #      | Task                                                                                                                              | Deliverable        | Acceptance                                               |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------- | ------------------ | -------------------------------------------------------- |
+| ✅ 2.1 | DB + RLS: `client`, `pool`, `basin`, `treatment`, `siloe_catalog`                                                                 | Migrations         | ✅ RLS + composite-FK org consistency verified via SQL   |
+| ✅ 2.2 | Seed `siloe_catalog` with annual-results catalogs (PARAMETROS, LUGAR, METODO, TIPO_PM, TIPO_ANALISIS, MOTIVO_CIERRE — Appendix A) | Seed script        | 73 rows seeded                                           |
+| ✅ 2.3 | `parameter_def` table + seed RD 742/2013 national defaults + **Cataluña** overrides (thresholds/colors)                           | Seed script        | 16 national + CT scaffold; exact CT values pending §13.3 |
+| ✅ 2.4 | Clients CRUD (company); owner auto-self-client                                                                                    | Clients UI         | Trigger creates self-client; CRUD live                   |
+| 🟡 2.5 | Pools CRUD incl. address + **Mapbox geocoding** (lat/lng), pool type, water source, SILOE codes fields                            | Pools UI + map pin | CRUD + geocode wired; needs MAPBOX_TOKEN env (Sara)      |
+| ✅ 2.6 | Basins (`vaso`) CRUD nested under pool (class, type, volume, depths, SILOE codes)                                                 | Basin UI           | Nested CRUD live                                         |
+| ✅ 2.7 | Treatments per basin (filtración/desinfección/coagulación/correcciónpH/otros)                                                     | Treatment UI       | Per-basin CRUD live                                      |
+
+**Phase 2 status:** code complete & green. 2.5 geocoding needs a `MAPBOX_TOKEN` Vercel env var
+(manual lat/lng entry works without it). Map-pin display and SILOE registration-catalog field
+mapping (tipo_vaso/sistema/sustancia ids) land later when the registration catalogs arrive (§13.1).
 
 **Phase 2 exit:** an org can fully model its clients, pools, basins and treatments.
 

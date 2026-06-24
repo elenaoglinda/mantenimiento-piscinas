@@ -6,8 +6,18 @@
   "common": {
     "loading": "Cargando…",
     "save": "Guardar",
+    "saving": "Guardando…",
     "cancel": "Cancelar",
+    "add": "Añadir",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "archive": "Archivar",
+    "unarchive": "Recuperar",
+    "back": "Volver",
     "retry": "Reintentar",
+    "optional": "opcional",
+    "none": "—",
+    "confirmDelete": "¿Seguro que quieres eliminar esto?",
     "genericError": "Algo ha salido mal. Inténtalo de nuevo.",
     "requiredField": "Este campo es obligatorio"
   },
@@ -83,5 +93,93 @@
   "accountType": {
     "owner": "Propietario",
     "company": "Empresa"
+  },
+  "clients": {
+    "title": "Clientes",
+    "subtitle": "Tus clientes y sus piscinas.",
+    "addClient": "Nuevo cliente",
+    "editClient": "Editar cliente",
+    "name": "Nombre",
+    "cifNif": "CIF / NIF",
+    "contactEmail": "Correo de contacto",
+    "contactPhone": "Teléfono de contacto",
+    "notes": "Notas",
+    "empty": "Aún no hay clientes. Añade el primero.",
+    "poolsCount": "{{count}} piscina",
+    "poolsCount_other": "{{count}} piscinas",
+    "self": "Tu instalación"
+  },
+  "pools": {
+    "title": "Piscinas",
+    "subtitle": "Instalaciones que gestionas.",
+    "addPool": "Nueva piscina",
+    "editPool": "Editar piscina",
+    "empty": "Aún no hay piscinas. Añade la primera.",
+    "denominacion": "Nombre de la instalación",
+    "client": "Cliente",
+    "poolType": "Tipo de piscina",
+    "waterSource": "Origen del agua",
+    "address": "Dirección",
+    "ccaa": "Comunidad Autónoma",
+    "provincia": "Provincia",
+    "municipio": "Municipio",
+    "localidad": "Localidad",
+    "cp": "Código postal",
+    "coordinates": "Coordenadas",
+    "lat": "Latitud",
+    "lng": "Longitud",
+    "geocode": "Buscar coordenadas por dirección",
+    "geocoding": "Buscando…",
+    "geocodeUnavailable": "El geocodificado no está configurado. Introduce las coordenadas manualmente.",
+    "geocodeNotFound": "No se han encontrado coordenadas para esa dirección.",
+    "siloeCodP": "Código SILOÉ (instalación)",
+    "observaciones": "Observaciones",
+    "basinsCount": "{{count}} vaso",
+    "basinsCount_other": "{{count}} vasos"
+  },
+  "poolType": {
+    "tipo_1": "Tipo 1 — uso principal (públicas, ocio, spa)",
+    "tipo_2": "Tipo 2 — servicio complementario (hoteles, camping)",
+    "tipo_3a": "Tipo 3A — comunidades, casas rurales"
+  },
+  "waterSource": {
+    "red_publica": "Red pública de abastecimiento",
+    "mar": "Agua de mar",
+    "captacion_propia": "Captación propia (no mar)"
+  },
+  "basins": {
+    "title": "Vasos",
+    "addBasin": "Nuevo vaso",
+    "editBasin": "Editar vaso",
+    "empty": "Este recinto aún no tiene vasos.",
+    "denominacion": "Nombre del vaso",
+    "clase": "Clase",
+    "tipoVaso": "Tipo de vaso",
+    "capacidad": "Volumen de agua (m³)",
+    "lamina": "Superficie lámina de agua (m²)",
+    "profMax": "Profundidad máxima (m)",
+    "profMin": "Profundidad mínima (m)",
+    "observaciones": "Observaciones"
+  },
+  "basinClass": {
+    "cubierto": "Cubierto",
+    "descubierto": "Descubierto",
+    "mixto": "Mixto"
+  },
+  "treatments": {
+    "title": "Tratamientos",
+    "addTreatment": "Nuevo tratamiento",
+    "editTreatment": "Editar tratamiento",
+    "empty": "Sin tratamientos.",
+    "kind": "Tipo de tratamiento",
+    "comercial": "Producto comercial",
+    "observaciones": "Observaciones"
+  },
+  "treatmentKind": {
+    "filtracion": "Filtración",
+    "desinfeccion": "Desinfección",
+    "coagulacion": "Coagulación / Floculación",
+    "correccion_ph": "Corrección de pH",
+    "otros": "Otros"
   }
 }

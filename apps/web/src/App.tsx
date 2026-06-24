@@ -7,6 +7,9 @@ import { SignupPage } from './pages/SignupPage.js';
 import { OnboardingPage } from './pages/OnboardingPage.js';
 import { DashboardPage } from './pages/DashboardPage.js';
 import { TeamPage } from './pages/TeamPage.js';
+import { ClientsPage } from './pages/ClientsPage.js';
+import { PoolsPage } from './pages/PoolsPage.js';
+import { PoolDetailPage } from './pages/PoolDetailPage.js';
 
 export function App() {
   return (
@@ -24,6 +27,9 @@ export function App() {
             <Route element={<RequireOnboarded />}>
               <Route element={<AppShell />}>
                 <Route index element={<DashboardPage />} />
+                <Route path="/pools" element={<PoolsPage />} />
+                <Route path="/pools/:poolId" element={<PoolDetailPage />} />
+                <Route path="/clients" element={<ClientsPage />} />
                 <Route path="/team" element={<TeamPage />} />
               </Route>
             </Route>
