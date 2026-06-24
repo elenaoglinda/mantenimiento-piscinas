@@ -10,13 +10,13 @@ acceptance check. Phases are mostly sequential; some tasks within a phase parall
 
 ## Phase 0 — Project foundations
 
-| #      | Task                                                                                                                                                  | Deliverable                           | Acceptance                          |
-| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ----------------------------------- |
-| ✅ 0.1 | Monorepo scaffold (Vite + React + TS frontend, `/api` Vercel serverless functions, shared `packages/shared`)                                          | Repo builds, `npm run dev` serves app | App shell loads locally             |
-| ✅ 0.2 | Tooling: ESLint, Prettier, Vitest, Playwright, CI (GitHub Actions: lint+typecheck+test)                                                               | Green CI on PR                        | CI passes on a trivial PR           |
+| #      | Task                                                                                                                                                  | Deliverable                           | Acceptance                                           |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ---------------------------------------------------- |
+| ✅ 0.1 | Monorepo scaffold (Vite + React + TS frontend, `/api` Vercel serverless functions, shared `packages/shared`)                                          | Repo builds, `npm run dev` serves app | App shell loads locally                              |
+| ✅ 0.2 | Tooling: ESLint, Prettier, Vitest, Playwright, CI (GitHub Actions: lint+typecheck+test)                                                               | Green CI on PR                        | CI passes on a trivial PR                            |
 | ✅ 0.3 | Vercel project linked; preview deploys per PR                                                                                                         | Live URL + env vars                   | https://mantenimiento-piscinas.vercel.app (HTTP 200) |
-| ✅ 0.4 | Supabase project (EU region) + local `supabase` CLI; env wiring (`.env`, Vercel envs)                                                                 | CLI installed + `.env` wired          | Client configured for Supabase      |
-| ✅ 0.5 | Design tokens foundation: Tailwind + CSS-variable token layer (color/space/typography/radius), aqua-teal + semantic green/amber/red, light/dark-ready | `tokens.css` + Tailwind theme         | Swapping one token recolors the app |
+| ✅ 0.4 | Supabase project (EU region) + local `supabase` CLI; env wiring (`.env`, Vercel envs)                                                                 | CLI installed + `.env` wired          | Client configured for Supabase                       |
+| ✅ 0.5 | Design tokens foundation: Tailwind + CSS-variable token layer (color/space/typography/radius), aqua-teal + semantic green/amber/red, light/dark-ready | `tokens.css` + Tailwind theme         | Swapping one token recolors the app                  |
 
 **Phase 0 exit:** empty but deployable app, CI green, Supabase + tokens in place.
 **Status:** ✅ complete. Live at https://mantenimiento-piscinas.vercel.app.
@@ -27,17 +27,19 @@ Development are set. Add Preview vars via the dashboard if/when PR previews are 
 
 ## Phase 1 — Auth, tenancy & app skeleton
 
-| #   | Task                                                                                          | Deliverable            | Acceptance                         |
-| --- | --------------------------------------------------------------------------------------------- | ---------------------- | ---------------------------------- |
-| 1.1 | DB: `org`, `app_user` tables + RLS helpers (`org_id` from JWT claim)                          | Migration              | RLS denies cross-org reads (test)  |
-| 1.2 | Supabase Auth: email/password + magic link; email verification                                | Sign-in/up screens     | User can register + log in         |
-| 1.3 | Google Workspace SSO (OIDC)                                                                   | "Continue with Google" | Google login creates/links user    |
-| 1.4 | Sign-up flow with **account-type choice** (owner vs company) → provisions `org` + first admin | Onboarding wizard      | Both paths create correct org type |
-| 1.5 | Roles (Admin/Technician/Viewer) + route guards + member invite                                | Members admin page     | Role gates verified in tests       |
-| 1.6 | App shell: nav, layout, i18n setup (es-ES, `react-i18next`), token-based theme                | Authenticated shell    | All chrome strings via i18n        |
+| #      | Task                                                                                              | Deliverable            | Acceptance                                              |
+| ------ | ------------------------------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------- |
+| ✅ 1.1 | DB: `org`, `app_user` tables + RLS helpers (`current_org_id()` SECURITY DEFINER, not a JWT claim) | Migration              | ✅ RLS cross-org isolation verified via SQL test        |
+| ✅ 1.2 | Supabase Auth: email/password + magic link; email verification                                    | Sign-in/up screens     | Login/signup screens built                              |
+| 🔲 1.3 | Google Workspace SSO (OIDC)                                                                       | "Continue with Google" | Code wired; needs Google OAuth creds in Supabase (Sara) |
+| ✅ 1.4 | Sign-up flow with **account-type choice** (owner vs company) → provisions `org` + first admin     | Onboarding wizard      | `provision_account` RPC + wizard                        |
+| 🟡 1.5 | Roles (Admin/Technician/Viewer) + route guards + member invite                                    | Members admin page     | Guards + roles + team list done; invite deferred        |
+| ✅ 1.6 | App shell: nav, layout, i18n setup (es-ES, `react-i18next`), token-based theme                    | Authenticated shell    | Shell + nav + i18n live                                 |
 
 **Phase 1 exit:** users can register (both account types), log in (email + Google), and see a
 role-appropriate empty app.
+**Status:** code complete & green. 1.3 needs Google OAuth credentials from Sara (dashboard);
+member invite (part of 1.5) deferred to when team management is needed.
 
 ---
 

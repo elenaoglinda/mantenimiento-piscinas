@@ -3,14 +3,85 @@
     "name": "Mantenimiento de Piscinas",
     "tagline": "Control del agua y cumplimiento SILOÉ, sin complicaciones"
   },
+  "common": {
+    "loading": "Cargando…",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "retry": "Reintentar",
+    "genericError": "Algo ha salido mal. Inténtalo de nuevo.",
+    "requiredField": "Este campo es obligatorio"
+  },
   "status": {
     "green": "Correcto",
     "amber": "Atención",
     "red": "Fuera de rango",
     "unknown": "Sin dato"
   },
-  "phase0": {
-    "ready": "Base del proyecto lista",
-    "description": "Aplicación, tokens de diseño y conexión a Supabase configurados."
+  "auth": {
+    "signInTitle": "Inicia sesión",
+    "signUpTitle": "Crea tu cuenta",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "signInButton": "Entrar",
+    "signUpButton": "Crear cuenta",
+    "orContinueWith": "o continúa con",
+    "google": "Continuar con Google",
+    "magicLink": "Enviarme un enlace de acceso",
+    "magicLinkSent": "Te hemos enviado un enlace de acceso a tu correo.",
+    "verifyEmailSent": "Revisa tu correo para confirmar tu cuenta antes de entrar.",
+    "noAccount": "¿No tienes cuenta?",
+    "createOne": "Crear una",
+    "haveAccount": "¿Ya tienes cuenta?",
+    "signInLink": "Inicia sesión",
+    "signOut": "Cerrar sesión",
+    "passwordHint": "Mínimo 8 caracteres",
+    "invalidCredentials": "Correo o contraseña incorrectos.",
+    "googleNotConfigured": "El acceso con Google aún no está configurado."
+  },
+  "onboarding": {
+    "title": "Configura tu cuenta",
+    "subtitle": "Cuéntanos cómo vas a usar la aplicación.",
+    "accountTypeQuestion": "¿Cómo gestionas las piscinas?",
+    "owner": "Gestiono mis propias piscinas",
+    "ownerDesc": "Para propietarios de una o varias piscinas propias.",
+    "company": "Soy una empresa de mantenimiento",
+    "companyDesc": "Gestiono piscinas de varios clientes.",
+    "orgName": "Nombre",
+    "orgNameOwnerHint": "El nombre de tu instalación o comunidad.",
+    "orgNameCompanyHint": "El nombre de tu empresa.",
+    "yourName": "Tu nombre completo",
+    "submit": "Empezar",
+    "creating": "Creando tu cuenta…"
+  },
+  "nav": {
+    "dashboard": "Inicio",
+    "pools": "Piscinas",
+    "clients": "Clientes",
+    "reports": "Informes",
+    "routes": "Rutas",
+    "team": "Equipo"
+  },
+  "dashboard": {
+    "welcome": "Hola, {{name}}",
+    "orgLabel": "Organización",
+    "roleLabel": "Rol",
+    "phase1Note": "Tu cuenta está lista. Pronto podrás añadir piscinas y registrar informes."
+  },
+  "team": {
+    "title": "Equipo",
+    "subtitle": "Personas con acceso a {{org}}.",
+    "you": "Tú",
+    "columnName": "Nombre",
+    "columnEmail": "Correo",
+    "columnRole": "Rol"
+  },
+  "roles": {
+    "admin": "Administrador",
+    "technician": "Técnico",
+    "viewer": "Solo lectura"
+  },
+  "accountType": {
+    "owner": "Propietario",
+    "company": "Empresa"
   }
 }
