@@ -811,6 +811,86 @@ export type Database = {
           },
         ];
       };
+      route: {
+        Row: {
+          created_at: string;
+          distance_m: number | null;
+          duration_s: number | null;
+          id: string;
+          org_id: string;
+          route_date: string;
+          start_lat: number | null;
+          start_lng: number | null;
+          technician_id: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          distance_m?: number | null;
+          duration_s?: number | null;
+          id?: string;
+          org_id: string;
+          route_date: string;
+          start_lat?: number | null;
+          start_lng?: number | null;
+          technician_id?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          distance_m?: number | null;
+          duration_s?: number | null;
+          id?: string;
+          org_id?: string;
+          route_date?: string;
+          start_lat?: number | null;
+          start_lng?: number | null;
+          technician_id?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      route_stop: {
+        Row: {
+          created_at: string;
+          eta: string | null;
+          id: string;
+          leg_s: number | null;
+          org_id: string;
+          pool_id: string;
+          route_id: string;
+          seq: number;
+        };
+        Insert: {
+          created_at?: string;
+          eta?: string | null;
+          id?: string;
+          leg_s?: number | null;
+          org_id: string;
+          pool_id: string;
+          route_id: string;
+          seq: number;
+        };
+        Update: {
+          created_at?: string;
+          eta?: string | null;
+          id?: string;
+          leg_s?: number | null;
+          org_id?: string;
+          pool_id?: string;
+          route_id?: string;
+          seq?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'route_stop_route_id_org_id_fkey';
+            columns: ['route_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'route';
+            referencedColumns: ['id', 'org_id'];
+          },
+        ];
+      };
       xml_export: {
         Row: {
           created_at: string;

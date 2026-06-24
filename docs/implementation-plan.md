@@ -117,14 +117,15 @@ arrive (§13.1)._
 
 ## Phase 6 — Route planning (Mapbox)
 
-| #   | Task                                                                             | Deliverable   | Acceptance               |
-| --- | -------------------------------------------------------------------------------- | ------------- | ------------------------ |
-| 6.1 | DB: `route`, `route_stop`                                                        | Migration     | —                        |
-| 6.2 | `/api` geocoding + **Mapbox Optimization API** proxy (keys server-side, caching) | Function      | Returns optimized order  |
-| 6.3 | Select pools for a day → optimized route + map + ordered stops + ETAs            | Route UI      | Multi-pool route renders |
-| 6.4 | Route available offline once fetched; "start visit" deep-links into report flow  | Offline route | Route usable in field    |
+| #      | Task                                                                            | Deliverable   | Acceptance                                                                                      |
+| ------ | ------------------------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------------------------- |
+| ✅ 6.1 | DB: `route`, `route_stop`                                                       | Migration     | Org-scoped RLS, composite FKs                                                                   |
+| ✅ 6.2 | `/api` **Mapbox Optimization API** proxy + static-map proxy (token server-side) | Functions     | `/api/route-optimize` returns order+legs; `/api/route-map` PNG                                  |
+| ✅ 6.3 | Select pools for a day → optimized route + map + ordered stops + ETAs           | Route UI      | Stops with ETAs, static map, save, Google Maps link                                             |
+| 🟡 6.4 | Route available offline once fetched; "start visit" deep-links into report flow | Offline route | "Iniciar visita" → /reports/new?poolId deep-link ✅; offline caching deferred (Phase 4 skipped) |
 
-**Phase 6 exit:** a technician plans an optimized multi-pool day and works it offline.
+**Phase 6 exit:** ✅ a technician plans an optimized multi-pool day (online). Offline route access
+waits for Phase 4 (PWA), which was skipped.
 
 ---
 
