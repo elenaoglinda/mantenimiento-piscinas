@@ -51,13 +51,13 @@ member invite (part of 1.5) deferred to when team management is needed.
 | ✅ 2.2 | Seed `siloe_catalog` with annual-results catalogs (PARAMETROS, LUGAR, METODO, TIPO_PM, TIPO_ANALISIS, MOTIVO_CIERRE — Appendix A) | Seed script        | 73 rows seeded                                           |
 | ✅ 2.3 | `parameter_def` table + seed RD 742/2013 national defaults + **Cataluña** overrides (thresholds/colors)                           | Seed script        | 16 national + CT scaffold; exact CT values pending §13.3 |
 | ✅ 2.4 | Clients CRUD (company); owner auto-self-client                                                                                    | Clients UI         | Trigger creates self-client; CRUD live                   |
-| 🟡 2.5 | Pools CRUD incl. address + **Mapbox geocoding** (lat/lng), pool type, water source, SILOE codes fields                            | Pools UI + map pin | CRUD + geocode wired; needs MAPBOX_TOKEN env (Sara)      |
+| ✅ 2.5 | Pools CRUD incl. address + **Mapbox geocoding** (lat/lng), pool type, water source, SILOE codes fields                            | Pools UI + map pin | CRUD + geocode live (MAPBOX_TOKEN set; verified)         |
 | ✅ 2.6 | Basins (`vaso`) CRUD nested under pool (class, type, volume, depths, SILOE codes)                                                 | Basin UI           | Nested CRUD live                                         |
 | ✅ 2.7 | Treatments per basin (filtración/desinfección/coagulación/correcciónpH/otros)                                                     | Treatment UI       | Per-basin CRUD live                                      |
 
-**Phase 2 status:** code complete & green. 2.5 geocoding needs a `MAPBOX_TOKEN` Vercel env var
-(manual lat/lng entry works without it). Map-pin display and SILOE registration-catalog field
-mapping (tipo_vaso/sistema/sustancia ids) land later when the registration catalogs arrive (§13.1).
+**Phase 2 status:** ✅ complete & green. `MAPBOX_TOKEN` set in Vercel (geocoding verified live).
+Map-pin display and SILOE registration-catalog field mapping (tipo_vaso/sistema/sustancia ids)
+land later when the registration catalogs arrive (§13.1).
 
 **Phase 2 exit:** an org can fully model its clients, pools, basins and treatments.
 
