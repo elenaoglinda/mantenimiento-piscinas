@@ -14,12 +14,14 @@ acceptance check. Phases are mostly sequential; some tasks within a phase parall
 | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ----------------------------------- |
 | ✅ 0.1 | Monorepo scaffold (Vite + React + TS frontend, `/api` Vercel serverless functions, shared `packages/shared`)                                          | Repo builds, `npm run dev` serves app | App shell loads locally             |
 | ✅ 0.2 | Tooling: ESLint, Prettier, Vitest, Playwright, CI (GitHub Actions: lint+typecheck+test)                                                               | Green CI on PR                        | CI passes on a trivial PR           |
-| 🔲 0.3 | Vercel project linked; preview deploys per PR                                                                                                         | Live preview URL                      | Needs `vercel login` (user)         |
+| ✅ 0.3 | Vercel project linked; preview deploys per PR                                                                                                         | Live URL + env vars                   | https://mantenimiento-piscinas.vercel.app (HTTP 200) |
 | ✅ 0.4 | Supabase project (EU region) + local `supabase` CLI; env wiring (`.env`, Vercel envs)                                                                 | CLI installed + `.env` wired          | Client configured for Supabase      |
 | ✅ 0.5 | Design tokens foundation: Tailwind + CSS-variable token layer (color/space/typography/radius), aqua-teal + semantic green/amber/red, light/dark-ready | `tokens.css` + Tailwind theme         | Swapping one token recolors the app |
 
 **Phase 0 exit:** empty but deployable app, CI green, Supabase + tokens in place.
-**Status:** done except 0.3 Vercel link (blocked on `vercel login` — needs Sara).
+**Status:** ✅ complete. Live at https://mantenimiento-piscinas.vercel.app.
+_Note: Vercel CLI v50 won't add Preview-scoped env vars without a branch; Production +
+Development are set. Add Preview vars via the dashboard if/when PR previews are used._
 
 ---
 
