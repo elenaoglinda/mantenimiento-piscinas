@@ -1,8 +1,12 @@
 # Mantenimiento de Piscinas
 
-PWA for Spanish public-pool operators to record RD 742/2013 water-quality maintenance and
-export the XML files SILOÉ accepts. See [docs/technical-spec.md](docs/technical-spec.md) and
-[docs/implementation-plan.md](docs/implementation-plan.md).
+Web app for Spanish public-pool operators to record RD 742/2013 water-quality maintenance and
+export the XML files SILOÉ accepts.
+
+**New here? Start with [docs/ONBOARDING.md](docs/ONBOARDING.md)** — how everything is set up
+(Vercel, Supabase, auth, deploys), the architectural decisions and why, and how to make changes.
+Also: [docs/technical-spec.md](docs/technical-spec.md) (domain + SILOE XML contract) and
+[docs/implementation-plan.md](docs/implementation-plan.md) (build status).
 
 ## Stack
 
