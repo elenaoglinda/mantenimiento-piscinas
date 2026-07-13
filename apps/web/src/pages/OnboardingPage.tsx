@@ -7,6 +7,7 @@ import { AuthLayout } from '../components/AuthLayout.js';
 import { Button } from '../components/ui/Button.js';
 import { TextField } from '../components/ui/TextField.js';
 import { Alert, Card } from '../components/ui/feedback.js';
+import { readPendingInvite } from '../lib/invitations.js';
 import type { Enums } from '../lib/database.types.js';
 
 type AccountType = Enums<'org_type'>;
@@ -23,6 +24,10 @@ export function OnboardingPage() {
 
   // Already provisioned → nothing to do here.
   if (profile) return <Navigate to="/" replace />;
+
+  // Arrived here via an invitation link → accept it instead of creating a new org.
+  const pendingInvite = readPendingInvite();
+  if (pendingInvite) return <Navigate to={`/invite/${pendingInvite}`} replace />;
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
