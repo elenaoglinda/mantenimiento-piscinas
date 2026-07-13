@@ -77,12 +77,66 @@
     "welcome": "Hola, {{name}}",
     "orgLabel": "Organización",
     "roleLabel": "Rol",
-    "phase1Note": "Tu cuenta está lista. Pronto podrás añadir piscinas y registrar informes.",
-    "gettingStarted": "Primeros pasos",
-    "addFirstClientHint": "Para empezar, añade tu primer cliente.",
-    "addFirstClient": "Añadir primer cliente",
-    "addFirstPoolHint": "Ahora añade tu primera piscina.",
-    "addFirstPool": "Añadir primera piscina"
+    "statPools": "Piscinas activas",
+    "statReports": "Informes (30 días)",
+    "statOutOfRange": "Fuera de rango",
+    "statNextVisit": "Próxima visita",
+    "calendarTitle": "Visitas planificadas",
+    "prevMonth": "Mes anterior",
+    "nextMonth": "Mes siguiente",
+    "noVisitsPlanned": "No hay visitas planificadas para este día.",
+    "planRouteLink": "Planificar una ruta →",
+    "attentionTitle": "Requiere atención",
+    "attentionEmpty": "Todo en orden. No hay avisos.",
+    "outOfRangeReading": "Lecturas fuera de rango",
+    "neverVisited": "Sin visitas registradas",
+    "overdueBy": "Sin visita desde hace {{days}} días",
+    "recentReports": "Informes recientes",
+    "viewAll": "Ver todos"
+  },
+  "checklist": {
+    "title": "Primeros pasos",
+    "subtitle": "Completa la configuración para empezar a registrar el mantenimiento.",
+    "howTo": "Cómo se hace",
+    "optionalTitle": "Configuración opcional",
+    "skip": "Omitir",
+    "steps": {
+      "addClient": {
+        "title": "Añade tu primer cliente",
+        "desc": "Registra el cliente cuyas piscinas vas a mantener.",
+        "cta": "Añadir"
+      },
+      "addPool": {
+        "title": "Añade tu primera piscina",
+        "desc": "Crea la instalación con su dirección y datos SILOÉ.",
+        "cta": "Añadir"
+      },
+      "addBasin": {
+        "title": "Añade un vaso",
+        "desc": "Cada piscina necesita al menos un vaso para registrar análisis.",
+        "cta": "Añadir"
+      },
+      "createReport": {
+        "title": "Crea tu primer informe",
+        "desc": "Registra los parámetros del agua de una visita.",
+        "cta": "Crear"
+      },
+      "exportSiloe": {
+        "title": "Genera tu XML SILOÉ",
+        "desc": "Exporta los resultados anuales para subirlos a SILOÉ.",
+        "cta": "Exportar"
+      },
+      "inviteTeam": {
+        "title": "Invita a tu equipo",
+        "desc": "Da acceso a tus técnicos para registrar visitas.",
+        "cta": "Invitar"
+      },
+      "planRoute": {
+        "title": "Planifica una ruta",
+        "desc": "Optimiza el recorrido para visitar varias piscinas en un día.",
+        "cta": "Planificar"
+      }
+    }
   },
   "team": {
     "title": "Equipo",
