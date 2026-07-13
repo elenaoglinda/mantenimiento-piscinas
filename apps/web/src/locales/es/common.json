@@ -71,7 +71,8 @@
     "reports": "Informes",
     "routes": "Rutas",
     "siloe": "SILOÉ",
-    "team": "Equipo"
+    "team": "Equipo",
+    "menu": "Menú"
   },
   "dashboard": {
     "welcome": "Hola, {{name}}",

@@ -43,7 +43,7 @@ export function TeamPage() {
       ) : error ? (
         <Alert tone="error">{error}</Alert>
       ) : (
-        <Card className="overflow-hidden p-0">
+        <Card className="overflow-x-auto p-0">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-border bg-surface-muted text-text-muted">
               <tr>

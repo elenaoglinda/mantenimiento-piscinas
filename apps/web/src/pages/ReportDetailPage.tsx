@@ -79,11 +79,11 @@ export function ReportDetailPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between gap-3 print:hidden">
+      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
         <Link to="/reports" className="text-sm text-primary hover:underline">
           ← {t('nav.reports')}
         </Link>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="ghost" onClick={() => window.print()}>
             {t('common.print')}
           </Button>
@@ -118,25 +118,29 @@ export function ReportDetailPage() {
         {measurements.length === 0 ? (
           <p className="text-sm text-text-muted">{t('common.none')}</p>
         ) : (
-          <table className="w-full text-left text-sm">
-            <tbody>
-              {measurements.map((m) => (
-                <tr key={m.id} className="border-b border-border last:border-0">
-                  <td className="py-2 text-text">
-                    {m.parameter_def?.name_es ?? '—'}
-                    {m.parameter_def?.unit && (
-                      <span className="ml-1 text-xs text-text-muted">({m.parameter_def.unit})</span>
-                    )}
-                  </td>
-                  <td className="py-2 font-mono text-text">{m.value ?? '—'}</td>
-                  <td className="py-2 text-xs text-text-muted">{t(`lugar.${m.lugar}`)}</td>
-                  <td className="py-2 text-right">
-                    <StatusChip status={m.status} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <tbody>
+                {measurements.map((m) => (
+                  <tr key={m.id} className="border-b border-border last:border-0">
+                    <td className="py-2 text-text">
+                      {m.parameter_def?.name_es ?? '—'}
+                      {m.parameter_def?.unit && (
+                        <span className="ml-1 text-xs text-text-muted">
+                          ({m.parameter_def.unit})
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-2 font-mono text-text">{m.value ?? '—'}</td>
+                    <td className="py-2 text-xs text-text-muted">{t(`lugar.${m.lugar}`)}</td>
+                    <td className="py-2 text-right">
+                      <StatusChip status={m.status} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </Card>
 
