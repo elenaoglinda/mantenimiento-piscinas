@@ -248,6 +248,7 @@ export type Database = {
           created_at: string;
           id: string;
           name: string;
+          onboarding_dismissed_at: string | null;
           type: Database['public']['Enums']['org_type'];
           updated_at: string;
         };
@@ -255,6 +256,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           name: string;
+          onboarding_dismissed_at?: string | null;
           type: Database['public']['Enums']['org_type'];
           updated_at?: string;
         };
@@ -262,6 +264,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           name?: string;
+          onboarding_dismissed_at?: string | null;
           type?: Database['public']['Enums']['org_type'];
           updated_at?: string;
         };
