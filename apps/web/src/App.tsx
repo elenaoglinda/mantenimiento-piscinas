@@ -15,12 +15,16 @@ import { ReportFormPage } from './pages/ReportFormPage.js';
 import { ReportDetailPage } from './pages/ReportDetailPage.js';
 import { SiloeExportPage } from './pages/SiloeExportPage.js';
 import { RoutesPage } from './pages/RoutesPage.js';
+import { InvitePage } from './pages/InvitePage.js';
 
 export function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          {/* Public: reachable in any auth state; the page itself branches on session. */}
+          <Route path="/invite/:token" element={<InvitePage />} />
+
           <Route element={<PublicOnly />}>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />

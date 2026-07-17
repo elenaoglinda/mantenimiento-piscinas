@@ -176,11 +176,79 @@ export type Database = {
           },
         ];
       };
+      invitation: {
+        Row: {
+          accepted_at: string | null;
+          accepted_by: string | null;
+          created_at: string;
+          email: string;
+          expires_at: string;
+          id: string;
+          invited_by: string | null;
+          org_id: string;
+          role: Database['public']['Enums']['user_role'];
+          status: Database['public']['Enums']['invitation_status'];
+          token: string;
+          updated_at: string;
+        };
+        Insert: {
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+          created_at?: string;
+          email: string;
+          expires_at?: string;
+          id?: string;
+          invited_by?: string | null;
+          org_id: string;
+          role?: Database['public']['Enums']['user_role'];
+          status?: Database['public']['Enums']['invitation_status'];
+          token: string;
+          updated_at?: string;
+        };
+        Update: {
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+          created_at?: string;
+          email?: string;
+          expires_at?: string;
+          id?: string;
+          invited_by?: string | null;
+          org_id?: string;
+          role?: Database['public']['Enums']['user_role'];
+          status?: Database['public']['Enums']['invitation_status'];
+          token?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'invitation_accepted_by_fkey';
+            columns: ['accepted_by'];
+            isOneToOne: false;
+            referencedRelation: 'app_user';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'invitation_invited_by_fkey';
+            columns: ['invited_by'];
+            isOneToOne: false;
+            referencedRelation: 'app_user';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'invitation_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'org';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       org: {
         Row: {
           created_at: string;
           id: string;
           name: string;
+          onboarding_dismissed_at: string | null;
           type: Database['public']['Enums']['org_type'];
           updated_at: string;
         };
@@ -188,6 +256,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           name: string;
+          onboarding_dismissed_at?: string | null;
           type: Database['public']['Enums']['org_type'];
           updated_at?: string;
         };
@@ -195,6 +264,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           name?: string;
+          onboarding_dismissed_at?: string | null;
           type?: Database['public']['Enums']['org_type'];
           updated_at?: string;
         };
@@ -929,9 +999,29 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      accept_invitation: {
+        Args: { p_full_name: string; p_token: string };
+        Returns: {
+          created_at: string;
+          id: string;
+          name: string;
+          type: Database['public']['Enums']['org_type'];
+          updated_at: string;
+        };
+      };
       current_org_id: { Args: never; Returns: string };
       current_user_can_write: { Args: never; Returns: boolean };
       current_user_role: { Args: never; Returns: Database['public']['Enums']['user_role'] };
+      get_invitation: {
+        Args: { p_token: string };
+        Returns: {
+          org_name: string;
+          role: Database['public']['Enums']['user_role'];
+          email: string;
+          status: Database['public']['Enums']['invitation_status'];
+          expired: boolean;
+        }[];
+      };
       provision_account: {
         Args: {
           p_account_type: Database['public']['Enums']['org_type'];
@@ -951,6 +1041,7 @@ export type Database = {
       analysis_type: 'autocontrol' | 'vigilancia';
       attachment_kind: 'photo' | 'lab_pdf';
       basin_class: 'cubierto' | 'descubierto' | 'mixto';
+      invitation_status: 'pending' | 'accepted' | 'revoked';
       measurement_lugar: 'in_situ' | 'lab';
       measurement_status: 'green' | 'amber' | 'red' | 'unknown';
       org_type: 'owner' | 'company';
