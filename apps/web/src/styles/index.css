@@ -49,6 +49,12 @@ body,
   height: 100%;
 }
 
+html {
+  /* Stop mobile browsers from inflating text on orientation change. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   background-color: var(--bg);
@@ -62,4 +68,16 @@ body {
     Arial,
     sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * On phones, keep form controls at >=16px so iOS Safari doesn't auto-zoom the
+ * viewport when a field gains focus. Desktop keeps the smaller `text-sm` controls.
+ */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
