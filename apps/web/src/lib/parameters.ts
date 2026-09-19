@@ -5,6 +5,12 @@ import type { Tables } from './database.types.js';
 export type ParameterDefRow = Tables<'parameter_def'>;
 
 /**
+ * SILOE parameters analysed in a laboratory rather than in situ (E. coli, Legionella,
+ * P. aeruginosa). Measurements for these default to `lugar = 'lab'`.
+ */
+export const LAB_PARAM_IDS = new Set([11, 12, 13]);
+
+/**
  * Map a free-text CCAA (as typed on the pool) to the code used in parameter_def overrides.
  * v1 launches with Cataluña only; extend as more regions are seeded. See spec §13.3.
  */

@@ -12,6 +12,7 @@ import { PoolsPage } from './pages/PoolsPage.js';
 import { PoolDetailPage } from './pages/PoolDetailPage.js';
 import { ReportsPage } from './pages/ReportsPage.js';
 import { ReportFormPage } from './pages/ReportFormPage.js';
+import { ImportReportPage } from './pages/ImportReportPage.js';
 import { ReportDetailPage } from './pages/ReportDetailPage.js';
 import { SiloeExportPage } from './pages/SiloeExportPage.js';
 import { RoutesPage } from './pages/RoutesPage.js';
@@ -40,6 +41,7 @@ export function App() {
                 <Route path="/pools/:poolId" element={<PoolDetailPage />} />
                 <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/reports/new" element={<ReportFormPage />} />
+                <Route path="/reports/import" element={<ImportReportPage />} />
                 <Route path="/reports/:reportId" element={<ReportDetailPage />} />
                 <Route path="/reports/:reportId/edit" element={<ReportFormPage />} />
                 <Route path="/routes" element={<RoutesPage />} />

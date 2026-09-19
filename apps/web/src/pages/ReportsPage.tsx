@@ -64,9 +64,14 @@ export function ReportsPage() {
           <p className="text-sm text-text-muted">{t('reports.subtitle')}</p>
         </div>
         {canWrite && !needsSetup && !loading && (
-          <Link to="/reports/new">
-            <Button>{t('reports.addReport')}</Button>
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link to="/reports/import">
+              <Button variant="secondary">{t('photoImport.entryAction')}</Button>
+            </Link>
+            <Link to="/reports/new">
+              <Button>{t('reports.addReport')}</Button>
+            </Link>
+          </div>
         )}
       </div>
 
