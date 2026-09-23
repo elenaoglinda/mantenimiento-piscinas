@@ -204,10 +204,10 @@ export function SiloeExportPage() {
         </Card>
       ) : (
         <>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-semibold text-text">{t('siloe.resultsTitle', { year })}</h2>
             {canWrite && (
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button variant="secondary" onClick={onSave} loading={busy}>
                   {t('siloe.saveChanges')}
                 </Button>
@@ -290,13 +290,16 @@ export function SiloeExportPage() {
         {exports.length === 0 ? (
           <p className="text-sm text-text-muted">{t('siloe.historyEmpty')}</p>
         ) : (
-          <ul className="flex flex-col gap-1 text-sm">
+          <ul className="flex flex-col gap-2 text-sm">
             {exports.map((x) => (
-              <li key={x.id} className="flex justify-between">
+              <li
+                key={x.id}
+                className="flex flex-col gap-0.5 sm:flex-row sm:justify-between sm:gap-3"
+              >
                 <span className="text-text">
                   {x.kind} · {x.period_year} · {t('siloe.paramsCount', { count: x.item_count })}
                 </span>
-                <span className="text-text-muted">
+                <span className="shrink-0 text-text-muted">
                   {new Date(x.created_at).toLocaleString('es-ES')}
                 </span>
               </li>
