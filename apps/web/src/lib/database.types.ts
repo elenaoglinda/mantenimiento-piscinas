@@ -497,6 +497,7 @@ export type Database = {
           analysis_type: Database['public']['Enums']['analysis_type'];
           basin_id: string;
           created_at: string;
+          extraction_meta: Json | null;
           id: string;
           location_lat: number | null;
           location_lng: number | null;
@@ -505,6 +506,7 @@ export type Database = {
           pool_id: string;
           punto_muestreo: number | null;
           signature_path: string | null;
+          source: Database['public']['Enums']['report_source'];
           signed_at: string | null;
           signed_by_dni: string | null;
           signed_by_name: string | null;
@@ -517,6 +519,7 @@ export type Database = {
           analysis_type?: Database['public']['Enums']['analysis_type'];
           basin_id: string;
           created_at?: string;
+          extraction_meta?: Json | null;
           id?: string;
           location_lat?: number | null;
           location_lng?: number | null;
@@ -525,6 +528,7 @@ export type Database = {
           pool_id: string;
           punto_muestreo?: number | null;
           signature_path?: string | null;
+          source?: Database['public']['Enums']['report_source'];
           signed_at?: string | null;
           signed_by_dni?: string | null;
           signed_by_name?: string | null;
@@ -537,6 +541,7 @@ export type Database = {
           analysis_type?: Database['public']['Enums']['analysis_type'];
           basin_id?: string;
           created_at?: string;
+          extraction_meta?: Json | null;
           id?: string;
           location_lat?: number | null;
           location_lng?: number | null;
@@ -545,6 +550,7 @@ export type Database = {
           pool_id?: string;
           punto_muestreo?: number | null;
           signature_path?: string | null;
+          source?: Database['public']['Enums']['report_source'];
           signed_at?: string | null;
           signed_by_dni?: string | null;
           signed_by_name?: string | null;
@@ -1045,6 +1051,7 @@ export type Database = {
       measurement_lugar: 'in_situ' | 'lab';
       measurement_status: 'green' | 'amber' | 'red' | 'unknown';
       org_type: 'owner' | 'company';
+      report_source: 'manual' | 'photo_import';
       report_status: 'draft' | 'completed' | 'signed';
       param_medium: 'water' | 'air';
       pool_type: 'tipo_1' | 'tipo_2' | 'tipo_3a';

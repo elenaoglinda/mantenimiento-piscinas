@@ -411,5 +411,36 @@
     "signedAt": "Fecha de firma",
     "needSignature": "Falta la firma.",
     "immutableNote": "Una vez firmado, el informe no se puede modificar."
+  },
+  "photoImport": {
+    "entryAction": "Importar parte (foto)",
+    "title": "Importar parte desde una foto",
+    "subtitle": "Digitaliza un parte en papel: sube la foto, revisa los valores extraídos y guárdalo como borrador.",
+    "uploadHint": "Haz una foto del parte en papel o elige una imagen. Se lee mejor con buena luz y el parte plano.",
+    "choosePhoto": "Elegir foto",
+    "changePhoto": "Cambiar foto",
+    "analyse": "Analizar parte",
+    "analysing": "Analizando el parte…",
+    "previewAlt": "Foto del parte",
+    "reviewHint": "Revisa cada valor antes de guardar. Los marcados en ámbar son los que la lectura automática no vio con claridad.",
+    "verifyBadge": "Verificar",
+    "verifyCount": "Revisa {{count}} campo marcado.",
+    "verifyCount_other": "Revisa {{count}} campos marcados.",
+    "poolHint": "El parte indica: «{{name}}». Comprueba que eliges la piscina correcta.",
+    "datePartial": "La fecha del parte se ha leído sólo en parte ({{date}}). Compruébala antes de guardar.",
+    "notesPrefix": "Del parte fotografiado",
+    "saveDraft": "Guardar como borrador",
+    "draftNote": "Se guarda como borrador: complétalo y fírmalo desde el informe, como cualquier otro.",
+    "viewerNotAllowed": "Tu rol es de solo lectura y no puede importar partes.",
+    "confidence": {
+      "high": "Lectura con buena confianza.",
+      "medium": "Lectura con confianza media: revisa los valores con atención.",
+      "low": "Lectura con baja confianza: comprueba todos los valores uno a uno."
+    },
+    "errorUnavailable": "La lectura automática no está configurada. Introduce el parte manualmente.",
+    "errorTooLarge": "La foto es demasiado grande. Prueba con una foto de menor resolución.",
+    "errorUnreadable": "No se han podido leer valores del parte. Comprueba la foto o introdúcelo manualmente.",
+    "errorUnauthorized": "Tu sesión ha caducado. Vuelve a iniciar sesión.",
+    "errorFailed": "No se ha podido analizar el parte. Inténtalo de nuevo."
   }
 }

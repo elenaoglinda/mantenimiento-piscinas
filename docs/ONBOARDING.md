@@ -187,18 +187,28 @@ the first path segment. Files are read via short-lived signed URLs.
 - **Environment variables** (Vercel → Settings → Environment Variables):
   - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` — client (safe; RLS governs access).
   - `MAPBOX_TOKEN` — **server-side only** (no `VITE_` prefix), used by the `/api` functions.
+  - `ANTHROPIC_API_KEY` — **server-side only**, used by `api/extract-reading.ts` (photo import).
+    Without it that endpoint returns 503 and the UI tells the technician to enter the parte by
+    hand, so the rest of the app is unaffected if it is missing.
   - Known quirk: the Vercel CLI won't add **Preview**-scoped vars without a branch; Production +
     Development are set. Add Preview vars in the dashboard if you start using PR previews.
 - **Custom domain:** `panel.cloro.app` is attached to the project; DNS is configured host-side.
 
 ### `/api` functions (why they exist)
 
-Only for work that needs the **Mapbox token kept off the client**:
+Only for work that needs a **server-side secret kept off the client**:
 
 - `api/geocode`… (removed) → replaced by `api/address-suggest.ts` (address autocomplete).
 - `api/route-optimize.ts` — Mapbox Optimization (optimal visit order + ETAs).
 - `api/route-map.ts` — Mapbox Static Images proxy (returns a PNG so the token never reaches the browser).
+- `api/extract-reading.ts` — Claude vision proxy for photo import (see §14). Unlike the Mapbox
+  proxies it **requires a valid Supabase session**, because each call costs money; it also refuses
+  a caller-supplied prompt so it can't be used as a general-purpose LLM proxy.
 - `api/health.ts` — trivial health check.
+
+`api/extract-reading.ts` is the first `/api` file to import from `@piscinas/shared` (for the
+extraction prompt, so prompt and parameter catalogue can't drift apart). Worth a smoke test on
+the first deploy that includes it.
 
 Everything else (including **SILOE XML generation**) runs **client-side** — XML has no secrets, so
 it's a pure `packages/shared` function invoked in the browser and downloaded. A server endpoint
@@ -331,6 +341,30 @@ E2E, user docs).
 - **Commit email must be GitHub-recognized** or Vercel refuses the deploy.
 - **SECURITY DEFINER functions** must pin `search_path` and revoke `anon` EXECUTE (run
   `get_advisors(security)` after DB changes).
+
+---
+
+## 14. Photo import (digitising paper partes)
+
+`/reports/import` turns a photographed paper _parte_ into a **draft** report.
+
+- **Flow:** pick/shoot a photo → `extractFromPhoto()` downscales it (long edge 1600px, JPEG) and
+  POSTs it to `api/extract-reading` → Claude reads the water readings → the technician verifies
+  every value → saved as a **draft**, never completed or signed.
+- **Contract:** `packages/shared/src/photoImport.ts` owns it. The system prompt is _generated
+  from_ `WATER_EXTRACTION_FIELDS`, the same catalogue used to map results back onto
+  `parameter_def` via `siloe_param_id` — so the prompt cannot drift from the schema. Scope is
+  **water only** (SILOE ids 1–13); air parameters aren't in the annual-results export.
+- **Trust nothing:** `parseExtraction()` is total, drops unknown keys, and nulls any reading that
+  isn't a finite number (a numeric _string_ is rejected — the technician types it). It's the
+  most-tested part of the feature; start there.
+- **Provenance (why it matters):** extracted readings feed the SILOE XML filed with the Ministry
+  of Health, so imported reports carry `report.source = 'photo_import'` and `report.extraction_meta`
+  (model + raw normalised payload), and the original photo is stored as a normal `attachment`
+  (`kind='photo'`). An audit can trace any figure back to the paper it came from.
+- **Automation bias:** values are prefilled but low-confidence fields are highlighted in amber,
+  and nothing is ever auto-completed or auto-signed — completion/signature stay in the normal
+  report flow.
 
 ---
 

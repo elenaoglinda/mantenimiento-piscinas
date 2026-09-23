@@ -7,6 +7,7 @@ import { useAuth } from '../auth/context.js';
 import {
   fetchResolvedParameterDefs,
   toEvaluatorDef,
+  LAB_PARAM_IDS,
   type ParameterDefRow,
 } from '../lib/parameters.js';
 import { Alert, Card, Spinner } from '../components/ui/feedback.js';
@@ -35,8 +36,6 @@ interface IncidentInput {
   description: string;
   corrective_action: string;
 }
-
-const LAB_PARAMS = new Set([11, 12, 13]); // E. coli, Legionella, P. aeruginosa default to lab.
 
 function toLocalInput(iso: string): string {
   const d = new Date(iso);
@@ -132,7 +131,7 @@ export function ReportFormPage() {
       ...prev,
       [defId]: {
         value: prev[defId]?.value ?? '',
-        lugar: prev[defId]?.lugar ?? (LAB_PARAMS.has(siloeId) ? 'lab' : 'in_situ'),
+        lugar: prev[defId]?.lugar ?? (LAB_PARAM_IDS.has(siloeId) ? 'lab' : 'in_situ'),
         ...patch,
       },
     }));
@@ -332,7 +331,8 @@ export function ReportFormPage() {
               const raw = input?.value ?? '';
               const num = raw.trim() === '' ? null : Number(raw);
               const status: ParameterStatus = evaluate(num, toEvaluatorDef(d)).status;
-              const lugar = input?.lugar ?? (LAB_PARAMS.has(d.siloe_param_id) ? 'lab' : 'in_situ');
+              const lugar =
+                input?.lugar ?? (LAB_PARAM_IDS.has(d.siloe_param_id) ? 'lab' : 'in_situ');
               return (
                 <div key={d.id} className="flex flex-wrap items-center gap-3 py-2.5">
                   <div className="min-w-40 flex-1">
