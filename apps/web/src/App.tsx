@@ -15,6 +15,9 @@ import { ReportFormPage } from './pages/ReportFormPage.js';
 import { ImportReportPage } from './pages/ImportReportPage.js';
 import { ReportDetailPage } from './pages/ReportDetailPage.js';
 import { SiloeExportPage } from './pages/SiloeExportPage.js';
+import { InvoicesPage } from './pages/InvoicesPage.js';
+import { InvoiceDetailPage } from './pages/InvoiceDetailPage.js';
+import { BillingSettingsPage } from './pages/BillingSettingsPage.js';
 import { RoutesPage } from './pages/RoutesPage.js';
 import { InvitePage } from './pages/InvitePage.js';
 
@@ -46,6 +49,9 @@ export function App() {
                 <Route path="/reports/:reportId/edit" element={<ReportFormPage />} />
                 <Route path="/routes" element={<RoutesPage />} />
                 <Route path="/siloe" element={<SiloeExportPage />} />
+                <Route path="/invoices" element={<InvoicesPage />} />
+                <Route path="/invoices/settings" element={<BillingSettingsPage />} />
+                <Route path="/invoices/:invoiceId" element={<InvoiceDetailPage />} />
                 <Route path="/clients" element={<ClientsPage />} />
                 <Route path="/team" element={<TeamPage />} />
               </Route>

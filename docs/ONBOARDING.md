@@ -188,6 +188,10 @@ the first path segment. Files are read via short-lived signed URLs.
   - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` — client (safe; RLS governs access).
   - `MAPBOX_TOKEN` — **server-side only** (no `VITE_` prefix), used by the `/api` functions.
   - `ANTHROPIC_API_KEY` — **server-side only**, used by `api/extract-reading.ts` (photo import).
+  - `VERIFACTI_API_KEY` — **server-side only**, used by `api/verifacti.ts` (Veri\*Factu invoicing).
+    The key prefix decides the environment (`vf_test_` / `vf_prod_`), so a key in the wrong
+    Vercel scope files real invoices with the AEAT. Preview/Development only for now.
+    See `docs/INVOICING.md`.
     Without it that endpoint returns 503 and the UI tells the technician to enter the parte by
     hand, so the rest of the app is unaffected if it is missing.
   - Known quirk: the Vercel CLI won't add **Preview**-scoped vars without a branch; Production +

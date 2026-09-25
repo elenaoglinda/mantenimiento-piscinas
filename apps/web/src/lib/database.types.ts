@@ -126,9 +126,64 @@ export type Database = {
           },
         ];
       };
+      billing_profile: {
+        Row: {
+          created_at: string;
+          cp: string | null;
+          direccion: string | null;
+          id: string;
+          municipio: string | null;
+          nif: string;
+          org_id: string;
+          pais: string;
+          provincia: string | null;
+          razon_social: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          cp?: string | null;
+          direccion?: string | null;
+          id?: string;
+          municipio?: string | null;
+          nif: string;
+          org_id: string;
+          pais?: string;
+          provincia?: string | null;
+          razon_social: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          cp?: string | null;
+          direccion?: string | null;
+          id?: string;
+          municipio?: string | null;
+          nif?: string;
+          org_id?: string;
+          pais?: string;
+          provincia?: string | null;
+          razon_social?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'billing_profile_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: true;
+            referencedRelation: 'org';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       client: {
         Row: {
           archived: boolean;
+          billing_cp: string | null;
+          billing_direccion: string | null;
+          billing_municipio: string | null;
+          billing_pais: string;
+          billing_provincia: string | null;
           cif_nif: string | null;
           contact_email: string | null;
           contact_phone: string | null;
@@ -142,6 +197,11 @@ export type Database = {
         };
         Insert: {
           archived?: boolean;
+          billing_cp?: string | null;
+          billing_direccion?: string | null;
+          billing_municipio?: string | null;
+          billing_pais?: string;
+          billing_provincia?: string | null;
           cif_nif?: string | null;
           contact_email?: string | null;
           contact_phone?: string | null;
@@ -155,6 +215,11 @@ export type Database = {
         };
         Update: {
           archived?: boolean;
+          billing_cp?: string | null;
+          billing_direccion?: string | null;
+          billing_municipio?: string | null;
+          billing_pais?: string;
+          billing_provincia?: string | null;
           cif_nif?: string | null;
           contact_email?: string | null;
           contact_phone?: string | null;
@@ -579,6 +644,211 @@ export type Database = {
             columns: ['technician_id'];
             isOneToOne: false;
             referencedRelation: 'app_user';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      invoice: {
+        Row: {
+          aeat_checked_at: string | null;
+          aeat_estado: string | null;
+          aeat_url: string | null;
+          base_cents: number;
+          client_id: string;
+          created_at: string;
+          descripcion: string;
+          id: string;
+          idempotency_key: string;
+          issue_date: string | null;
+          last_error: string | null;
+          notes: string | null;
+          number: number | null;
+          operation_date: string | null;
+          org_id: string;
+          send_attempts: number;
+          send_status: Database['public']['Enums']['invoice_send_status'];
+          sent_at: string | null;
+          series_id: string;
+          status: Database['public']['Enums']['invoice_status'];
+          tax_cents: number;
+          tipo_factura: string;
+          total_cents: number;
+          updated_at: string;
+          verifacti_huella: string | null;
+          verifacti_uuid: string | null;
+        };
+        Insert: {
+          aeat_checked_at?: string | null;
+          aeat_estado?: string | null;
+          aeat_url?: string | null;
+          base_cents?: number;
+          client_id: string;
+          created_at?: string;
+          descripcion: string;
+          id?: string;
+          idempotency_key?: string;
+          issue_date?: string | null;
+          last_error?: string | null;
+          notes?: string | null;
+          number?: number | null;
+          operation_date?: string | null;
+          org_id: string;
+          send_attempts?: number;
+          send_status?: Database['public']['Enums']['invoice_send_status'];
+          sent_at?: string | null;
+          series_id: string;
+          status?: Database['public']['Enums']['invoice_status'];
+          tax_cents?: number;
+          tipo_factura?: string;
+          total_cents?: number;
+          updated_at?: string;
+          verifacti_huella?: string | null;
+          verifacti_uuid?: string | null;
+        };
+        Update: {
+          aeat_checked_at?: string | null;
+          aeat_estado?: string | null;
+          aeat_url?: string | null;
+          base_cents?: number;
+          client_id?: string;
+          created_at?: string;
+          descripcion?: string;
+          id?: string;
+          idempotency_key?: string;
+          issue_date?: string | null;
+          last_error?: string | null;
+          notes?: string | null;
+          number?: number | null;
+          operation_date?: string | null;
+          org_id?: string;
+          send_attempts?: number;
+          send_status?: Database['public']['Enums']['invoice_send_status'];
+          sent_at?: string | null;
+          series_id?: string;
+          status?: Database['public']['Enums']['invoice_status'];
+          tax_cents?: number;
+          tipo_factura?: string;
+          total_cents?: number;
+          updated_at?: string;
+          verifacti_huella?: string | null;
+          verifacti_uuid?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'invoice_client_id_org_id_fkey';
+            columns: ['client_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'client';
+            referencedColumns: ['id', 'org_id'];
+          },
+          {
+            foreignKeyName: 'invoice_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'org';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'invoice_series_id_org_id_fkey';
+            columns: ['series_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'invoice_series';
+            referencedColumns: ['id', 'org_id'];
+          },
+        ];
+      };
+      invoice_line: {
+        Row: {
+          base_cents: number;
+          created_at: string;
+          description: string;
+          id: string;
+          invoice_id: string;
+          line_no: number;
+          org_id: string;
+          quantity: number;
+          tax_rate: number;
+          unit_price_cents: number;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description: string;
+          id?: string;
+          invoice_id: string;
+          line_no?: number;
+          org_id: string;
+          quantity?: number;
+          tax_rate?: number;
+          unit_price_cents: number;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string;
+          id?: string;
+          invoice_id?: string;
+          line_no?: number;
+          org_id?: string;
+          quantity?: number;
+          tax_rate?: number;
+          unit_price_cents?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'invoice_line_invoice_id_org_id_fkey';
+            columns: ['invoice_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'invoice';
+            referencedColumns: ['id', 'org_id'];
+          },
+          {
+            foreignKeyName: 'invoice_line_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'org';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      invoice_series: {
+        Row: {
+          archived: boolean;
+          code: string;
+          created_at: string;
+          description: string | null;
+          id: string;
+          next_number: number;
+          org_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          archived?: boolean;
+          code: string;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          next_number?: number;
+          org_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          archived?: boolean;
+          code?: string;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          next_number?: number;
+          org_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'invoice_series_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'org';
             referencedColumns: ['id'];
           },
         ];
@@ -1028,6 +1298,14 @@ export type Database = {
           expired: boolean;
         }[];
       };
+      invoice_tax_breakdown: {
+        Args: { p_invoice_id: string };
+        Returns: { tax_rate: number; base_cents: number; quota_cents: number }[];
+      };
+      issue_invoice: {
+        Args: { p_invoice_id: string };
+        Returns: Database['public']['Tables']['invoice']['Row'];
+      };
       provision_account: {
         Args: {
           p_account_type: Database['public']['Enums']['org_type'];
@@ -1048,6 +1326,8 @@ export type Database = {
       attachment_kind: 'photo' | 'lab_pdf';
       basin_class: 'cubierto' | 'descubierto' | 'mixto';
       invitation_status: 'pending' | 'accepted' | 'revoked';
+      invoice_send_status: 'not_sent' | 'queued' | 'sending' | 'accepted' | 'rejected' | 'failed';
+      invoice_status: 'draft' | 'issued' | 'void';
       measurement_lugar: 'in_situ' | 'lab';
       measurement_status: 'green' | 'amber' | 'red' | 'unknown';
       org_type: 'owner' | 'company';
