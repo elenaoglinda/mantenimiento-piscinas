@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   DEFAULT_TAX_RATE,
@@ -21,7 +21,9 @@ import {
   sendInvoice,
   type InvoiceWithRelations,
 } from '../lib/invoicing.js';
+import type { DbFailure } from '../lib/dbError.js';
 import { Alert, Card, Spinner } from '../components/ui/feedback.js';
+import { DbFailureAlert } from '../components/invoicing/DbFailureAlert.js';
 import { Button } from '../components/ui/Button.js';
 import { TextField } from '../components/ui/TextField.js';
 import { SendStatusBadge } from '../components/invoicing/SendStatusBadge.js';
@@ -38,6 +40,7 @@ export function InvoiceDetailPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [failure, setFailure] = useState<DbFailure | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
   const [desc, setDesc] = useState('');
@@ -47,9 +50,16 @@ export function InvoiceDetailPage() {
   const load = useCallback(async () => {
     if (!invoiceId) return;
     setLoading(true);
-    const inv = await getInvoice(invoiceId);
+    const { data: inv, failure: loadFailure } = await getInvoice(invoiceId);
     setInvoice(inv);
-    setBreakdown(inv ? await getTaxBreakdown(invoiceId) : []);
+    if (inv) {
+      const bd = await getTaxBreakdown(invoiceId);
+      setBreakdown(bd.data);
+      setFailure(loadFailure ?? bd.failure);
+    } else {
+      setBreakdown([]);
+      setFailure(loadFailure);
+    }
     setLoading(false);
   }, [invoiceId]);
 
@@ -58,7 +68,17 @@ export function InvoiceDetailPage() {
   }, [load]);
 
   if (loading) return <Spinner />;
-  if (!invoice) return <Alert tone="error">{t('invoicing.notFound')}</Alert>;
+  if (!invoice) {
+    return (
+      <div className="flex flex-col gap-3">
+        <Link to="/invoices" className="text-sm text-primary hover:underline">
+          ← {t('invoicing.backToInvoices')}
+        </Link>
+        <DbFailureAlert failure={failure} />
+        {!failure && <Alert tone="error">{t('invoicing.notFound')}</Alert>}
+      </div>
+    );
+  }
 
   const isDraft = invoice.status === 'draft';
   const lines = [...invoice.invoice_line].sort((a, b) => a.line_no - b.line_no);
@@ -67,6 +87,7 @@ export function InvoiceDetailPage() {
     setBusy(true);
     setError(null);
     setInfo(null);
+    setFailure(null);
     try {
       await fn();
     } catch (err) {
@@ -88,7 +109,7 @@ export function InvoiceDetailPage() {
       return;
     }
     await run(async () => {
-      await addLine({
+      const f = await addLine({
         orgId: invoice!.org_id,
         invoiceId: invoice!.id,
         lineNo: lines.length,
@@ -97,6 +118,10 @@ export function InvoiceDetailPage() {
         unitPriceCents: cents,
         taxRate: DEFAULT_TAX_RATE,
       });
+      if (f) {
+        setFailure(f);
+        return;
+      }
       setDesc('');
       setQty('1');
       setPrice('');
@@ -107,7 +132,10 @@ export function InvoiceDetailPage() {
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-text">
+          <Link to="/invoices" className="text-sm text-primary hover:underline">
+            ← {t('invoicing.backToInvoices')}
+          </Link>
+          <h1 className="mt-1 text-2xl font-semibold text-text">
             {formatInvoiceNumber(invoice.invoice_series?.code ?? '', invoice.number)}
           </h1>
           <p className="text-sm text-text-muted">
@@ -117,6 +145,7 @@ export function InvoiceDetailPage() {
         <SendStatusBadge status={invoice.status} sendStatus={invoice.send_status} />
       </div>
 
+      <DbFailureAlert failure={failure} />
       {error && <Alert tone="error">{error}</Alert>}
       {info && <Alert tone="success">{info}</Alert>}
 
@@ -156,7 +185,11 @@ export function InvoiceDetailPage() {
                         <button
                           type="button"
                           className="text-sm text-status-red hover:underline"
-                          onClick={() => void run(() => deleteLine(l.id))}
+                          onClick={() =>
+                            void run(async () => {
+                              setFailure(await deleteLine(l.id));
+                            })
+                          }
                         >
                           {t('common.delete')}
                         </button>
@@ -270,7 +303,11 @@ export function InvoiceDetailPage() {
                 variant="secondary"
                 onClick={() =>
                   void run(async () => {
-                    await deleteDraft(invoice!.id);
+                    const f = await deleteDraft(invoice!.id);
+                    if (f) {
+                      setFailure(f);
+                      return;
+                    }
                     navigate('/invoices');
                   })
                 }

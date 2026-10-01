@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { isValidNif } from '@piscinas/shared';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../auth/context.js';
+import { toDbFailure, type DbFailure } from '../lib/dbError.js';
 import { Alert, Card, Spinner } from '../components/ui/feedback.js';
+import { DbFailureAlert } from '../components/invoicing/DbFailureAlert.js';
 import { Button } from '../components/ui/Button.js';
 import { TextField } from '../components/ui/TextField.js';
 
@@ -15,11 +18,13 @@ import { TextField } from '../components/ui/TextField.js';
 export function BillingSettingsPage() {
   const { t } = useTranslation();
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const canWrite = profile ? profile.user.role === 'admin' : false;
 
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [failure, setFailure] = useState<DbFailure | null>(null);
   const [id, setId] = useState<string | null>(null);
   const [form, setForm] = useState({
     nif: '',
@@ -32,7 +37,8 @@ export function BillingSettingsPage() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.from('billing_profile').select('*').maybeSingle();
+    const { data, error } = await supabase.from('billing_profile').select('*').maybeSingle();
+    setFailure(toDbFailure(error));
     if (data) {
       setId(data.id);
       setForm({
@@ -68,10 +74,21 @@ export function BillingSettingsPage() {
       municipio: form.municipio.trim() || null,
       provincia: form.provincia.trim() || null,
     };
-    if (id) await supabase.from('billing_profile').update(payload).eq('id', id);
-    else await supabase.from('billing_profile').insert(payload);
-    await load();
-    setSaved(true);
+    const { error } = id
+      ? await supabase.from('billing_profile').update(payload).eq('id', id)
+      : await supabase.from('billing_profile').insert(payload);
+
+    const f = toDbFailure(error);
+    if (f) {
+      // Previously this branch did not exist: the write was discarded and the UI still said
+      // "guardado", which is how an unapplied migration looked like a disappearing form.
+      setFailure(f);
+      setSaved(false);
+    } else {
+      setFailure(null);
+      await load();
+      setSaved(true);
+    }
     setBusy(false);
   }
 
@@ -80,11 +97,15 @@ export function BillingSettingsPage() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="text-2xl font-semibold text-text">{t('invoicing.fiscalTitle')}</h1>
+        <Link to="/invoices" className="text-sm text-primary hover:underline">
+          ← {t('invoicing.backToInvoices')}
+        </Link>
+        <h1 className="mt-1 text-2xl font-semibold text-text">{t('invoicing.fiscalTitle')}</h1>
         <p className="text-sm text-text-muted">{t('invoicing.fiscalSubtitle')}</p>
       </div>
 
       {!canWrite && <Alert tone="info">{t('invoicing.fiscalAdminOnly')}</Alert>}
+      <DbFailureAlert failure={failure} />
       {saved && <Alert tone="success">{t('invoicing.fiscalSaved')}</Alert>}
 
       <Card>
@@ -128,10 +149,15 @@ export function BillingSettingsPage() {
           />
         </div>
         {canWrite && (
-          <div className="mt-4">
+          <div className="mt-4 flex flex-wrap gap-2">
             <Button onClick={onSave} loading={busy} disabled={!canSave}>
               {t('common.save')}
             </Button>
+            {saved && (
+              <Button variant="secondary" onClick={() => navigate('/invoices')}>
+                {t('invoicing.continue')}
+              </Button>
+            )}
           </div>
         )}
       </Card>

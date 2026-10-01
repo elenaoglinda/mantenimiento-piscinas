@@ -10,6 +10,7 @@ import {
   type TipoFactura,
 } from '@piscinas/shared';
 import { supabase } from './supabase.js';
+import { toDbFailure, type DbFailure } from './dbError.js';
 import type { Tables } from './database.types.js';
 
 /**
@@ -81,40 +82,50 @@ async function callApi(body: unknown): Promise<{ status: number; json: unknown }
 // Reads
 // ---------------------------------------------------------------------------
 
-export async function listInvoices(): Promise<InvoiceWithRelations[]> {
-  const { data } = await supabase
+export interface LoadResult<T> {
+  data: T;
+  failure: DbFailure | null;
+}
+
+export async function listInvoices(): Promise<LoadResult<InvoiceWithRelations[]>> {
+  const { data, error } = await supabase
     .from('invoice')
     .select(
       '*, client!invoice_client_id_org_id_fkey(name, cif_nif), invoice_series!invoice_series_id_org_id_fkey(code), invoice_line(*)',
     )
     .order('created_at', { ascending: false });
-  return (data as InvoiceWithRelations[]) ?? [];
+  return { data: (data as InvoiceWithRelations[]) ?? [], failure: toDbFailure(error) };
 }
 
-export async function getInvoice(id: string): Promise<InvoiceWithRelations | null> {
-  const { data } = await supabase
+export async function getInvoice(id: string): Promise<LoadResult<InvoiceWithRelations | null>> {
+  const { data, error } = await supabase
     .from('invoice')
     .select(
       '*, client!invoice_client_id_org_id_fkey(name, cif_nif), invoice_series!invoice_series_id_org_id_fkey(code), invoice_line(*)',
     )
     .eq('id', id)
     .maybeSingle();
-  return (data as InvoiceWithRelations | null) ?? null;
+  return { data: (data as InvoiceWithRelations | null) ?? null, failure: toDbFailure(error) };
 }
 
 /** The per-tax-rate aggregate, computed in SQL so it matches the stored totals exactly. */
-export async function getTaxBreakdown(invoiceId: string): Promise<TaxBreakdownRow[]> {
-  const { data } = await supabase.rpc('invoice_tax_breakdown', { p_invoice_id: invoiceId });
+export async function getTaxBreakdown(invoiceId: string): Promise<LoadResult<TaxBreakdownRow[]>> {
+  const { data, error } = await supabase.rpc('invoice_tax_breakdown', {
+    p_invoice_id: invoiceId,
+  });
   const rows = (data ?? []) as Array<{
     tax_rate: number | string;
     base_cents: number;
     quota_cents: number;
   }>;
-  return rows.map((r) => ({
-    taxRate: Number(r.tax_rate),
-    baseCents: Number(r.base_cents),
-    quotaCents: Number(r.quota_cents),
-  }));
+  return {
+    data: rows.map((r) => ({
+      taxRate: Number(r.tax_rate),
+      baseCents: Number(r.base_cents),
+      quotaCents: Number(r.quota_cents),
+    })),
+    failure: toDbFailure(error),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -129,8 +140,8 @@ export async function createDraft(input: {
   tipoFactura?: TipoFactura;
   operationDate?: string | null;
   notes?: string | null;
-}): Promise<string | null> {
-  const { data } = await supabase
+}): Promise<{ id: string | null; failure: DbFailure | null }> {
+  const { data, error } = await supabase
     .from('invoice')
     .insert({
       org_id: input.orgId,
@@ -143,7 +154,7 @@ export async function createDraft(input: {
     })
     .select('id')
     .single();
-  return data?.id ?? null;
+  return { id: data?.id ?? null, failure: toDbFailure(error) };
 }
 
 export async function addLine(input: {
@@ -154,8 +165,8 @@ export async function addLine(input: {
   quantity: number;
   unitPriceCents: number;
   taxRate: number;
-}): Promise<void> {
-  await supabase.from('invoice_line').insert({
+}): Promise<DbFailure | null> {
+  const { error } = await supabase.from('invoice_line').insert({
     org_id: input.orgId,
     invoice_id: input.invoiceId,
     line_no: input.lineNo,
@@ -164,15 +175,18 @@ export async function addLine(input: {
     unit_price_cents: input.unitPriceCents,
     tax_rate: input.taxRate,
   });
+  return toDbFailure(error);
 }
 
-export async function deleteLine(lineId: string): Promise<void> {
-  await supabase.from('invoice_line').delete().eq('id', lineId);
+export async function deleteLine(lineId: string): Promise<DbFailure | null> {
+  const { error } = await supabase.from('invoice_line').delete().eq('id', lineId);
+  return toDbFailure(error);
 }
 
-export async function deleteDraft(invoiceId: string): Promise<void> {
+export async function deleteDraft(invoiceId: string): Promise<DbFailure | null> {
   // The DB trigger refuses this for anything past draft; we do not rely on the UI alone.
-  await supabase.from('invoice').delete().eq('id', invoiceId);
+  const { error } = await supabase.from('invoice').delete().eq('id', invoiceId);
+  return toDbFailure(error);
 }
 
 // ---------------------------------------------------------------------------
@@ -182,7 +196,8 @@ export async function deleteDraft(invoiceId: string): Promise<void> {
 /** Allocates the number and freezes the document. Gapless numbering happens in the RPC. */
 export async function issueInvoice(invoiceId: string): Promise<InvoiceRow> {
   const { data, error } = await supabase.rpc('issue_invoice', { p_invoice_id: invoiceId });
-  if (error) throw new InvoiceSendError('invalid', error.message);
+  const failure = toDbFailure(error);
+  if (failure) throw new InvoiceSendError('invalid', failure.detail ?? failure.code);
   return data as unknown as InvoiceRow;
 }
 
@@ -205,7 +220,7 @@ export async function sendInvoice(invoice: InvoiceWithRelations): Promise<SendSt
     return invoice.send_status;
   }
 
-  const breakdown = await getTaxBreakdown(invoice.id);
+  const { data: breakdown } = await getTaxBreakdown(invoice.id);
   const payloadInput = {
     seriesCode: invoice.invoice_series?.code ?? '',
     number: invoice.number,

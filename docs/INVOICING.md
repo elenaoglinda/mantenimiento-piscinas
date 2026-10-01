@@ -116,6 +116,20 @@ Worth trying deliberately:
 - **Edit an issued invoice via the API.** The database should refuse it.
 - **Refresh status immediately after sending.** It should stay _Enviando_, not flip to an error.
 
+## 5b. Troubleshooting
+
+**"Could not find the table 'public.billing_profile' in the schema cache"** — PostgREST code
+`PGRST205`, returned as a `404`. The app is deployed but **the migration has not been applied**.
+Apply `supabase/migrations/20260925120000_invoicing.sql`. The RPC equivalent is `PGRST202`
+(`issue_invoice`, `invoice_tax_breakdown`); if the tables exist but you still see these, the
+schema cache is stale — `NOTIFY pgrst, 'reload schema';` forces a reload.
+
+Every Supabase call in this module routes its error through `toDbFailure()` and renders it with
+`<DbFailureAlert>`, so a missing migration now says so on screen instead of showing an empty
+form. This was not true in the first version: the writes ignored `error` entirely and the UI
+reported success regardless, which made an unapplied migration look like a form that forgot
+what you typed. If you add a call here, thread its error through the same path.
+
 ## 6. What is NOT done
 
 - **Single-tenant key.** Verifacti issues **one API key per obligado tributario**. This PR reads
