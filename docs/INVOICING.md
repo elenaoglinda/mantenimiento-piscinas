@@ -130,6 +130,60 @@ form. This was not true in the first version: the writes ignored `error` entirel
 reported success regardless, which made an unapplied migration look like a form that forgot
 what you typed. If you add a call here, thread its error through the same path.
 
+## 5c. Fiscal lifecycle (Phase 1a)
+
+The state machine is enforced **in the database**. `invoice_transition_allowed()` is the single
+source of truth; the guard trigger refuses anything else, so an illegal move fails server-side
+with a clear message even if the UI (or a script, or a future client) tries it.
+
+State is the pair `(invoice.status, invoice.send_status)`:
+
+| Badge              | status / send_status                                                      |
+| ------------------ | ------------------------------------------------------------------------- |
+| Borrador           | `draft` / `not_sent`                                                      |
+| Pendiente de envío | `issued` / `queued`, `sending`, `failed`                                  |
+| Enviada            | `issued` / `accepted` (`aeat_estado` says Correcta vs AceptadaConErrores) |
+| Rechazada          | `issued` / `rejected`                                                     |
+| Anulada            | `void`                                                                    |
+| Rectificada        | **derived** — a rectificativa points at it                                |
+| Vencida            | **derived** — `due_date` passed and unpaid                                |
+
+Derived states are never stored, so they cannot go stale or disagree with reality.
+
+### Exits from a rejected record
+
+A rejection is not a rectificativa case. Verifacti is explicit that `/verifactu/modify`
+(subsanación) _"solo puede usarse para subsanar registros de facturación en aquellos casos en
+los que la subsanación no tiene ninguna repercusión fiscal"_, and their worked example for a
+rejected record resends the **unchanged** payload with `rechazo_previo=X`.
+
+So:
+
+- **Formal/technical cause** (their example: an expired certificate) → resend unchanged,
+  `rechazo_previo=X`. `claim_invoice_for_send(id, 'subsanacion')` sets this automatically.
+- **Fiscal cause** (wrong amount, NIF, tax rate) → **anular and issue a new invoice**. The
+  anulación carries `sin_registro_previo='S'` because AEAT holds nothing, and the replacement
+  gets its own number: _"se deberá registrar con un alta y con un número de factura o fecha de
+  expedición diferente."_
+- **Never a rectificativa.** `create_rectificativa()` refuses unless the original was accepted —
+  there is nothing at AEAT to rectify otherwise.
+
+### Concurrency
+
+`claim_invoice_for_send()` is the only way into `sending`. It takes a row lock, checks the state
+is still claimable, and returns `null` otherwise — so a user pressing _Reintentar_ while pg_cron
+sweeps results in one send, not two. A second _Emitir_ on the same draft blocks on the lock and
+then fails with "La factura ya fue emitida", so a number is never allocated twice. Retries reuse
+the registro's stored `idempotency_key`; it is never regenerated, which is what makes a retry
+after an unknown outcome safe.
+
+### Retry
+
+Backoff is 1m → 5m → 15m → 1h → 3h, max 5 attempts, then the invoice appears in
+`invoices_needing_attention()`. `reap_stuck_sends()` returns invoices abandoned mid-flight by a
+crashed worker. The worker itself lives in `/api` (that is where the key is); scheduling it from
+pg_cron via pg_net is deployment configuration, not part of this migration.
+
 ## 6. What is NOT done
 
 - **Single-tenant key.** Verifacti issues **one API key per obligado tributario**. This PR reads
@@ -144,6 +198,16 @@ what you typed. If you add a call here, thread its error through the same path.
 - No rectificativas or abonos yet, so **a mistake on an issued invoice currently has no remedy
   in the UI**. Worth knowing before issuing anything real.
 - No recurring contracts, no monthly batch, no chemicals/parts on invoices, no gestoría export.
+- **No UI for any of the Phase 1a lifecycle yet** — the database enforces it, but rejection
+  handling, anulación, rectificativas, the timeline and the payment toggle are not on screen.
+  That is the next PR.
+- **Document language is presentation only.** Translating an invoice does not make it compliant
+  anywhere else: Portugal requires certified software with ATCUD and SAF-T, France is moving to
+  Factur-X via PDPs, and Verifacti covers neither. Nothing here should be read as "we can
+  invoice in Portugal or France".
+- **Per-org Verifacti credentials and the modelo de representación** (Phase 5) remain the gate
+  between this and production. Verifacti issues one API key per obligado tributario, and each
+  one must sign an authorisation before its first production invoice.
 - No scheduled retry sweep; retry is manual, from the invoice page.
 
 ## 7. Undoing it
