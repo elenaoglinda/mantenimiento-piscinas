@@ -171,8 +171,9 @@ So:
 ### Concurrency
 
 `claim_invoice_for_send()` is the only way into `sending`. It takes a row lock, checks the state
-is still claimable, and returns `null` otherwise — so a user pressing _Reintentar_ while pg*cron
-sweeps results in one send, not two. A second \_Emitir* on the same draft blocks on the lock and
+is still claimable, and returns `null` otherwise — so a user pressing "Reintentar" while
+`pg_cron` sweeps results in one send, not two. A second "Emitir" on the same draft blocks on the
+lock and
 then fails with "La factura ya fue emitida", so a number is never allocated twice. Retries reuse
 the registro's stored `idempotency_key`; it is never regenerated, which is what makes a retry
 after an unknown outcome safe.
@@ -182,7 +183,7 @@ after an unknown outcome safe.
 Backoff is 1m → 5m → 15m → 1h → 3h, max 5 attempts, then the invoice appears in
 `invoices_needing_attention()`. `reap_stuck_sends()` returns invoices abandoned mid-flight by a
 crashed worker. The worker itself lives in `/api` (that is where the key is); scheduling it from
-pg_cron via pg_net is deployment configuration, not part of this migration.
+`pg_cron` via `pg_net` is deployment configuration, not part of this migration.
 
 ## 6. What is NOT done
 
