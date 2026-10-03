@@ -9,9 +9,9 @@ import {
   type TaxBreakdownRow,
   type TipoFactura,
 } from '@piscinas/shared';
-import { supabase } from './supabase.js';
-import { toDbFailure, type DbFailure } from './dbError.js';
-import type { Tables } from './database.types.js';
+import { supabase } from '../../../lib/supabase.js';
+import { toDbFailure, type DbFailure } from '../../../lib/dbError.js';
+import type { Tables } from '../../../lib/database.types.js';
 
 /**
  * Invoicing data access and the Veri*Factu send orchestration.

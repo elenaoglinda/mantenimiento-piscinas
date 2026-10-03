@@ -8,7 +8,7 @@ import {
   formatInvoiceNumber,
   type TaxBreakdownRow,
 } from '@piscinas/shared';
-import { useAuth } from '../auth/context.js';
+import { useAuth } from '../../../auth/context.js';
 import {
   InvoiceSendError,
   addLine,
@@ -20,13 +20,13 @@ import {
   refreshStatus,
   sendInvoice,
   type InvoiceWithRelations,
-} from '../lib/invoicing.js';
-import type { DbFailure } from '../lib/dbError.js';
-import { Alert, Card, Spinner } from '../components/ui/feedback.js';
-import { DbFailureAlert } from '../components/invoicing/DbFailureAlert.js';
-import { Button } from '../components/ui/Button.js';
-import { TextField } from '../components/ui/TextField.js';
-import { SendStatusBadge } from '../components/invoicing/SendStatusBadge.js';
+} from '../lib/data.js';
+import type { DbFailure } from '../../../lib/dbError.js';
+import { Alert, Card, Spinner } from '../../../components/ui/feedback.js';
+import { DbFailureAlert } from '../components/DbFailureAlert.js';
+import { Button } from '../../../components/ui/Button.js';
+import { TextField } from '../../../components/ui/TextField.js';
+import { SendStatusBadge } from '../components/SendStatusBadge.js';
 
 export function InvoiceDetailPage() {
   const { t } = useTranslation();

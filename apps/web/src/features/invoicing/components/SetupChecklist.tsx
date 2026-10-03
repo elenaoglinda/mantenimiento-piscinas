@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Card } from '../ui/feedback.js';
-import { Button } from '../ui/Button.js';
+import { Card } from '../../../components/ui/feedback.js';
+import { Button } from '../../../components/ui/Button.js';
 
 /**
  * The three things that must exist before an invoice can be issued, as an ordered checklist

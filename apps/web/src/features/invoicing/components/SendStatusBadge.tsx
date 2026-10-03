@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import type { Enums } from '../../lib/database.types.js';
+import type { Enums } from '../../../lib/database.types.js';
 
 /**
  * One badge for two related facts: whether the document is a draft, and where its Veri*Factu

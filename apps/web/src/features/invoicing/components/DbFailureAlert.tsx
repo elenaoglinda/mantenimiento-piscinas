@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Alert } from '../ui/feedback.js';
-import type { DbFailure } from '../../lib/dbError.js';
+import { Alert } from '../../../components/ui/feedback.js';
+import type { DbFailure } from '../../../lib/dbError.js';
 
 /**
  * Renders a database failure as something actionable.

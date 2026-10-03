@@ -15,9 +15,11 @@ import { ReportFormPage } from './pages/ReportFormPage.js';
 import { ImportReportPage } from './pages/ImportReportPage.js';
 import { ReportDetailPage } from './pages/ReportDetailPage.js';
 import { SiloeExportPage } from './pages/SiloeExportPage.js';
-import { InvoicesPage } from './pages/InvoicesPage.js';
-import { InvoiceDetailPage } from './pages/InvoiceDetailPage.js';
-import { BillingSettingsPage } from './pages/BillingSettingsPage.js';
+import {
+  BillingSettingsPage,
+  InvoiceDetailPage,
+  InvoicesPage,
+} from './features/invoicing/index.js';
 import { RoutesPage } from './pages/RoutesPage.js';
 import { InvitePage } from './pages/InvitePage.js';
 

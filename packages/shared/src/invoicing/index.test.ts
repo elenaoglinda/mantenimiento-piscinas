@@ -14,7 +14,7 @@ import {
   toVerifactiDate,
   validateForSending,
   type BuildPayloadInput,
-} from './invoicing.js';
+} from './index.js';
 
 describe('money', () => {
   it('formats cents with exactly two decimals', () => {

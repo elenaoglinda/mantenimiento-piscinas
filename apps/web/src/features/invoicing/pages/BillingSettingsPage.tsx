@@ -2,13 +2,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { isValidNif } from '@piscinas/shared';
-import { supabase } from '../lib/supabase.js';
-import { useAuth } from '../auth/context.js';
-import { toDbFailure, type DbFailure } from '../lib/dbError.js';
-import { Alert, Card, Spinner } from '../components/ui/feedback.js';
-import { DbFailureAlert } from '../components/invoicing/DbFailureAlert.js';
-import { Button } from '../components/ui/Button.js';
-import { TextField } from '../components/ui/TextField.js';
+import { supabase } from '../../../lib/supabase.js';
+import { useAuth } from '../../../auth/context.js';
+import { toDbFailure, type DbFailure } from '../../../lib/dbError.js';
+import { Alert, Card, Spinner } from '../../../components/ui/feedback.js';
+import { DbFailureAlert } from '../components/DbFailureAlert.js';
+import { Button } from '../../../components/ui/Button.js';
+import { TextField } from '../../../components/ui/TextField.js';
 
 /**
  * The org's own fiscal identity — the "obligado tributario" whose NIF appears on every invoice

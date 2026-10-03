@@ -2,18 +2,18 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { formatEuros, formatInvoiceNumber } from '@piscinas/shared';
-import { supabase } from '../lib/supabase.js';
-import { useAuth } from '../auth/context.js';
-import { createDraft, listInvoices, type InvoiceWithRelations } from '../lib/invoicing.js';
-import { toDbFailure, type DbFailure } from '../lib/dbError.js';
-import { Alert, Card, Spinner } from '../components/ui/feedback.js';
-import { Button } from '../components/ui/Button.js';
-import { TextField } from '../components/ui/TextField.js';
-import { SelectField } from '../components/ui/fields.js';
-import { SendStatusBadge } from '../components/invoicing/SendStatusBadge.js';
-import { SetupChecklist } from '../components/invoicing/SetupChecklist.js';
-import { DbFailureAlert } from '../components/invoicing/DbFailureAlert.js';
-import type { Tables } from '../lib/database.types.js';
+import { supabase } from '../../../lib/supabase.js';
+import { useAuth } from '../../../auth/context.js';
+import { createDraft, listInvoices, type InvoiceWithRelations } from '../lib/data.js';
+import { toDbFailure, type DbFailure } from '../../../lib/dbError.js';
+import { Alert, Card, Spinner } from '../../../components/ui/feedback.js';
+import { Button } from '../../../components/ui/Button.js';
+import { TextField } from '../../../components/ui/TextField.js';
+import { SelectField } from '../../../components/ui/fields.js';
+import { SendStatusBadge } from '../components/SendStatusBadge.js';
+import { SetupChecklist } from '../components/SetupChecklist.js';
+import { DbFailureAlert } from '../components/DbFailureAlert.js';
+import type { Tables } from '../../../lib/database.types.js';
 
 /**
  * Invoice history, plus the setup a new org must complete before anything can be issued.
