@@ -48,16 +48,30 @@ solely to recognise it, and `refreshStatus()` leaves the status untouched when i
 
 ## 3. Architecture
 
+One folder per feature, per `docs/ONBOARDING.md` §7.1:
+
 ```
-apps/web/src/pages/InvoicesPage.tsx        list, series/fiscal setup, draft creation
-apps/web/src/pages/InvoiceDetailPage.tsx   line editor, issue, send, status
-apps/web/src/pages/BillingSettingsPage.tsx the org's fiscal identity
-apps/web/src/lib/invoicing.ts              data access + send orchestration
-api/verifacti.ts                           authenticated proxy; holds the API key
-packages/shared/src/invoicing.ts           money, NIF validation, payload/response contract
+apps/web/src/features/invoicing/
+  index.ts                     public surface — outside code imports this, nothing deeper
+  pages/InvoicesPage.tsx       history table + filters, setup checklist, draft creation
+  pages/InvoiceDetailPage.tsx  line editor, totals, Emitir / Enviar / Actualizar estado
+  pages/BillingSettingsPage.tsx the org's fiscal identity
+  components/                  SetupChecklist · SendStatusBadge · DbFailureAlert
+  lib/data.ts                  Supabase access + Veri*Factu send orchestration
+  README.md
+
+packages/shared/src/invoicing/ money, NIF validation, payload/response contract (+ README)
+apps/web/src/lib/dbError.ts    error mapping — outside the feature on purpose, see below
+api/verifacti.ts               authenticated proxy; holds VERIFACTI_API_KEY
 supabase/migrations/20260925120000_invoicing.sql
-supabase/rollback/20260925120000_invoicing.down.sql
+supabase/migrations/20261002120000_invoicing_lifecycle.sql
+supabase/rollback/*.down.sql
 ```
+
+`dbError.ts` sits outside the feature although invoicing is, today, its only consumer. The
+no-silent-failures rule is project-wide, and the moment a second feature needs it, importing
+from `features/invoicing/` would be the wrong dependency direction. If invoicing stays the only
+consumer, moving it in later is a one-line change.
 
 ### Money is integer cents, everywhere
 
