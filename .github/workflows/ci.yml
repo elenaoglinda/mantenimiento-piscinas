@@ -39,3 +39,39 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e
+
+  sql:
+    name: database lifecycle
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply every migration in order
+        run: |
+          psql -d postgres -c 'create database app'
+          psql -v ON_ERROR_STOP=1 -q -d app -f supabase/tests/_local_supabase_stubs.sql
+          for f in $(ls supabase/migrations/*.sql | sort); do
+            echo "applying $(basename "$f")"
+            psql -v ON_ERROR_STOP=1 -q -d app -f "$f"
+          done
+      - name: Fiscal state-machine tests
+        run: psql -v ON_ERROR_STOP=1 -d app -f supabase/tests/invoicing_lifecycle.test.sql
+      - name: Rollback must refuse while issued invoices exist
+        run: |
+          if psql -v ON_ERROR_STOP=1 -q -d app \
+               -f supabase/rollback/20261002120000_invoicing_lifecycle.down.sql 2>/dev/null; then
+            echo "::error::rollback succeeded despite issued invoices"; exit 1
+          fi
+          echo "rollback correctly refused"

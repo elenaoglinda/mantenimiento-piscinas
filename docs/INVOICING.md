@@ -48,16 +48,30 @@ solely to recognise it, and `refreshStatus()` leaves the status untouched when i
 
 ## 3. Architecture
 
+One folder per feature, per `docs/ONBOARDING.md` §7.1:
+
 ```
-apps/web/src/pages/InvoicesPage.tsx        list, series/fiscal setup, draft creation
-apps/web/src/pages/InvoiceDetailPage.tsx   line editor, issue, send, status
-apps/web/src/pages/BillingSettingsPage.tsx the org's fiscal identity
-apps/web/src/lib/invoicing.ts              data access + send orchestration
-api/verifacti.ts                           authenticated proxy; holds the API key
-packages/shared/src/invoicing.ts           money, NIF validation, payload/response contract
+apps/web/src/features/invoicing/
+  index.ts                     public surface — outside code imports this, nothing deeper
+  pages/InvoicesPage.tsx       history table + filters, setup checklist, draft creation
+  pages/InvoiceDetailPage.tsx  line editor, totals, Emitir / Enviar / Actualizar estado
+  pages/BillingSettingsPage.tsx the org's fiscal identity
+  components/                  SetupChecklist · SendStatusBadge · DbFailureAlert
+  lib/data.ts                  Supabase access + Veri*Factu send orchestration
+  README.md
+
+packages/shared/src/invoicing/ money, NIF validation, payload/response contract (+ README)
+apps/web/src/lib/dbError.ts    error mapping — outside the feature on purpose, see below
+api/verifacti.ts               authenticated proxy; holds VERIFACTI_API_KEY
 supabase/migrations/20260925120000_invoicing.sql
-supabase/rollback/20260925120000_invoicing.down.sql
+supabase/migrations/20261002120000_invoicing_lifecycle.sql
+supabase/rollback/*.down.sql
 ```
+
+`dbError.ts` sits outside the feature although invoicing is, today, its only consumer. The
+no-silent-failures rule is project-wide, and the moment a second feature needs it, importing
+from `features/invoicing/` would be the wrong dependency direction. If invoicing stays the only
+consumer, moving it in later is a one-line change.
 
 ### Money is integer cents, everywhere
 
@@ -130,6 +144,61 @@ form. This was not true in the first version: the writes ignored `error` entirel
 reported success regardless, which made an unapplied migration look like a form that forgot
 what you typed. If you add a call here, thread its error through the same path.
 
+## 5c. Fiscal lifecycle (Phase 1a)
+
+The state machine is enforced **in the database**. `invoice_transition_allowed()` is the single
+source of truth; the guard trigger refuses anything else, so an illegal move fails server-side
+with a clear message even if the UI (or a script, or a future client) tries it.
+
+State is the pair `(invoice.status, invoice.send_status)`:
+
+| Badge              | status / send_status                                                      |
+| ------------------ | ------------------------------------------------------------------------- |
+| Borrador           | `draft` / `not_sent`                                                      |
+| Pendiente de envío | `issued` / `queued`, `sending`, `failed`                                  |
+| Enviada            | `issued` / `accepted` (`aeat_estado` says Correcta vs AceptadaConErrores) |
+| Rechazada          | `issued` / `rejected`                                                     |
+| Anulada            | `void`                                                                    |
+| Rectificada        | **derived** — a rectificativa points at it                                |
+| Vencida            | **derived** — `due_date` passed and unpaid                                |
+
+Derived states are never stored, so they cannot go stale or disagree with reality.
+
+### Exits from a rejected record
+
+A rejection is not a rectificativa case. Verifacti is explicit that `/verifactu/modify`
+(subsanación) _"solo puede usarse para subsanar registros de facturación en aquellos casos en
+los que la subsanación no tiene ninguna repercusión fiscal"_, and their worked example for a
+rejected record resends the **unchanged** payload with `rechazo_previo=X`.
+
+So:
+
+- **Formal/technical cause** (their example: an expired certificate) → resend unchanged,
+  `rechazo_previo=X`. `claim_invoice_for_send(id, 'subsanacion')` sets this automatically.
+- **Fiscal cause** (wrong amount, NIF, tax rate) → **anular and issue a new invoice**. The
+  anulación carries `sin_registro_previo='S'` because AEAT holds nothing, and the replacement
+  gets its own number: _"se deberá registrar con un alta y con un número de factura o fecha de
+  expedición diferente."_
+- **Never a rectificativa.** `create_rectificativa()` refuses unless the original was accepted —
+  there is nothing at AEAT to rectify otherwise.
+
+### Concurrency
+
+`claim_invoice_for_send()` is the only way into `sending`. It takes a row lock, checks the state
+is still claimable, and returns `null` otherwise — so a user pressing "Reintentar" while
+`pg_cron` sweeps results in one send, not two. A second "Emitir" on the same draft blocks on the
+lock and
+then fails with "La factura ya fue emitida", so a number is never allocated twice. Retries reuse
+the registro's stored `idempotency_key`; it is never regenerated, which is what makes a retry
+after an unknown outcome safe.
+
+### Retry
+
+Backoff is 1m → 5m → 15m → 1h → 3h, max 5 attempts, then the invoice appears in
+`invoices_needing_attention()`. `reap_stuck_sends()` returns invoices abandoned mid-flight by a
+crashed worker. The worker itself lives in `/api` (that is where the key is); scheduling it from
+`pg_cron` via `pg_net` is deployment configuration, not part of this migration.
+
 ## 6. What is NOT done
 
 - **Single-tenant key.** Verifacti issues **one API key per obligado tributario**. This PR reads
@@ -144,6 +213,16 @@ what you typed. If you add a call here, thread its error through the same path.
 - No rectificativas or abonos yet, so **a mistake on an issued invoice currently has no remedy
   in the UI**. Worth knowing before issuing anything real.
 - No recurring contracts, no monthly batch, no chemicals/parts on invoices, no gestoría export.
+- **No UI for any of the Phase 1a lifecycle yet** — the database enforces it, but rejection
+  handling, anulación, rectificativas, the timeline and the payment toggle are not on screen.
+  That is the next PR.
+- **Document language is presentation only.** Translating an invoice does not make it compliant
+  anywhere else: Portugal requires certified software with ATCUD and SAF-T, France is moving to
+  Factur-X via PDPs, and Verifacti covers neither. Nothing here should be read as "we can
+  invoice in Portugal or France".
+- **Per-org Verifacti credentials and the modelo de representación** (Phase 5) remain the gate
+  between this and production. Verifacti issues one API key per obligado tributario, and each
+  one must sign an authorisation before its first production invoice.
 - No scheduled retry sweep; retry is manual, from the invoice page.
 
 ## 7. Undoing it
