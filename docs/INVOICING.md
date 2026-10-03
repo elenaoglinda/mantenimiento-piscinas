@@ -171,8 +171,8 @@ So:
 ### Concurrency
 
 `claim_invoice_for_send()` is the only way into `sending`. It takes a row lock, checks the state
-is still claimable, and returns `null` otherwise — so a user pressing _Reintentar_ while pg_cron
-sweeps results in one send, not two. A second _Emitir_ on the same draft blocks on the lock and
+is still claimable, and returns `null` otherwise — so a user pressing _Reintentar_ while pg*cron
+sweeps results in one send, not two. A second \_Emitir* on the same draft blocks on the lock and
 then fails with "La factura ya fue emitida", so a number is never allocated twice. Retries reuse
 the registro's stored `idempotency_key`; it is never regenerated, which is what makes a retry
 after an unknown outcome safe.
