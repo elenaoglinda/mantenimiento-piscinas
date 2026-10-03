@@ -26,6 +26,7 @@ export function AppShell() {
     { to: '/reports', key: 'nav.reports' },
     { to: '/routes', key: 'nav.routes' },
     { to: '/siloe', key: 'nav.siloe' },
+    { to: '/invoices', key: 'nav.invoices' },
     // Companies manage multiple clients; owners only have their implicit self-client.
     ...(profile?.org.type === 'company' ? [{ to: '/clients', key: 'nav.clients' }] : []),
     { to: '/team', key: 'nav.team' },

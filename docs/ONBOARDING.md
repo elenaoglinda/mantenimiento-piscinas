@@ -188,6 +188,10 @@ the first path segment. Files are read via short-lived signed URLs.
   - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` — client (safe; RLS governs access).
   - `MAPBOX_TOKEN` — **server-side only** (no `VITE_` prefix), used by the `/api` functions.
   - `ANTHROPIC_API_KEY` — **server-side only**, used by `api/extract-reading.ts` (photo import).
+  - `VERIFACTI_API_KEY` — **server-side only**, used by `api/verifacti.ts` (Veri\*Factu invoicing).
+    The key prefix decides the environment (`vf_test_` / `vf_prod_`), so a key in the wrong
+    Vercel scope files real invoices with the AEAT. Preview/Development only for now.
+    See `docs/INVOICING.md`.
     Without it that endpoint returns 503 and the UI tells the technician to enter the parte by
     hand, so the rest of the app is unaffected if it is missing.
   - Known quirk: the Vercel CLI won't add **Preview**-scoped vars without a branch; Production +
@@ -239,6 +243,50 @@ of raw elements so styling stays consistent.
 does authorization. Cross-cutting/service logic sits in `src/lib/` (`parameters.ts` = threshold
 resolver + `evaluate()` adapter, `siloeExport.ts` = aggregation + XML assembly, `routing.ts` =
 optimizer client).
+
+### 7.1 Feature folders (the convention for anything new)
+
+Older code is organised by _kind_ — every page in `pages/`, every component in `components/`.
+That worked while the app was one domain. It stopped working once features grew their own
+pages, components, data access and shared logic: a single feature was spread across five
+directories, and nothing said which files belonged together.
+
+**Anything new goes in one folder per feature.** `invoicing` is the reference:
+
+```
+apps/web/src/features/invoicing/
+  README.md        what it does, how it connects, what will bite you
+  index.ts         the public surface — outside code imports from here, nothing deeper
+  pages/           route components
+  components/      components used only by this feature
+  lib/             this feature's data access and orchestration
+
+packages/shared/src/invoicing/
+  README.md
+  index.ts         framework-free logic, re-exported by the package barrel
+  index.test.ts
+```
+
+Rules:
+
+1. **Import the barrel, not the internals.** `import { InvoicesPage } from './features/invoicing/index.js'`.
+   If a rename inside the folder does not change `index.ts`, nothing outside can break.
+2. **Every feature folder has a README.** Not a file listing — what the feature does, what it
+   connects to, and the decisions a newcomer would otherwise undo. Both invoicing READMEs
+   explain _why_ money is integer cents and _why_ `mapEstado` never defaults to `failed`,
+   because both look like over-engineering until you know the reason.
+3. **Cross-cutting infrastructure stays in `src/lib/`.** `dbError.ts` is the test: the
+   no-silent-failures rule applies to every feature, so a second feature must never have to
+   import from `features/invoicing/` to get it. If two features would share it, it is not
+   feature code.
+4. **Migrations stay in `supabase/migrations/`.** They are applied in filename order across the
+   whole database, so they cannot be scattered per feature. The feature README links to its own.
+5. **Shared logic mirrors the same name** under `packages/shared/src/<feature>/`.
+
+Existing non-feature code (`pages/`, `components/`) is left alone. Move it only when you are
+already changing it — a migration for its own sake buys nothing and makes review harder.
+
+---
 
 ---
 
