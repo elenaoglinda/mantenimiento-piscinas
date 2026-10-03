@@ -3,7 +3,8 @@ import type { CreateInvoicePayload } from '@piscinas/shared';
 
 /**
  * Veri*Factu proxy. POST /api/verifacti
- *   { action: 'create', idempotencyKey: <uuid>, payload: <CreateInvoicePayload> }
+ *   { action: 'create', idempotencyKey: <uuid>, payload: <CreateInvoicePayload>,
+ *     mode?: 'create' | 'modify', rechazoPrevio?: 'N' | 'X' | 'S' }
  *   { action: 'status', serie, numero, fechaExpedicion }
  *   { action: 'health' }
  *
@@ -66,7 +67,7 @@ function looksLikePayload(value: unknown): value is CreateInvoicePayload {
 
 async function callUpstream(
   path: string,
-  method: 'GET' | 'POST',
+  method: 'GET' | 'POST' | 'PUT',
   apiKey: string,
   body?: unknown,
   idempotencyKey?: string,
@@ -136,11 +137,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         res.status(400).json({ error: 'invalid_payload' });
         return;
       }
+      // Subsanación reuses the same payload against /modify. Verifacti restricts it to
+      // changes with no fiscal repercussion; which exits a rejected record may take is
+      // decided in the UI and the database, not here.
+      const modify = body.mode === 'modify';
+      const payload = modify
+        ? {
+            ...(body.payload as unknown as Record<string, unknown>),
+            rechazo_previo: body.rechazoPrevio,
+          }
+        : body.payload;
+
       const r = await callUpstream(
-        '/verifactu/create',
-        'POST',
+        modify ? '/verifactu/modify' : '/verifactu/create',
+        modify ? 'PUT' : 'POST',
         apiKey,
-        body.payload,
+        payload,
         idempotencyKey,
       );
       // 409/422 are idempotency answers, not failures — pass them through untouched so the

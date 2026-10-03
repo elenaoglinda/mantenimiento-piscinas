@@ -73,7 +73,7 @@
     "reports": "Informes",
     "routes": "Rutas",
     "siloe": "SILOÉ",
-    "invoices": "Facturas",
+    "invoicing": "Facturación",
     "team": "Equipo",
     "menu": "Menú"
   },
@@ -434,6 +434,117 @@
     "cp": "Código postal",
     "municipio": "Municipio",
     "provincia": "Provincia",
+    "tab": {
+      "todas": "Todas",
+      "rectificativas": "Rectificativas"
+    },
+    "nav": {
+      "resumen": "Resumen",
+      "facturas": "Facturas",
+      "catalogo": "Catálogo",
+      "clientes": "Clientes",
+      "informes": "Informes",
+      "ajustes": "Ajustes",
+      "soon": "Próximamente"
+    },
+    "testBadge": "Entorno de pruebas",
+    "filterAttention": "Requieren atención",
+    "timeline": "Historial",
+    "timelineEmpty": "Todavía no hay actividad.",
+    "attempts": "Intentos de envío",
+    "markPaid": "Marcar como pagada",
+    "markUnpaid": "Marcar como pendiente",
+    "cancel": "Anular",
+    "cancelAndReplace": "Anular y crear nueva",
+    "fiscal": {
+      "draft": "Borrador",
+      "pending_send": "Pendiente de envío",
+      "sent": "Enviada a AEAT",
+      "sent_with_errors": "Aceptada con errores",
+      "rejected": "Rechazada",
+      "cancelled": "Anulada",
+      "rectified": "Rectificada"
+    },
+    "payment": {
+      "pending": "Pendiente de cobro",
+      "paid": "Pagada",
+      "overdue": "Vencida"
+    },
+    "link": {
+      "rectifiedBy": "Esta factura ha sido rectificada.",
+      "rectifies": "Esta factura rectifica a otra.",
+      "replacedBy": "Esta factura fue anulada y sustituida.",
+      "open": "Ver factura"
+    },
+    "resumen": {
+      "billedMonth": "Facturado este mes",
+      "outstanding": "Pendiente de cobro",
+      "overdue": "Vencidas",
+      "attention": "Requieren atención",
+      "allClear": "No hay nada pendiente de revisar.",
+      "reason": {
+        "rejected": "Rechazada por la AEAT",
+        "send_exhausted": "No se ha podido enviar tras varios intentos"
+      }
+    },
+    "confirmIssue": {
+      "title": "Emitir factura",
+      "body": "Al emitirla se le asigna el número correlativo, se bloquea y se envía a la AEAT. No podrá editarse después.",
+      "remedy": "Si luego detectas un error: se corrige con una factura rectificativa, o se anula si nunca debió emitirse.",
+      "confirm": "Emitir y enviar"
+    },
+    "rejection": {
+      "title": "La AEAT ha rechazado el registro",
+      "code": "Código",
+      "noMessage": "La AEAT no ha devuelto un mensaje.",
+      "chooseCause": "Elige según la causa del rechazo. No todas las correcciones son válidas:",
+      "formalTitle": "Causa técnica o formal",
+      "formalBody": "Por ejemplo, un problema de certificado o de comunicación. Se reenvía el mismo registro sin cambios.",
+      "resend": "Reenviar sin cambios",
+      "nonFiscalTitle": "Dato sin efecto fiscal",
+      "nonFiscalBody": "Solo para campos como la descripción. La AEAT no permite subsanar importes, NIF ni tipos de IVA por esta vía.",
+      "subsanar": "Subsanar registro",
+      "fiscalTitle": "Importe, NIF o tipo de IVA incorrectos",
+      "fiscalBody": "No puede subsanarse. Hay que anular esta factura y emitir una nueva con otro número."
+    },
+    "rectificativa": {
+      "action": "Crear rectificativa",
+      "title": "Nueva factura rectificativa",
+      "intro": "Se creará un borrador con las líneas de la factura original, en una serie distinta.",
+      "needsOtherSeries": "Necesitas una segunda serie para las rectificativas. Créala en Ajustes.",
+      "tipo": "Tipo",
+      "modo": "Modo de rectificación",
+      "modoI": "Por diferencias — solo el importe corregido",
+      "modoS": "Por sustitución — se rehace la factura completa",
+      "series": "Serie de la rectificativa",
+      "seriesHint": "Debe ser distinta de la serie original (serie específica obligatoria).",
+      "create": "Crear borrador",
+      "tipos": {
+        "R1": "Error fundado en derecho (art. 80 Uno, Dos y Seis LIVA)",
+        "R2": "Concurso de acreedores (art. 80.Tres)",
+        "R3": "Crédito incobrable (art. 80.Cuatro)",
+        "R4": "Resto",
+        "R5": "Rectificativa en factura simplificada"
+      }
+    },
+    "activity": {
+      "created": "Borrador creado",
+      "edited": "Editada",
+      "issued": "Emitida",
+      "aeat_queued": "Enviada a la AEAT",
+      "aeat_accepted": "Aceptada por la AEAT",
+      "aeat_rejected": "Rechazada por la AEAT",
+      "send_failed": "Fallo de envío",
+      "send_retried": "Reintento de envío",
+      "needs_attention": "Requiere atención",
+      "resubmitted": "Reenviada",
+      "subsanacion": "Subsanación enviada",
+      "cancelled": "Anulada",
+      "replaced_by": "Sustituida por una nueva factura",
+      "rectified_by": "Rectificada",
+      "emailed": "Enviada al cliente",
+      "paid": "Marcada como pagada"
+    },
     "status": {
       "draft": "Borrador",
       "issued": "Emitida",

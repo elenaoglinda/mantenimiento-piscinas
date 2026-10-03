@@ -120,6 +120,9 @@ reason: guessing "failed" is what invites a duplicate.
 
 ## 5. Testing it
 
+Step-by-step manual script, including how to force a rejection and a transport failure:
+[`docs/INVOICING_TEST_SCRIPT.md`](./INVOICING_TEST_SCRIPT.md).
+
 Draft → add lines → **Emitir factura** (allocates the number, freezes it) → **Enviar a la AEAT**
 → wait a minute → **Actualizar estado** until it reads _Aceptada_. The detail page then links to
 the AEAT validation URL for that record.
@@ -213,9 +216,7 @@ crashed worker. The worker itself lives in `/api` (that is where the key is); sc
 - No rectificativas or abonos yet, so **a mistake on an issued invoice currently has no remedy
   in the UI**. Worth knowing before issuing anything real.
 - No recurring contracts, no monthly batch, no chemicals/parts on invoices, no gestoría export.
-- **No UI for any of the Phase 1a lifecycle yet** — the database enforces it, but rejection
-  handling, anulación, rectificativas, the timeline and the payment toggle are not on screen.
-  That is the next PR.
+- **No PDF and no email yet**, so an invoice cannot be delivered to a customer from the app.
 - **Document language is presentation only.** Translating an invoice does not make it compliant
   anywhere else: Portugal requires certified software with ATCUD and SAF-T, France is moving to
   Factur-X via PDPs, and Verifacti covers neither. Nothing here should be read as "we can

@@ -4,13 +4,19 @@ import { useTranslation } from 'react-i18next';
 import { formatEuros, formatInvoiceNumber } from '@piscinas/shared';
 import { supabase } from '../../../lib/supabase.js';
 import { useAuth } from '../../../auth/context.js';
-import { createDraft, listInvoices, type InvoiceWithRelations } from '../lib/data.js';
+import {
+  createDraft,
+  listInvoices,
+  needingAttention,
+  type InvoiceWithRelations,
+} from '../lib/data.js';
 import { toDbFailure, type DbFailure } from '../../../lib/dbError.js';
 import { Alert, Card, Spinner } from '../../../components/ui/feedback.js';
 import { Button } from '../../../components/ui/Button.js';
 import { TextField } from '../../../components/ui/TextField.js';
 import { SelectField } from '../../../components/ui/fields.js';
-import { SendStatusBadge } from '../components/SendStatusBadge.js';
+import { FiscalStateBadge, PaymentBadge } from '../components/FiscalStateBadge.js';
+import { FacturacionNav, TestEnvBadge } from '../components/FacturacionNav.js';
 import { SetupChecklist } from '../components/SetupChecklist.js';
 import { DbFailureAlert } from '../components/DbFailureAlert.js';
 import type { Tables } from '../../../lib/database.types.js';
@@ -38,22 +44,26 @@ export function InvoicesPage() {
   const [clientId, setClientId] = useState('');
   const [descripcion, setDescripcion] = useState('');
 
+  const [tab, setTab] = useState<'todas' | 'rectificativas'>('todas');
+  const [attention, setAttention] = useState<Set<string>>(new Set());
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterClient, setFilterClient] = useState('all');
   const [filterYear, setFilterYear] = useState('all');
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [rows, ser, cli, prof] = await Promise.all([
+    const [rows, ser, cli, prof, att] = await Promise.all([
       listInvoices(),
       supabase.from('invoice_series').select('*').eq('archived', false).order('code'),
       supabase.from('client').select('id, name').eq('archived', false).order('name'),
       supabase.from('billing_profile').select('*').maybeSingle(),
+      needingAttention(),
     ]);
     setInvoices(rows.data);
     setSeries(ser.data ?? []);
     setClients(cli.data ?? []);
     setFiscal(prof.data ?? null);
+    setAttention(new Set(att.data.map((a) => a.invoice_id)));
     // Any one of these failing the same way means the same thing; report the first.
     setFailure(rows.failure ?? toDbFailure(ser.error) ?? toDbFailure(prof.error));
     setLoading(false);
@@ -63,6 +73,12 @@ export function InvoicesPage() {
     void load();
   }, [load]);
 
+  // Derived, not stored: an invoice is rectificada when some rectificativa names it.
+  const rectified = useMemo(
+    () => new Set(invoices.map((i) => i.rectifies_invoice_id).filter(Boolean) as string[]),
+    [invoices],
+  );
+
   const years = useMemo(() => {
     const set = new Set(invoices.map((i) => (i.issue_date ?? i.created_at).slice(0, 4)));
     return [...set].sort().reverse();
@@ -71,8 +87,11 @@ export function InvoicesPage() {
   const visible = useMemo(
     () =>
       invoices.filter((i) => {
+        const isRect = i.tipo_factura.startsWith('R');
+        if (tab === 'rectificativas' ? !isRect : isRect) return false;
+        if (filterStatus === 'attention' && !attention.has(i.id)) return false;
         if (filterStatus === 'draft' && i.status !== 'draft') return false;
-        if (filterStatus !== 'all' && filterStatus !== 'draft') {
+        if (filterStatus !== 'all' && filterStatus !== 'draft' && filterStatus !== 'attention') {
           if (i.status === 'draft' || i.send_status !== filterStatus) return false;
         }
         if (filterClient !== 'all' && i.client_id !== filterClient) return false;
@@ -81,7 +100,7 @@ export function InvoicesPage() {
         }
         return true;
       }),
-    [invoices, filterStatus, filterClient, filterYear],
+    [invoices, tab, attention, filterStatus, filterClient, filterYear],
   );
 
   async function onCreateSeries() {
@@ -124,11 +143,15 @@ export function InvoicesPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="text-2xl font-semibold text-text">{t('invoicing.title')}</h1>
-        <p className="text-sm text-text-muted">{t('invoicing.subtitle')}</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-text">{t('invoicing.title')}</h1>
+          <p className="text-sm text-text-muted">{t('invoicing.subtitle')}</p>
+        </div>
+        <TestEnvBadge />
       </div>
 
+      <FacturacionNav />
       <DbFailureAlert failure={failure} />
       <Alert tone="info">{t('invoicing.testModeNotice')}</Alert>
 
@@ -198,7 +221,22 @@ export function InvoicesPage() {
 
       <Card>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold text-text">{t('invoicing.history')}</h2>
+          <div className="flex items-center gap-1">
+            {(['todas', 'rectificativas'] as const).map((x) => (
+              <button
+                key={x}
+                type="button"
+                onClick={() => setTab(x)}
+                className={`rounded-[var(--radius-md)] px-3 py-1.5 text-sm transition-colors ${
+                  tab === x
+                    ? 'bg-surface-muted font-medium text-text'
+                    : 'text-text-muted hover:text-text'
+                }`}
+              >
+                {t(`invoicing.tab.${x}`)}
+              </button>
+            ))}
+          </div>
           <Link to="/invoices/settings" className="text-sm text-primary hover:underline">
             {t('invoicing.editFiscal')}
           </Link>
@@ -212,6 +250,7 @@ export function InvoicesPage() {
               onChange={(e) => setFilterStatus(e.target.value)}
             >
               <option value="all">{t('invoicing.filterAll')}</option>
+              <option value="attention">{t('invoicing.filterAttention')}</option>
               <option value="draft">{t('invoicing.status.draft')}</option>
               <option value="not_sent">{t('invoicing.sendStatus.not_sent')}</option>
               <option value="queued">{t('invoicing.sendStatus.queued')}</option>
@@ -281,7 +320,14 @@ export function InvoicesPage() {
                       {formatEuros(Number(inv.total_cents))}
                     </td>
                     <td className="py-2 pr-3">
-                      <SendStatusBadge status={inv.status} sendStatus={inv.send_status} />
+                      <span className="flex flex-wrap items-center gap-1.5">
+                        <FiscalStateBadge invoice={{ ...inv, rectified: rectified.has(inv.id) }} />
+                        <PaymentBadge
+                          paymentStatus={inv.payment_status}
+                          dueDate={inv.due_date}
+                          status={inv.status}
+                        />
+                      </span>
                     </td>
                   </tr>
                 ))}
