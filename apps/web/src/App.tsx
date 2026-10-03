@@ -19,6 +19,7 @@ import {
   BillingSettingsPage,
   InvoiceDetailPage,
   InvoicesPage,
+  ResumenPage,
 } from './features/invoicing/index.js';
 import { RoutesPage } from './pages/RoutesPage.js';
 import { InvitePage } from './pages/InvitePage.js';
@@ -52,6 +53,7 @@ export function App() {
                 <Route path="/routes" element={<RoutesPage />} />
                 <Route path="/siloe" element={<SiloeExportPage />} />
                 <Route path="/invoices" element={<InvoicesPage />} />
+                <Route path="/invoices/resumen" element={<ResumenPage />} />
                 <Route path="/invoices/settings" element={<BillingSettingsPage />} />
                 <Route path="/invoices/:invoiceId" element={<InvoiceDetailPage />} />
                 <Route path="/clients" element={<ClientsPage />} />

@@ -4,6 +4,8 @@ import {
   breakdownToLineas,
   buildCreatePayload,
   centsToAmount,
+  fiscalState,
+  isOverdue,
   formatEuros,
   formatInvoiceNumber,
   isPendingLookup,
@@ -241,5 +243,56 @@ describe('formatInvoiceNumber', () => {
 
   it('shows a dash while the invoice is still a draft', () => {
     expect(formatInvoiceNumber('2026', null)).toBe('—');
+  });
+});
+
+describe('fiscalState', () => {
+  const base = { status: 'issued' as const, sendStatus: 'accepted' as const };
+
+  it('reads a draft as a draft whatever the send column says', () => {
+    expect(fiscalState({ status: 'draft', sendStatus: 'not_sent' })).toBe('draft');
+  });
+
+  it('distinguishes Correcta from AceptadaConErrores', () => {
+    expect(fiscalState({ ...base, aeatEstado: 'Correcta' })).toBe('sent');
+    expect(fiscalState({ ...base, aeatEstado: 'AceptadaConErrores' })).toBe('sent_with_errors');
+  });
+
+  it('treats everything in flight as pending_send', () => {
+    for (const s of ['queued', 'sending', 'failed', 'not_sent'] as const) {
+      expect(fiscalState({ status: 'issued', sendStatus: s })).toBe('pending_send');
+    }
+  });
+
+  it('shows rejected', () => {
+    expect(fiscalState({ status: 'issued', sendStatus: 'rejected' })).toBe('rejected');
+  });
+
+  it('lets cancelled win over everything — it is the terminal fact', () => {
+    expect(fiscalState({ status: 'void', sendStatus: 'accepted', hasRectificativa: true })).toBe(
+      'cancelled',
+    );
+  });
+
+  it('reports rectified only for an invoice that is still issued', () => {
+    expect(fiscalState({ ...base, hasRectificativa: true })).toBe('rectified');
+    expect(fiscalState({ status: 'draft', sendStatus: 'not_sent', hasRectificativa: true })).toBe(
+      'draft',
+    );
+  });
+});
+
+describe('isOverdue', () => {
+  it('is false once paid, even long past the date', () => {
+    expect(isOverdue('2020-01-01', 'paid', '2026-10-03')).toBe(false);
+  });
+
+  it('is false without a due date', () => {
+    expect(isOverdue(null, 'pending', '2026-10-03')).toBe(false);
+  });
+
+  it('is true the day after the due date, not on it', () => {
+    expect(isOverdue('2026-10-03', 'pending', '2026-10-03')).toBe(false);
+    expect(isOverdue('2026-10-02', 'pending', '2026-10-03')).toBe(true);
   });
 });

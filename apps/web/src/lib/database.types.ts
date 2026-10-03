@@ -651,11 +651,21 @@ export type Database = {
       invoice: {
         Row: {
           aeat_checked_at: string | null;
+          aeat_csv: string | null;
           aeat_estado: string | null;
           aeat_url: string | null;
           base_cents: number;
           client_id: string;
+          cancelled_at: string | null;
           created_at: string;
+          due_date: string | null;
+          paid_at: string | null;
+          payment_status: Database['public']['Enums']['invoice_payment_status'];
+          rectifies_invoice_id: string | null;
+          rectificativa_tipo: string | null;
+          rectificativa_base_cents: number | null;
+          rectificativa_quota_cents: number | null;
+          replaced_by_invoice_id: string | null;
           descripcion: string;
           id: string;
           idempotency_key: string;
@@ -679,11 +689,16 @@ export type Database = {
         };
         Insert: {
           aeat_checked_at?: string | null;
+          aeat_csv?: string | null;
           aeat_estado?: string | null;
           aeat_url?: string | null;
           base_cents?: number;
           client_id: string;
+          cancelled_at?: string | null;
           created_at?: string;
+          due_date?: string | null;
+          paid_at?: string | null;
+          payment_status?: Database['public']['Enums']['invoice_payment_status'];
           descripcion: string;
           id?: string;
           idempotency_key?: string;
@@ -704,14 +719,24 @@ export type Database = {
           updated_at?: string;
           verifacti_huella?: string | null;
           verifacti_uuid?: string | null;
+          rectifies_invoice_id?: string | null;
+          rectificativa_tipo?: string | null;
+          rectificativa_base_cents?: number | null;
+          rectificativa_quota_cents?: number | null;
+          replaced_by_invoice_id?: string | null;
         };
         Update: {
           aeat_checked_at?: string | null;
+          aeat_csv?: string | null;
           aeat_estado?: string | null;
           aeat_url?: string | null;
           base_cents?: number;
           client_id?: string;
+          cancelled_at?: string | null;
           created_at?: string;
+          due_date?: string | null;
+          paid_at?: string | null;
+          payment_status?: Database['public']['Enums']['invoice_payment_status'];
           descripcion?: string;
           id?: string;
           idempotency_key?: string;
@@ -732,6 +757,11 @@ export type Database = {
           updated_at?: string;
           verifacti_huella?: string | null;
           verifacti_uuid?: string | null;
+          rectifies_invoice_id?: string | null;
+          rectificativa_tipo?: string | null;
+          rectificativa_base_cents?: number | null;
+          rectificativa_quota_cents?: number | null;
+          replaced_by_invoice_id?: string | null;
         };
         Relationships: [
           {
@@ -753,6 +783,121 @@ export type Database = {
             columns: ['series_id', 'org_id'];
             isOneToOne: false;
             referencedRelation: 'invoice_series';
+            referencedColumns: ['id', 'org_id'];
+          },
+        ];
+      };
+      invoice_activity: {
+        Row: {
+          actor_id: string | null;
+          created_at: string;
+          id: string;
+          invoice_id: string;
+          kind: Database['public']['Enums']['invoice_activity_kind'];
+          org_id: string;
+          payload: Json;
+        };
+        Insert: {
+          actor_id?: string | null;
+          created_at?: string;
+          id?: string;
+          invoice_id: string;
+          kind: Database['public']['Enums']['invoice_activity_kind'];
+          org_id: string;
+          payload?: Json;
+        };
+        Update: {
+          actor_id?: string | null;
+          created_at?: string;
+          id?: string;
+          invoice_id?: string;
+          kind?: Database['public']['Enums']['invoice_activity_kind'];
+          org_id?: string;
+          payload?: Json;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'invoice_activity_invoice_id_org_id_fkey';
+            columns: ['invoice_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'invoice';
+            referencedColumns: ['id', 'org_id'];
+          },
+        ];
+      };
+      invoice_aeat_record: {
+        Row: {
+          aeat_csv: string | null;
+          aeat_url: string | null;
+          attempts: number;
+          created_at: string;
+          error_code: string | null;
+          error_message: string | null;
+          estado: string | null;
+          huella: string | null;
+          id: string;
+          idempotency_key: string;
+          invoice_id: string;
+          kind: Database['public']['Enums']['aeat_record_kind'];
+          last_attempt_at: string | null;
+          next_attempt_at: string | null;
+          org_id: string;
+          rechazo_previo: string | null;
+          settled_at: string | null;
+          sin_registro_previo: string | null;
+          updated_at: string;
+          verifacti_uuid: string | null;
+        };
+        Insert: {
+          aeat_csv?: string | null;
+          aeat_url?: string | null;
+          attempts?: number;
+          created_at?: string;
+          error_code?: string | null;
+          error_message?: string | null;
+          estado?: string | null;
+          huella?: string | null;
+          id?: string;
+          idempotency_key?: string;
+          invoice_id: string;
+          kind: Database['public']['Enums']['aeat_record_kind'];
+          last_attempt_at?: string | null;
+          next_attempt_at?: string | null;
+          org_id: string;
+          rechazo_previo?: string | null;
+          settled_at?: string | null;
+          sin_registro_previo?: string | null;
+          updated_at?: string;
+          verifacti_uuid?: string | null;
+        };
+        Update: {
+          aeat_csv?: string | null;
+          aeat_url?: string | null;
+          attempts?: number;
+          created_at?: string;
+          error_code?: string | null;
+          error_message?: string | null;
+          estado?: string | null;
+          huella?: string | null;
+          id?: string;
+          idempotency_key?: string;
+          invoice_id?: string;
+          kind?: Database['public']['Enums']['aeat_record_kind'];
+          last_attempt_at?: string | null;
+          next_attempt_at?: string | null;
+          org_id?: string;
+          rechazo_previo?: string | null;
+          settled_at?: string | null;
+          sin_registro_previo?: string | null;
+          updated_at?: string;
+          verifacti_uuid?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'invoice_aeat_record_invoice_id_org_id_fkey';
+            columns: ['invoice_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'invoice';
             referencedColumns: ['id', 'org_id'];
           },
         ];
@@ -1302,6 +1447,47 @@ export type Database = {
         Args: { p_invoice_id: string };
         Returns: { tax_rate: number; base_cents: number; quota_cents: number }[];
       };
+      cancel_and_replace: {
+        Args: { p_invoice_id: string };
+        Returns: Database['public']['Tables']['invoice']['Row'];
+      };
+      cancel_invoice: {
+        Args: { p_invoice_id: string };
+        Returns: Database['public']['Tables']['invoice_aeat_record']['Row'];
+      };
+      claim_invoice_for_send: {
+        Args: {
+          p_invoice_id: string;
+          p_kind?: Database['public']['Enums']['aeat_record_kind'];
+        };
+        Returns: Database['public']['Tables']['invoice_aeat_record']['Row'];
+      };
+      create_rectificativa: {
+        Args: { p_invoice_id: string; p_tipo: string; p_modo: string; p_series_id: string };
+        Returns: Database['public']['Tables']['invoice']['Row'];
+      };
+      invoices_needing_attention: {
+        Args: never;
+        Returns: { invoice_id: string; org_id: string; reason: string }[];
+      };
+      mark_invoice_paid: {
+        Args: { p_invoice_id: string; p_paid?: boolean };
+        Returns: Database['public']['Tables']['invoice']['Row'];
+      };
+      record_aeat_result: {
+        Args: {
+          p_record_id: string;
+          p_estado?: string | null;
+          p_uuid?: string | null;
+          p_huella?: string | null;
+          p_url?: string | null;
+          p_csv?: string | null;
+          p_error_code?: string | null;
+          p_error_message?: string | null;
+          p_transport_failed?: boolean;
+        };
+        Returns: Database['public']['Tables']['invoice']['Row'];
+      };
       issue_invoice: {
         Args: { p_invoice_id: string };
         Returns: Database['public']['Tables']['invoice']['Row'];
@@ -1326,6 +1512,25 @@ export type Database = {
       attachment_kind: 'photo' | 'lab_pdf';
       basin_class: 'cubierto' | 'descubierto' | 'mixto';
       invitation_status: 'pending' | 'accepted' | 'revoked';
+      aeat_record_kind: 'alta' | 'anulacion' | 'subsanacion';
+      invoice_payment_status: 'pending' | 'paid';
+      invoice_activity_kind:
+        | 'created'
+        | 'edited'
+        | 'issued'
+        | 'aeat_queued'
+        | 'aeat_accepted'
+        | 'aeat_rejected'
+        | 'send_failed'
+        | 'send_retried'
+        | 'needs_attention'
+        | 'resubmitted'
+        | 'subsanacion'
+        | 'cancelled'
+        | 'replaced_by'
+        | 'rectified_by'
+        | 'emailed'
+        | 'paid';
       invoice_send_status: 'not_sent' | 'queued' | 'sending' | 'accepted' | 'rejected' | 'failed';
       invoice_status: 'draft' | 'issued' | 'void';
       measurement_lugar: 'in_situ' | 'lab';

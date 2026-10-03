@@ -310,3 +310,73 @@ export function formatInvoiceNumber(seriesCode: string, number: number | null): 
   if (number == null) return '—';
   return `${seriesCode}/${String(number).padStart(4, '0')}`;
 }
+
+// ---------------------------------------------------------------------------
+// Fiscal state (presentation)
+// ---------------------------------------------------------------------------
+
+/**
+ * The badge a user sees. Derived from the stored pair plus two facts that are deliberately NOT
+ * stored — whether a rectificativa points at this invoice, and whether it is past due — because
+ * a stored copy of either would eventually disagree with reality.
+ */
+export type FiscalState =
+  | 'draft'
+  | 'pending_send'
+  | 'sent'
+  | 'sent_with_errors'
+  | 'rejected'
+  | 'cancelled'
+  | 'rectified';
+
+export interface FiscalStateInput {
+  status: 'draft' | 'issued' | 'void';
+  sendStatus: SendStatus;
+  /** Verifacti's own word: "Correcta", "AceptadaConErrores", … */
+  aeatEstado?: string | null;
+  /** True when some rectificativa names this invoice as its original. */
+  hasRectificativa?: boolean;
+}
+
+export function fiscalState(input: FiscalStateInput): FiscalState {
+  if (input.status === 'void') return 'cancelled';
+  if (input.status === 'draft') return 'draft';
+  // A rectified invoice is still accepted at AEAT; the badge just says it was superseded.
+  if (input.hasRectificativa) return 'rectified';
+  switch (input.sendStatus) {
+    case 'rejected':
+      return 'rejected';
+    case 'accepted':
+      return (input.aeatEstado ?? '').toLowerCase().includes('errores')
+        ? 'sent_with_errors'
+        : 'sent';
+    default:
+      return 'pending_send';
+  }
+}
+
+/** Unpaid and past its due date. Never stored — it would need a nightly job just to stay true. */
+export function isOverdue(
+  dueDate: string | null,
+  paymentStatus: 'pending' | 'paid',
+  today: string = madridToday(),
+): boolean {
+  if (paymentStatus === 'paid' || !dueDate) return false;
+  return dueDate < today;
+}
+
+/** The exits a rejected record may legally take. See docs/INVOICING.md §5c. */
+export type RejectionRemedy = 'resend' | 'subsanacion' | 'cancel_and_replace';
+
+/**
+ * Which remedies to offer for a rejected record.
+ *
+ * Deliberately NOT a single "fix and resend": Verifacti restricts subsanación to changes with
+ * no fiscal repercussion, so a rejection caused by a wrong amount or NIF has to go through
+ * anulación plus a new invoice instead.
+ */
+export const REJECTION_REMEDIES: readonly RejectionRemedy[] = [
+  'resend',
+  'subsanacion',
+  'cancel_and_replace',
+];

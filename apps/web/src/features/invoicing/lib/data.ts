@@ -201,30 +201,45 @@ export async function issueInvoice(invoiceId: string): Promise<InvoiceRow> {
   return data as unknown as InvoiceRow;
 }
 
-async function persist(invoiceId: string, patch: Partial<InvoiceRow>): Promise<void> {
-  await supabase.from('invoice').update(patch).eq('id', invoiceId);
-}
-
 /**
  * Send an issued invoice to AEAT via Verifacti.
  *
  * Returns the resulting send status. On `unknown_outcome` the invoice is left as `failed` with
  * its idempotency key intact, which is precisely the state a later retry needs.
  */
-export async function sendInvoice(invoice: InvoiceWithRelations): Promise<SendStatus> {
-  if (invoice.status === 'draft' || invoice.number == null || invoice.issue_date == null) {
-    throw new InvoiceSendError('invalid', 'not_issued');
-  }
-  if (invoice.send_status === 'accepted' || invoice.send_status === 'sending') {
-    // Already at AEAT. Refresh instead of sending again.
-    return invoice.send_status;
+export type AeatRecordKind = 'alta' | 'anulacion' | 'subsanacion';
+
+/**
+ * Send an issued invoice to AEAT.
+ *
+ * Every state change goes through an RPC, so the database — not this function — decides what is
+ * legal. `claim_invoice_for_send` returns null when the invoice is not claimable (already in
+ * flight, already settled, or claimed by the pg_cron sweep a moment earlier); that is a no-op,
+ * not an error. The registro it returns carries the idempotency key, which is reused on every
+ * retry and never regenerated.
+ */
+export async function sendInvoice(
+  invoice: InvoiceWithRelations,
+  kind: AeatRecordKind = 'alta',
+): Promise<{ status: SendStatus; failure: DbFailure | null; skipped?: boolean }> {
+  const claim = await supabase.rpc('claim_invoice_for_send', {
+    p_invoice_id: invoice.id,
+    p_kind: kind,
+  });
+  const claimFailure = toDbFailure(claim.error);
+  if (claimFailure) return { status: invoice.send_status, failure: claimFailure };
+
+  const record = claim.data as unknown as Tables<'invoice_aeat_record'> | null;
+  if (!record) {
+    // Someone else owns this send. Leave it alone.
+    return { status: invoice.send_status, failure: null, skipped: true };
   }
 
   const { data: breakdown } = await getTaxBreakdown(invoice.id);
   const payloadInput = {
     seriesCode: invoice.invoice_series?.code ?? '',
-    number: invoice.number,
-    issueDate: invoice.issue_date,
+    number: invoice.number!,
+    issueDate: invoice.issue_date!,
     tipoFactura: invoice.tipo_factura as TipoFactura,
     descripcion: invoice.descripcion,
     breakdown,
@@ -235,68 +250,77 @@ export async function sendInvoice(invoice: InvoiceWithRelations): Promise<SendSt
 
   const problems = validateForSending(payloadInput);
   if (problems.length > 0) {
-    await persist(invoice.id, { send_status: 'failed', last_error: problems.join(',') });
-    throw new InvoiceSendError('invalid', problems.join(','));
+    await recordResult(record.id, { transportFailed: true, errorMessage: problems.join(',') });
+    return { status: 'failed', failure: { code: 'rule', detail: problems.join(', ') } };
   }
-
-  await persist(invoice.id, {
-    send_status: 'sending',
-    send_attempts: invoice.send_attempts + 1,
-  });
 
   let result: { status: number; json: unknown };
   try {
     result = await callApi({
       action: 'create',
-      idempotencyKey: invoice.idempotency_key,
+      idempotencyKey: record.idempotency_key,
       payload: buildCreatePayload(payloadInput),
+      // Subsanación reuses /modify upstream; the proxy branches on this.
+      mode: kind === 'alta' ? 'create' : 'modify',
+      rechazoPrevio: record.rechazo_previo,
     });
-  } catch (err) {
-    const code = err instanceof InvoiceSendError ? err.code : 'failed';
-    // 'unknown_outcome' deliberately does NOT reset the idempotency key.
-    await persist(invoice.id, { send_status: 'failed', last_error: code });
-    throw err;
+  } catch {
+    // Unknown outcome. The key survives, so a retry collapses onto the same AEAT record.
+    await recordResult(record.id, { transportFailed: true, errorMessage: 'unknown_outcome' });
+    return { status: 'failed', failure: { code: 'rule', detail: 'unknown_outcome' } };
   }
 
-  if (result.status === 401) {
-    await persist(invoice.id, { send_status: 'failed', last_error: 'unauthorized' });
-    throw new InvoiceSendError('unauthorized');
-  }
-  if (result.status === 503) {
-    await persist(invoice.id, { send_status: 'failed', last_error: 'unavailable' });
-    throw new InvoiceSendError('unavailable');
-  }
   if (result.status === 409) {
-    // Same key already in flight upstream — the record is being created, not lost.
-    await persist(invoice.id, { send_status: 'sending', last_error: null });
-    return 'sending';
-  }
-  if (result.status === 422) {
-    // Key reused with a different payload: a real bug, never something to paper over.
-    await persist(invoice.id, { send_status: 'failed', last_error: 'idempotency_conflict' });
-    throw new InvoiceSendError('conflict');
+    // Same key already in flight upstream: the record is being created, not lost.
+    return { status: 'sending', failure: null };
   }
   if (result.status !== 200) {
     const detail =
       typeof result.json === 'object' && result.json !== null
         ? JSON.stringify(result.json).slice(0, 300)
         : `http_${result.status}`;
-    await persist(invoice.id, { send_status: 'failed', last_error: detail });
-    throw new InvoiceSendError('failed', detail);
+    await recordResult(record.id, { transportFailed: true, errorMessage: detail });
+    return { status: 'failed', failure: { code: 'rule', detail } };
   }
 
   const parsed = parseCreateResponse(result.json);
-  const status = mapEstado(parsed.estado);
-  await persist(invoice.id, {
-    send_status: status,
-    verifacti_uuid: parsed.uuid,
-    verifacti_huella: parsed.huella,
-    aeat_url: parsed.url,
-    aeat_estado: parsed.estado,
-    sent_at: new Date().toISOString(),
-    last_error: null,
+  const { failure } = await recordResult(record.id, {
+    estado: parsed.estado,
+    uuid: parsed.uuid,
+    huella: parsed.huella,
+    url: parsed.url,
   });
-  return status;
+  return { status: mapEstado(parsed.estado), failure };
+}
+
+interface ResultInput {
+  estado?: string | null;
+  uuid?: string | null;
+  huella?: string | null;
+  url?: string | null;
+  csv?: string | null;
+  errorCode?: string | null;
+  errorMessage?: string | null;
+  transportFailed?: boolean;
+}
+
+/** The only way a verdict enters the database. */
+async function recordResult(
+  recordId: string,
+  input: ResultInput,
+): Promise<{ failure: DbFailure | null }> {
+  const { error } = await supabase.rpc('record_aeat_result', {
+    p_record_id: recordId,
+    p_estado: input.estado ?? null,
+    p_uuid: input.uuid ?? null,
+    p_huella: input.huella ?? null,
+    p_url: input.url ?? null,
+    p_csv: input.csv ?? null,
+    p_error_code: input.errorCode ?? null,
+    p_error_message: input.errorMessage ?? null,
+    p_transport_failed: input.transportFailed ?? false,
+  });
+  return { failure: toDbFailure(error) };
 }
 
 /**
@@ -305,39 +329,126 @@ export async function sendInvoice(invoice: InvoiceWithRelations): Promise<SendSt
  * For roughly a minute after a create, the status endpoint answers "Factura no encontrada".
  * That is the record still propagating, not a lost invoice, so it leaves the status untouched.
  */
-export async function refreshStatus(invoice: InvoiceRow): Promise<SendStatus> {
-  if (invoice.number == null || invoice.issue_date == null) return invoice.send_status;
-
-  const { data: series } = await supabase
-    .from('invoice_series')
-    .select('code')
-    .eq('id', invoice.series_id)
-    .maybeSingle();
-
-  const result = await callApi({
-    action: 'status',
-    serie: series?.code ?? '',
-    numero: String(invoice.number),
-    fechaExpedicion: toVerifactiDate(invoice.issue_date),
-  });
-
-  if (isPendingLookup(result.json)) {
-    await persist(invoice.id, { aeat_checked_at: new Date().toISOString() });
-    return invoice.send_status;
+export async function refreshStatus(
+  invoice: InvoiceRow,
+): Promise<{ status: SendStatus; failure: DbFailure | null }> {
+  if (invoice.number == null || invoice.issue_date == null) {
+    return { status: invoice.send_status, failure: null };
   }
-  if (result.status !== 200) return invoice.send_status;
 
-  const raw = result.json as { estado?: unknown; huella?: unknown };
+  const [{ data: series }, { data: records }] = await Promise.all([
+    supabase.from('invoice_series').select('code').eq('id', invoice.series_id).maybeSingle(),
+    supabase
+      .from('invoice_aeat_record')
+      .select('*')
+      .eq('invoice_id', invoice.id)
+      .is('settled_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1),
+  ]);
+  const record = records?.[0];
+  if (!record) return { status: invoice.send_status, failure: null };
+
+  let result: { status: number; json: unknown };
+  try {
+    result = await callApi({
+      action: 'status',
+      serie: series?.code ?? '',
+      numero: String(invoice.number),
+      fechaExpedicion: toVerifactiDate(invoice.issue_date),
+    });
+  } catch {
+    return { status: invoice.send_status, failure: null };
+  }
+
+  // For ~60s after a create the endpoint reports the invoice as missing. That is propagation,
+  // not loss, so the state is left alone.
+  if (isPendingLookup(result.json) || result.status !== 200) {
+    return { status: invoice.send_status, failure: null };
+  }
+
+  const raw = result.json as { estado?: unknown; huella?: unknown; csv?: unknown };
   const estado = typeof raw.estado === 'string' ? raw.estado : null;
-  if (!estado) return invoice.send_status;
+  if (!estado) return { status: invoice.send_status, failure: null };
 
-  const status = mapEstado(estado);
-  await persist(invoice.id, {
-    send_status: status,
-    aeat_estado: estado,
-    aeat_checked_at: new Date().toISOString(),
-    verifacti_huella:
-      typeof raw.huella === 'string' ? raw.huella : (invoice.verifacti_huella ?? null),
+  const { failure } = await recordResult(record.id, {
+    estado,
+    huella: typeof raw.huella === 'string' ? raw.huella : null,
+    csv: typeof raw.csv === 'string' ? raw.csv : null,
   });
-  return status;
+  return { status: mapEstado(estado), failure };
+}
+
+// ---------------------------------------------------------------------------
+// Lifecycle actions. Each is a thin wrapper: the rules live in the RPC.
+// ---------------------------------------------------------------------------
+
+export async function getActivity(
+  invoiceId: string,
+): Promise<LoadResult<Tables<'invoice_activity'>[]>> {
+  const { data, error } = await supabase
+    .from('invoice_activity')
+    .select('*')
+    .eq('invoice_id', invoiceId)
+    .order('created_at', { ascending: false });
+  return { data: data ?? [], failure: toDbFailure(error) };
+}
+
+export async function getAeatRecords(
+  invoiceId: string,
+): Promise<LoadResult<Tables<'invoice_aeat_record'>[]>> {
+  const { data, error } = await supabase
+    .from('invoice_aeat_record')
+    .select('*')
+    .eq('invoice_id', invoiceId)
+    .order('created_at', { ascending: false });
+  return { data: data ?? [], failure: toDbFailure(error) };
+}
+
+export async function cancelInvoice(invoiceId: string): Promise<DbFailure | null> {
+  const { error } = await supabase.rpc('cancel_invoice', { p_invoice_id: invoiceId });
+  return toDbFailure(error);
+}
+
+/** Anular + a new draft carrying the same lines. The replacement always gets its own number. */
+export async function cancelAndReplace(
+  invoiceId: string,
+): Promise<{ id: string | null; failure: DbFailure | null }> {
+  const { data, error } = await supabase.rpc('cancel_and_replace', { p_invoice_id: invoiceId });
+  const row = data as unknown as InvoiceRow | null;
+  return { id: row?.id ?? null, failure: toDbFailure(error) };
+}
+
+export async function createRectificativa(input: {
+  invoiceId: string;
+  tipo: string;
+  modo: 'S' | 'I';
+  seriesId: string;
+}): Promise<{ id: string | null; failure: DbFailure | null }> {
+  const { data, error } = await supabase.rpc('create_rectificativa', {
+    p_invoice_id: input.invoiceId,
+    p_tipo: input.tipo,
+    p_modo: input.modo,
+    p_series_id: input.seriesId,
+  });
+  const row = data as unknown as InvoiceRow | null;
+  return { id: row?.id ?? null, failure: toDbFailure(error) };
+}
+
+export async function markPaid(invoiceId: string, paid: boolean): Promise<DbFailure | null> {
+  const { error } = await supabase.rpc('mark_invoice_paid', {
+    p_invoice_id: invoiceId,
+    p_paid: paid,
+  });
+  return toDbFailure(error);
+}
+
+export async function needingAttention(): Promise<
+  LoadResult<{ invoice_id: string; reason: string }[]>
+> {
+  const { data, error } = await supabase.rpc('invoices_needing_attention');
+  return {
+    data: (data ?? []) as { invoice_id: string; reason: string }[],
+    failure: toDbFailure(error),
+  };
 }
