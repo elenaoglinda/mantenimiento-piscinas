@@ -204,7 +204,7 @@ crashed worker. The worker itself lives in `/api` (that is where the key is); sc
 
 ## 6. What is NOT done
 
-- **Single-tenant key.** Verifacti issues **one API key per obligado tributario**. This PR reads
+- **Single-tenant key.** Verifacti issues **one API key per obligado tributario**. It reads
   a single key from the environment, so every org would invoice through the same Veri\*Factu
   account. **Real multi-tenant use needs a per-org credential** stored server-side — the next PR.
 - **No modelo de representación.** Before a NIF's first _production_ invoice, its holder must
@@ -212,11 +212,9 @@ crashed worker. The worker itself lives in `/api` (that is where the key is); sc
   (CIF) must sign a PDF with a digital certificate. Neither is wired up.
 - **Paid tier required** for webhooks, the NIF-management API and automated representación. The
   free/shared account cannot use them, which is why status is polled rather than pushed.
-- No PDF, no QR rendering (the base64 QR is returned but not yet stored), no email delivery.
-- No rectificativas or abonos yet, so **a mistake on an issued invoice currently has no remedy
-  in the UI**. Worth knowing before issuing anything real.
+- **No PDF and no email**, so an invoice cannot be delivered to a customer from the app. The
+  base64 QR comes back from Verifacti but is not stored anywhere yet.
 - No recurring contracts, no monthly batch, no chemicals/parts on invoices, no gestoría export.
-- **No PDF and no email yet**, so an invoice cannot be delivered to a customer from the app.
 - **Document language is presentation only.** Translating an invoice does not make it compliant
   anywhere else: Portugal requires certified software with ATCUD and SAF-T, France is moving to
   Factur-X via PDPs, and Verifacti covers neither. Nothing here should be read as "we can
