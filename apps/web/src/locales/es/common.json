@@ -97,7 +97,29 @@
     "neverVisited": "Sin visitas registradas",
     "overdueBy": "Sin visita desde hace {{days}} días",
     "recentReports": "Informes recientes",
-    "viewAll": "Ver todos"
+    "viewAll": "Ver todos",
+    "statVisitsToday": "Visitas hoy",
+    "statReportsToday_one": "{{count}} informe registrado hoy",
+    "statReportsToday_other": "{{count}} informes registrados hoy",
+    "statPoolsStale_one": "{{count}} sin visita en 30 días",
+    "statPoolsStale_other": "{{count}} sin visita en 30 días",
+    "statPoolsFresh": "Todas visitadas en los últimos 30 días",
+    "statSiloe": "SILOÉ {{year}}",
+    "siloeHint": "Vasos con resultados anuales preparados",
+    "siloeExported": "Exportado el {{date}}",
+    "siloeProgress": "Vasos con resultados anuales de {{year}}",
+    "todayRoute": "Ruta de hoy",
+    "todayRouteEmpty": "No hay ruta planificada para hoy",
+    "todayRouteEmptyHint": "Planifica una ruta para ver aquí las visitas del día.",
+    "nextRoute": "Próxima ruta: {{date}}",
+    "openRoutes": "Ver rutas",
+    "stops_one": "{{count}} parada",
+    "stops_other": "{{count}} paradas",
+    "alertsTitle": "Alertas",
+    "attentionEmptyHint": "Sin lecturas fuera de rango ni piscinas pendientes de visita.",
+    "outOfRangeOf_one": "En {{count}} informe de los últimos {{days}} días",
+    "outOfRangeOf_other": "De {{count}} informes en los últimos {{days}} días",
+    "statOutOfRangeReadings": "Lecturas fuera de rango"
   },
   "checklist": {
     "title": "Primeros pasos",
@@ -141,7 +163,10 @@
         "desc": "Optimiza el recorrido para visitar varias piscinas en un día.",
         "cta": "Planificar"
       }
-    }
+    },
+    "next": "Siguiente paso",
+    "showSteps": "Ver todos los pasos",
+    "hideSteps": "Ocultar pasos"
   },
   "team": {
     "title": "Equipo",

@@ -17,7 +17,10 @@ const OUT = join(
   process.env.SHOT_DIR ?? 'before',
 );
 
-test.skip(process.env.SHOT_DIR === 'before', 'the old layout has no sidebar states');
+test.skip(
+  process.env.SHOT_DIR === 'before' || !!process.env.ONLY,
+  'the old layout has no sidebar states; ONLY= runs just the page captures',
+);
 
 test('shell states', async ({ browser }) => {
   mkdirSync(OUT, { recursive: true });

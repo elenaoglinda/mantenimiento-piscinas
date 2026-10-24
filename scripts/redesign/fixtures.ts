@@ -96,16 +96,54 @@ const pools = [
   ...p,
   // Non-null in the schema; the detail page and report form read them directly.
   agua_alimentacion: ['red_publica'],
-  basin: [],
   client: { name: clients.find((c) => c.id === p.client_id)!.name, is_self: false },
 }));
+
+const basinBase = {
+  org_id: ORG,
+  capacidad_m3: 180,
+  lamina_m2: 120,
+  prof_min: 1.1,
+  prof_max: 2.2,
+  clase: null,
+  fecha_baja: null,
+  observaciones: null,
+  siloe_cod_v: null,
+  siloe_cod_v_p: null,
+  tipo_vaso: ['recreativo'],
+  created_at: iso(50),
+  updated_at: iso(5),
+};
+const basins = [
+  { ...basinBase, id: 'bas-1', pool_id: 'pool-1', denominacion: 'Vaso principal', num_orden: 1 },
+  {
+    ...basinBase,
+    id: 'bas-2',
+    pool_id: 'pool-1',
+    denominacion: 'Chapoteo',
+    num_orden: 2,
+    capacidad_m3: 12,
+  },
+  { ...basinBase, id: 'bas-3', pool_id: 'pool-2', denominacion: 'Vaso exterior', num_orden: 1 },
+  {
+    ...basinBase,
+    id: 'bas-4',
+    pool_id: 'pool-3',
+    denominacion: 'Spa',
+    num_orden: 1,
+    capacidad_m3: 8,
+  },
+];
+for (const p of pools) {
+  (p as Record<string, unknown>).basin = basins.filter((b) => b.pool_id === p.id);
+}
 
 const reports = [
   {
     id: 'rep-1',
     org_id: ORG,
     pool_id: 'pool-1',
-    basin_id: null,
+    basin_id: 'bas-1',
     technician_id: USER,
     visited_at: iso(1),
     status: 'signed',
@@ -116,7 +154,7 @@ const reports = [
     id: 'rep-2',
     org_id: ORG,
     pool_id: 'pool-2',
-    basin_id: null,
+    basin_id: 'bas-3',
     technician_id: USER,
     visited_at: iso(2),
     status: 'completed',
@@ -127,7 +165,7 @@ const reports = [
     id: 'rep-3',
     org_id: ORG,
     pool_id: 'pool-3',
-    basin_id: null,
+    basin_id: 'bas-4',
     technician_id: USER,
     visited_at: iso(3),
     status: 'draft',
@@ -137,16 +175,62 @@ const reports = [
 ].map((r) => ({
   ...r,
   pool: { denominacion: pools.find((p) => p.id === r.pool_id)!.denominacion },
-  basin: null,
+  basin: { denominacion: basins.find((b) => b.id === r.basin_id)!.denominacion },
 }));
+
+const at = (hh: number, mm: number) => {
+  const d = new Date();
+  d.setHours(hh, mm, 0, 0);
+  return d.toISOString();
+};
+const lastYear = new Date().getFullYear() - 1;
 
 export const tables: Record<string, Record<string, unknown>[]> = {
   org: [org],
   client: clients,
   pool: pools,
   report: reports,
+  basin: basins,
   route: [
     { id: 'route-1', org_id: ORG, technician_id: USER, route_date: day(0), created_at: iso(1) },
+  ],
+  route_stop: [
+    {
+      id: 'st-1',
+      org_id: ORG,
+      route_id: 'route-1',
+      pool_id: 'pool-1',
+      seq: 1,
+      eta: at(9, 15),
+      leg_s: 900,
+      created_at: iso(1),
+    },
+    {
+      id: 'st-2',
+      org_id: ORG,
+      route_id: 'route-1',
+      pool_id: 'pool-2',
+      seq: 2,
+      eta: at(10, 40),
+      leg_s: 1500,
+      created_at: iso(1),
+    },
+    {
+      id: 'st-3',
+      org_id: ORG,
+      route_id: 'route-1',
+      pool_id: 'pool-3',
+      seq: 3,
+      eta: at(11, 30),
+      leg_s: 300,
+      created_at: iso(1),
+    },
+  ],
+  // One out-of-range reading, so the dashboard's alerts have something to show.
+  measurement: [{ id: 'm-1', org_id: ORG, report_id: 'rep-2', status: 'red', value: 3.4 }],
+  annual_result: [
+    { id: 'ar-1', org_id: ORG, basin_id: 'bas-1', year: lastYear, analysis_type: 'autocontrol' },
+    { id: 'ar-2', org_id: ORG, basin_id: 'bas-3', year: lastYear, analysis_type: 'autocontrol' },
   ],
 };
 
