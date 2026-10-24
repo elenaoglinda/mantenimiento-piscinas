@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../auth/context.js';
@@ -28,7 +29,13 @@ export function ClientsPage() {
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Client | null>(null);
   const [creating, setCreating] = useState(false);
-  const [query, setQuery] = useState('');
+  // ⌘K can deep-link a search here with ?q=, also while this page is already open.
+  const [params] = useSearchParams();
+  const [query, setQuery] = useState(params.get('q') ?? '');
+  useEffect(() => {
+    const q = params.get('q');
+    if (q !== null) setQuery(q);
+  }, [params]);
 
   const load = useCallback(async () => {
     setLoading(true);

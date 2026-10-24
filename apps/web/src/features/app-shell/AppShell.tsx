@@ -8,6 +8,7 @@ import { Topbar } from './Topbar.js';
 import { resolveRoute } from './nav.js';
 import { useSidebarCollapsed } from './useSidebarCollapsed.js';
 import { RecordCrumbProvider } from './RecordCrumbProvider.js';
+import { ShellDataProvider } from './ShellDataProvider.js';
 import { useCurrentRecordLabel } from './recordCrumb.js';
 
 /**
@@ -17,7 +18,9 @@ import { useCurrentRecordLabel } from './recordCrumb.js';
 export function AppShell() {
   return (
     <RecordCrumbProvider>
-      <ShellLayout />
+      <ShellDataProvider>
+        <ShellLayout />
+      </ShellDataProvider>
     </RecordCrumbProvider>
   );
 }

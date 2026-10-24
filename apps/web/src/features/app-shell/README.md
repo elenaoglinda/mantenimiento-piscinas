@@ -9,7 +9,10 @@ index.ts               public surface — import { AppShell } from here
 AppShell.tsx           layout, drawer + palette state, document.title, ⌘K listener
 Sidebar.tsx            rail (desktop) and drawer content: groups, active state, user menu
 Topbar.tsx             hamburger, breadcrumb, search trigger, "+ Nuevo informe", help, bell
-CommandMenu.tsx        ⌘K palette — jumps to pages and quick actions
+CommandMenu.tsx        ⌘K palette — pages, quick actions, pool/client search
+NotificationsMenu.tsx  the bell: current alerts
+ShellDataProvider.tsx  loads alerts and sidebar counts on each navigation
+shellData.ts           the context those read from
 MobileDrawer.tsx       the sidebar as a modal drawer below 1024px
 nav.ts                 the navigation table + resolveRoute(): one source for sidebar,
                        breadcrumb, palette and page titles
@@ -48,15 +51,29 @@ Detail pages call `useRecordCrumb(name)` (exported from `index.ts`) once their r
 so the breadcrumb and the tab title read "Piscinas › Villa Mar" instead of "Detalle". The name is
 stored with the path it belongs to, so it never leaks onto the next page while that one loads.
 
-## Placeholders and follow-ups
+## Live data in the shell
 
-These are visible in the UI and deliberately not wired to anything yet:
+`ShellDataProvider` loads, on every navigation, what the shell shows everywhere:
 
-| Element              | Today                                        | Needs                                                               |
-| -------------------- | -------------------------------------------- | ------------------------------------------------------------------- |
-| Company row          | Shows the one company; chevron is decorative | Multi-company switching                                             |
-| Ajustes (user menu)  | Disabled, "Próximamente"                     | A general settings page — none exists                               |
-| Ayuda                | Opens cloro.app                              | A real help centre or contact address                               |
-| Notifications bell   | `aria-disabled`, "Próximamente"              | A notifications source                                              |
-| Record search        | The palette jumps to pages only, and says so | A search endpoint                                                   |
-| Sidebar count badges | Not shown                                    | Counts the shell can load cheaply (e.g. invoices needing attention) |
+- **Avisos** (the bell): out-of-range readings from the last 30 days and invoices the AEAT
+  rejected or that couldn't be sent (`invoices_needing_attention`). Derived, so nothing is
+  "marked as read": an alert disappears when its cause is fixed.
+- **Sidebar counts**: draft reports next to Informes, invoices needing attention next to
+  Facturación. The count is part of the link's accessible name.
+
+All read-only, on existing tables and RPCs. A failed load leaves the previous values; the shell
+never blocks a page on it.
+
+**⌘K** searches pools and clients by name from two letters on (`ilike`, read-only) and offers
+"Buscar «…» en informes", which deep-links into the Informes search with `?q=` (Clientes takes
+`?q=` too).
+
+**Ajustes** (`/settings`) and **Ayuda** (`/ayuda`) are `UTILITY_PAGES` in `nav.ts`: not in the
+sidebar groups, but known to the breadcrumb, the tab title and ⌘K.
+
+## What's still deliberately simple
+
+| Element     | Today                                                   | Would need                        |
+| ----------- | ------------------------------------------------------- | --------------------------------- |
+| Company row | Opens the organisation's settings (one org per account) | Multi-organisation membership     |
+| Avisos      | Recomputed on navigation, not pushed                    | Realtime subscriptions, if wanted |

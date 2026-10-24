@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ClipboardList, FileUp, Plus, Waves } from 'lucide-react';
 import { supabase } from '../lib/supabase.js';
@@ -32,7 +32,13 @@ export function ReportsPage() {
   const [clientCount, setClientCount] = useState(0);
   const [poolCount, setPoolCount] = useState(0);
   const [filter, setFilter] = useState<StatusFilter>('all');
-  const [query, setQuery] = useState('');
+  // ⌘K can deep-link a search here with ?q=, also while this page is already open.
+  const [params] = useSearchParams();
+  const [query, setQuery] = useState(params.get('q') ?? '');
+  useEffect(() => {
+    const q = params.get('q');
+    if (q !== null) setQuery(q);
+  }, [params]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

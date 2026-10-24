@@ -50,6 +50,17 @@ test('shell states', async ({ browser }) => {
     await page.keyboard.press('Escape');
     await page.getByRole('button', { name: /Elena Oglinda/ }).click();
     await page.screenshot({ path: join(OUT, 'shell-usermenu--1440.png') });
+    await page.keyboard.press('Escape');
+
+    // ⌘K record search and the Avisos bell.
+    await page.keyboard.press('ControlOrMeta+k');
+    await page.getByRole('combobox').fill('palm');
+    await expect(page.getByRole('option', { name: /Las Palmeras · Spa/ })).toBeVisible();
+    await page.screenshot({ path: join(OUT, 'shell-search--1440.png') });
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: /^Avisos/ }).click();
+    await expect(page.getByText('Lecturas fuera de rango', { exact: false }).first()).toBeVisible();
+    await page.screenshot({ path: join(OUT, 'shell-alerts--1440.png') });
     await ctx.close();
   }
 

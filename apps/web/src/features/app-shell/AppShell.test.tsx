@@ -194,17 +194,23 @@ describe('AppShell command palette', () => {
     });
     const input = screen.getByRole('combobox', { name: 'Ir a una página' });
     fireEvent.change(input, { target: { value: 'facturacion' } });
-    expect(screen.getAllByRole('option')).toHaveLength(1);
+    const options = screen.getAllByRole('option').map((o) => o.textContent);
+    // The page first, then the offer to search the term in Informes.
+    expect(options[0]).toBe('Facturación');
+    expect(options).toContain('Buscar «facturacion» en informes');
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(screen.getByTestId('where')).toHaveTextContent('/invoices');
     expect(screen.queryByRole('combobox')).toBeNull();
   });
 
-  it('says plainly that record search is not there yet', () => {
+  it('deep-links a search into Informes', () => {
     renderShell();
     act(() => {
       fireEvent.keyDown(document, { key: 'k', ctrlKey: true });
     });
-    expect(screen.getByText(/próximamente/i)).toBeInTheDocument();
+    const input = screen.getByRole('combobox', { name: 'Ir a una página' });
+    fireEvent.change(input, { target: { value: 'villa' } });
+    fireEvent.click(screen.getByRole('option', { name: 'Buscar «villa» en informes' }));
+    expect(screen.getByTestId('where')).toHaveTextContent('/reports');
   });
 });

@@ -52,9 +52,31 @@ export async function mockSupabase(page: Page | BrowserContext, auth: AuthMode) 
 
       // Honour simple equality filters (id=eq.x, archived=eq.false) so detail pages resolve.
       for (const [k, v] of url.searchParams) {
-        if (!v.startsWith('eq.')) continue;
-        const want = v.slice(3);
-        rows = rows.filter((r) => r[k] === undefined || String(r[k]) === want);
+        if (v.startsWith('eq.')) {
+          const want = v.slice(3);
+          rows = rows.filter((r) => r[k] === undefined || String(r[k]) === want);
+        } else if (v.startsWith('in.')) {
+          const set = v
+            .slice(3)
+            .replace(/^\(|\)$/g, '')
+            .split(',')
+            .map((x) => x.replace(/^"|"$/g, ''));
+          rows = rows.filter((r) => r[k] === undefined || set.includes(String(r[k])));
+        } else if (v.startsWith('gte.') || v.startsWith('lte.')) {
+          const bound = v.slice(4);
+          rows = rows.filter(
+            (r) =>
+              r[k] === undefined || (v[0] === 'g' ? String(r[k]) >= bound : String(r[k]) <= bound),
+          );
+        } else if (v.startsWith('ilike.')) {
+          // %term% → case-insensitive contains (what ⌘K search sends).
+          const want = v.slice(6).replace(/%/g, '').toLowerCase();
+          rows = rows.filter((r) =>
+            String(r[k] ?? '')
+              .toLowerCase()
+              .includes(want),
+          );
+        }
       }
 
       const range = {

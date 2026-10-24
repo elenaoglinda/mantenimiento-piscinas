@@ -1,11 +1,20 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen, Settings, X } from 'lucide-react';
+import {
+  ChevronRight,
+  ChevronsUpDown,
+  LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Settings,
+  X,
+} from 'lucide-react';
 import { useAuth } from '../../auth/context.js';
 import { Logo } from '../../components/brand/Logo.js';
 import { Avatar } from '../../components/ui/Avatar.js';
 import { UTILITY_PAGES, visibleGroups, type NavItem } from './nav.js';
+import { useShellData } from './shellData.js';
 
 interface SidebarProps {
   /** `rail` is the desktop sidebar; `drawer` is the same content inside the mobile drawer. */
@@ -55,17 +64,21 @@ export function Sidebar({ variant, collapsed = false, onToggleCollapse, onClose 
         </div>
       )}
 
-      {/* Company row — a single company today, laid out for a switcher later. */}
+      {/* Company row: one organisation per account today, so it opens its settings. */}
       {!rail && profile && (
-        <div className="mx-3 mb-3 flex items-center gap-2 rounded-[var(--radius-md)] border border-border bg-surface px-2.5 py-2">
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-text">{profile.org.name}</p>
-            <p className="truncate text-xs text-text-muted">
-              {profile.user.full_name ?? profile.user.email}
-            </p>
-          </div>
-          <ChevronsUpDown aria-hidden size={14} className="shrink-0 text-text-muted" />
-        </div>
+        <Link
+          to="/settings"
+          onClick={onClose}
+          className="mx-3 mb-3 flex items-center gap-2 rounded-[var(--radius-md)] border border-border bg-surface px-2.5 py-2 transition-colors hover:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-medium text-text">{profile.org.name}</span>
+            <span className="block truncate text-xs text-text-muted">
+              {t(`accountType.${profile.org.type}`, { defaultValue: '' })}
+            </span>
+          </span>
+          <ChevronRight aria-hidden size={14} className="shrink-0 text-text-muted" />
+        </Link>
       )}
 
       <nav aria-label={t('shell.mainNav')} className="flex-1 overflow-y-auto px-2 pb-3">
@@ -112,7 +125,11 @@ function SidebarLink({
   onNavigate?: () => void;
 }) {
   const { t } = useTranslation();
+  const shell = useShellData();
+  const count = item.badge ? shell[item.badge] : 0;
   const label = t(item.labelKey);
+  // The count is part of the name, so it's announced, not just drawn.
+  const countText = count > 0 && item.badge ? t(`shell.badges.${item.badge}`, { count }) : null;
   const Icon = item.icon;
 
   return (
@@ -121,7 +138,9 @@ function SidebarLink({
         to={item.to}
         end={item.end}
         onClick={onNavigate}
-        aria-label={rail ? label : undefined}
+        // Rail: icon only, so it needs a label. Expanded: the visible text names it, and the
+        // count is added as hidden text (WCAG 2.5.3: the name must contain what's visible).
+        aria-label={rail ? [label, countText].filter(Boolean).join(', ') : undefined}
         className={({ isActive }) =>
           `relative flex h-9 items-center gap-3 rounded-[var(--radius-md)] text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
             rail ? 'justify-center' : 'px-3'
@@ -141,7 +160,27 @@ function SidebarLink({
               />
             )}
             <Icon aria-hidden size={18} className={isActive ? 'text-accent' : ''} />
-            {!rail && <span className="truncate">{label}</span>}
+            {!rail && <span className="flex-1 truncate">{label}</span>}
+            {count > 0 &&
+              (rail ? (
+                <span
+                  aria-hidden
+                  className={`absolute top-1.5 right-3 size-2 rounded-full ${
+                    item.badge === 'invoiceAttention' ? 'bg-status-red' : 'bg-accent'
+                  }`}
+                />
+              ) : (
+                <span
+                  className={`rounded-[var(--radius-full)] px-1.5 text-xs font-semibold tabular-nums ${
+                    item.badge === 'invoiceAttention'
+                      ? 'bg-status-red-bg text-status-red-text'
+                      : 'bg-surface-muted text-text-muted'
+                  }`}
+                >
+                  <span aria-hidden>{count}</span>
+                  <span className="sr-only">, {countText}</span>
+                </span>
+              ))}
           </>
         )}
       </NavLink>

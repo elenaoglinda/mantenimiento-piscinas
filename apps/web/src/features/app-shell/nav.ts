@@ -26,6 +26,8 @@ export interface NavItem {
   end?: boolean;
   /** Hidden for owner orgs, which only have their implicit self-client. */
   companyOnly?: boolean;
+  /** Which shell count to show next to the item (see ShellDataProvider). */
+  badge?: 'draftReports' | 'invoiceAttention';
 }
 
 export interface NavGroup {
@@ -43,7 +45,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: '/routes', labelKey: 'nav.routes', icon: Route },
       { to: '/pools', labelKey: 'nav.pools', icon: Waves },
-      { to: '/reports', labelKey: 'nav.reports', icon: ClipboardList },
+      { to: '/reports', labelKey: 'nav.reports', icon: ClipboardList, badge: 'draftReports' },
       { to: '/clients', labelKey: 'nav.clients', icon: Users, companyOnly: true },
     ],
   },
@@ -56,7 +58,7 @@ export const NAV_GROUPS: NavGroup[] = [
     id: 'gestion',
     labelKey: 'shell.groups.gestion',
     items: [
-      { to: '/invoices', labelKey: 'nav.invoicing', icon: Receipt },
+      { to: '/invoices', labelKey: 'nav.invoicing', icon: Receipt, badge: 'invoiceAttention' },
       { to: '/team', labelKey: 'nav.team', icon: UserCog },
       // Planned, not rendered yet — add here when the feature exists:
       // { to: '/whatsapp', labelKey: 'nav.whatsappAgent', icon: MessageCircle },

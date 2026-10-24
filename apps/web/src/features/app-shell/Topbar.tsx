@@ -1,9 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Bell, CircleHelp, Menu, Plus, Search } from 'lucide-react';
+import { CircleHelp, Menu, Plus, Search } from 'lucide-react';
 import { useAuth } from '../../auth/context.js';
 import { Breadcrumb, type Crumb } from '../../components/ui/Breadcrumb.js';
 import { resolveRoute } from './nav.js';
+import { NotificationsMenu } from './NotificationsMenu.js';
 import { useCurrentRecordLabel } from './recordCrumb.js';
 
 interface TopbarProps {
@@ -70,14 +71,7 @@ export function Topbar({ drawerOpen, onOpenDrawer, onOpenSearch, menuButtonRef }
       >
         <CircleHelp aria-hidden size={18} />
       </Link>
-      {/* Placeholder until notifications exist; aria-disabled keeps it focusable for the label. */}
-      <IconAction
-        label={`${t('shell.notifications')} · ${t('shell.comingSoon')}`}
-        disabled
-        className="hidden sm:inline-flex"
-      >
-        <Bell aria-hidden size={18} />
-      </IconAction>
+      <NotificationsMenu />
     </header>
   );
 }
@@ -85,13 +79,11 @@ export function Topbar({ drawerOpen, onOpenDrawer, onOpenSearch, menuButtonRef }
 function IconAction({
   label,
   onClick,
-  disabled,
   className = '',
   children,
 }: {
   label: string;
   onClick?: () => void;
-  disabled?: boolean;
   className?: string;
   children: React.ReactNode;
 }) {
@@ -100,11 +92,8 @@ function IconAction({
       type="button"
       aria-label={label}
       title={label}
-      aria-disabled={disabled || undefined}
-      onClick={disabled ? undefined : onClick}
-      className={`inline-flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] text-text-muted transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
-        disabled ? 'cursor-default opacity-60' : 'hover:bg-surface-muted hover:text-text'
-      } ${className}`}
+      onClick={onClick}
+      className={`inline-flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] text-text-muted transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${'hover:bg-surface-muted hover:text-text'} ${className}`}
     >
       {children}
     </button>

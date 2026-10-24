@@ -806,13 +806,27 @@
     },
     "commands": {
       "title": "Ir a una página",
-      "placeholder": "Escribe para buscar una página…",
+      "placeholder": "Busca una página, piscina o cliente…",
       "empty": "Sin resultados",
       "hint": "↑ ↓ para moverte · Intro para abrir · Esc para cerrar",
-      "recordsSoon": "Buscar piscinas, clientes e informes: próximamente",
       "importReport": "Importar parte (foto)",
       "actions": "Acciones",
-      "pages": "Páginas"
+      "pages": "Páginas",
+      "recordsHint": "Escribe dos letras para buscar piscinas y clientes",
+      "searchReports": "Buscar «{{q}}» en informes"
+    },
+    "alerts": {
+      "title": "Avisos",
+      "labelCount_one": "Avisos: {{count}} pendiente",
+      "labelCount_other": "Avisos: {{count}} pendientes",
+      "empty": "Todo en orden",
+      "emptyHint": "Sin lecturas fuera de rango en 30 días ni facturas pendientes de revisar."
+    },
+    "badges": {
+      "draftReports_one": "{{count}} borrador",
+      "draftReports_other": "{{count}} borradores",
+      "invoiceAttention_one": "{{count}} requiere atención",
+      "invoiceAttention_other": "{{count}} requieren atención"
     }
   },
   "ui": {
