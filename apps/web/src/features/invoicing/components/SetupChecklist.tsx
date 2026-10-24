@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Card } from '../../../components/ui/feedback.js';
+import { Check } from 'lucide-react';
+import { Card, CardHeader } from '../../../components/ui/Card.js';
 import { Button } from '../../../components/ui/Button.js';
+import { cn } from '../../../components/ui/utils.js';
 
 /**
  * The three things that must exist before an invoice can be issued, as an ordered checklist
@@ -31,11 +33,11 @@ export function SetupChecklist({
       done: hasFiscal,
       label: t('invoicing.step1'),
       action: canWrite ? (
-        <Link to="/invoices/settings">
-          <Button variant={hasFiscal ? 'ghost' : 'primary'}>
+        <Button asChild size="sm" variant={hasFiscal ? 'ghost' : 'primary'}>
+          <Link to="/invoices/settings">
             {hasFiscal ? t('common.edit') : t('invoicing.editFiscal')}
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       ) : null,
     },
     {
@@ -43,7 +45,7 @@ export function SetupChecklist({
       label: t('invoicing.step2'),
       action:
         canWrite && !hasSeries ? (
-          <Button onClick={onCreateSeries} loading={busy}>
+          <Button size="sm" onClick={onCreateSeries} loading={busy}>
             {t('invoicing.createSeries')}
           </Button>
         ) : null,
@@ -51,22 +53,34 @@ export function SetupChecklist({
     { done: hasInvoice, label: t('invoicing.step3'), action: null },
   ];
 
+  const next = steps.findIndex((s) => !s.done);
+
   return (
     <Card>
-      <h2 className="mb-3 text-lg font-semibold text-text">{t('invoicing.setupTitle')}</h2>
-      <ol className="flex flex-col gap-3">
+      <CardHeader
+        title={t('invoicing.setupTitle')}
+        description={t('invoicing.newInvoiceBlocked')}
+      />
+      <ol className="flex flex-col">
         {steps.map((step, i) => (
-          <li key={i} className="flex flex-wrap items-center justify-between gap-3">
+          <li
+            key={i}
+            aria-current={i === next ? 'step' : undefined}
+            className="flex flex-wrap items-center justify-between gap-3 border-b border-border py-3 last:border-0"
+          >
             <span className="flex items-center gap-3">
               <span
                 aria-hidden
-                className={`inline-flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                className={cn(
+                  'inline-flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
                   step.done
-                    ? 'bg-status-green/15 text-status-green-text'
-                    : 'bg-surface-muted text-text-muted'
-                }`}
+                    ? 'bg-status-green-bg text-status-green-text'
+                    : i === next
+                      ? 'bg-accent-soft text-navy-800'
+                      : 'border border-border text-text-muted',
+                )}
               >
-                {step.done ? '✓' : i + 1}
+                {step.done ? <Check size={14} /> : i + 1}
               </span>
               <span className={step.done ? 'text-text-muted line-through' : 'text-text'}>
                 {step.label}

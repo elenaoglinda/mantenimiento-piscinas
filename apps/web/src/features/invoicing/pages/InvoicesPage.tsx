@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { formatEuros, formatInvoiceNumber } from '@piscinas/shared';
 import { supabase } from '../../../lib/supabase.js';
@@ -11,12 +10,18 @@ import {
   type InvoiceWithRelations,
 } from '../lib/data.js';
 import { toDbFailure, type DbFailure } from '../../../lib/dbError.js';
-import { Alert, Card, Spinner } from '../../../components/ui/feedback.js';
+import { Plus, ReceiptText } from 'lucide-react';
+import { Alert } from '../../../components/ui/feedback.js';
 import { Button } from '../../../components/ui/Button.js';
+import { DataTable, TableToolbar, type Column } from '../../../components/ui/DataTable.js';
+import { Sheet } from '../../../components/ui/Dialog.js';
+import { EmptyState } from '../../../components/ui/EmptyState.js';
+import { NativeSelect } from '../../../components/ui/Input.js';
 import { TextField } from '../../../components/ui/TextField.js';
 import { SelectField } from '../../../components/ui/fields.js';
+import { cn, focusRing, fold } from '../../../components/ui/utils.js';
 import { FiscalStateBadge, PaymentBadge } from '../components/FiscalStateBadge.js';
-import { FacturacionNav, TestEnvBadge } from '../components/FacturacionNav.js';
+import { InvoicingHeader } from '../components/InvoicingHeader.js';
 import { SetupChecklist } from '../components/SetupChecklist.js';
 import { DbFailureAlert } from '../components/DbFailureAlert.js';
 import type { Tables } from '../../../lib/database.types.js';
@@ -24,8 +29,9 @@ import type { Tables } from '../../../lib/database.types.js';
 /**
  * Invoice history, plus the setup a new org must complete before anything can be issued.
  *
- * The create form is always rendered — disabled with a reason when setup is incomplete, never
- * hidden. Hiding it previously made the feature look absent rather than blocked.
+ * "Nueva factura" is always offered to writers — disabled, with the setup checklist explaining
+ * why, when setup is incomplete; never hidden. Hiding it previously made the feature look absent
+ * rather than blocked. The form itself opens in a side sheet.
  */
 export function InvoicesPage() {
   const { t } = useTranslation();
@@ -49,6 +55,8 @@ export function InvoicesPage() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterClient, setFilterClient] = useState('all');
   const [filterYear, setFilterYear] = useState('all');
+  const [search, setSearch] = useState('');
+  const [creating, setCreating] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -98,9 +106,18 @@ export function InvoicesPage() {
         if (filterYear !== 'all' && (i.issue_date ?? i.created_at).slice(0, 4) !== filterYear) {
           return false;
         }
+        const q = fold(search.trim());
+        if (
+          q &&
+          !fold(
+            `${formatInvoiceNumber(i.invoice_series?.code ?? '', i.number)} ${i.client?.name ?? ''} ${i.descripcion}`,
+          ).includes(q)
+        ) {
+          return false;
+        }
         return true;
       }),
-    [invoices, tab, attention, filterStatus, filterClient, filterYear],
+    [invoices, tab, attention, filterStatus, filterClient, filterYear, search],
   );
 
   async function onCreateSeries() {
@@ -130,32 +147,103 @@ export function InvoicesPage() {
     if (f) setFailure(f);
     else {
       setDescripcion('');
+      setCreating(false);
       await load();
     }
     setBusy(false);
   }
 
-  if (loading) return <Spinner />;
-
   const hasFiscal = Boolean(fiscal);
   const hasSeries = series.length > 0;
   const setupDone = hasFiscal && hasSeries;
 
+  // Totals of what the filters show. Drafts and void invoices carry no fiscal amount.
+  const counted = visible.filter((i) => i.status === 'issued');
+  const sum = (k: 'base_cents' | 'tax_cents' | 'total_cents') =>
+    counted.reduce((n, i) => n + Number(i[k]), 0);
+
+  const columns: Column<InvoiceWithRelations>[] = [
+    {
+      id: 'number',
+      header: t('invoicing.number'),
+      cell: (inv) => (
+        <span className="tabular-nums">
+          {formatInvoiceNumber(inv.invoice_series?.code ?? '', inv.number)}
+        </span>
+      ),
+      sortValue: (inv) => inv.number,
+    },
+    {
+      id: 'date',
+      header: t('invoicing.issueDate'),
+      cell: (inv) =>
+        inv.issue_date ? (
+          <time dateTime={inv.issue_date}>
+            {new Date(inv.issue_date).toLocaleDateString('es-ES')}
+          </time>
+        ) : (
+          <span className="text-text-muted">{t('invoicing.status.draft')}</span>
+        ),
+      sortValue: (inv) => inv.issue_date,
+      hideBelow: 'sm',
+    },
+    {
+      id: 'client',
+      header: t('invoicing.client'),
+      cell: (inv) => (
+        <span className="flex flex-col">
+          <span>{inv.client?.name ?? '—'}</span>
+          <span className="max-w-64 truncate text-xs text-text-muted">{inv.descripcion}</span>
+        </span>
+      ),
+      sortValue: (inv) => inv.client?.name,
+      hideBelow: 'md',
+    },
+    {
+      id: 'total',
+      header: t('invoicing.total'),
+      cell: (inv) => formatEuros(Number(inv.total_cents)),
+      sortValue: (inv) => Number(inv.total_cents),
+      align: 'right',
+    },
+    {
+      id: 'state',
+      header: t('invoicing.state'),
+      cell: (inv) => (
+        <span className="flex flex-wrap items-center gap-1.5">
+          <FiscalStateBadge invoice={{ ...inv, rectified: rectified.has(inv.id) }} />
+          <PaymentBadge
+            paymentStatus={inv.payment_status}
+            dueDate={inv.due_date}
+            status={inv.status}
+          />
+        </span>
+      ),
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold text-text">{t('invoicing.title')}</h1>
-          <p className="text-sm text-text-muted">{t('invoicing.subtitle')}</p>
-        </div>
-        <TestEnvBadge />
-      </div>
+      <InvoicingHeader
+        className="mb-1"
+        actions={
+          canWrite && (
+            <Button
+              onClick={() => setCreating(true)}
+              disabled={!setupDone || loading}
+              title={!setupDone ? t('invoicing.newInvoiceBlocked') : undefined}
+            >
+              <Plus aria-hidden size={16} />
+              {t('invoicing.newInvoice')}
+            </Button>
+          )
+        }
+      />
 
-      <FacturacionNav />
       <DbFailureAlert failure={failure} />
-      <Alert tone="info">{t('invoicing.testModeNotice')}</Alert>
+      <Alert tone="warning">{t('invoicing.testModeNotice')}</Alert>
 
-      {!setupDone && (
+      {!loading && !setupDone && (
         <SetupChecklist
           hasFiscal={hasFiscal}
           hasSeries={hasSeries}
@@ -166,48 +254,150 @@ export function InvoicesPage() {
         />
       )}
 
-      {canWrite && (
-        <Card>
-          <h2 className="mb-3 text-lg font-semibold text-text">{t('invoicing.newInvoice')}</h2>
-          {!setupDone && (
-            <p className="mb-3 text-sm text-text-muted">{t('invoicing.newInvoiceBlocked')}</p>
-          )}
-          <div className="grid gap-3 sm:grid-cols-3">
-            <SelectField
-              label={t('invoicing.series')}
-              value={seriesId}
-              onChange={(e) => setSeriesId(e.target.value)}
-              disabled={!setupDone}
-            >
-              <option value="">—</option>
-              {series.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.code}
-                </option>
-              ))}
-            </SelectField>
-            <SelectField
-              label={t('invoicing.client')}
-              value={clientId}
-              onChange={(e) => setClientId(e.target.value)}
-              disabled={!setupDone}
-            >
-              <option value="">—</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </SelectField>
-            <TextField
-              label={t('invoicing.descripcion')}
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-              placeholder={t('invoicing.descripcionPlaceholder')}
-              disabled={!setupDone}
-            />
+      <section className="flex flex-col">
+        <TableToolbar
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder={t('invoicing.searchPlaceholder')}
+        >
+          <div
+            role="group"
+            aria-label={t('invoicing.history')}
+            className="inline-flex rounded-[var(--radius-md)] border border-border bg-surface p-0.5"
+          >
+            {(['todas', 'rectificativas'] as const).map((x) => (
+              <button
+                key={x}
+                type="button"
+                aria-pressed={tab === x}
+                onClick={() => setTab(x)}
+                className={cn(
+                  'h-8 rounded-[var(--radius-sm)] px-3 text-sm font-medium transition-colors',
+                  focusRing,
+                  tab === x ? 'bg-accent-soft text-navy-800' : 'text-text-muted hover:text-text',
+                )}
+              >
+                {t(`invoicing.tab.${x}`)}
+              </button>
+            ))}
           </div>
-          <div className="mt-3">
+          {invoices.length > 0 && (
+            <>
+              <NativeSelect
+                aria-label={t('invoicing.filterStatus')}
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="h-9 w-auto"
+              >
+                <option value="all">
+                  {t('invoicing.filterStatus')}: {t('invoicing.filterAll')}
+                </option>
+                <option value="attention">{t('invoicing.filterAttention')}</option>
+                <option value="draft">{t('invoicing.status.draft')}</option>
+                <option value="not_sent">{t('invoicing.sendStatus.not_sent')}</option>
+                <option value="queued">{t('invoicing.sendStatus.queued')}</option>
+                <option value="sending">{t('invoicing.sendStatus.sending')}</option>
+                <option value="accepted">{t('invoicing.sendStatus.accepted')}</option>
+                <option value="rejected">{t('invoicing.sendStatus.rejected')}</option>
+                <option value="failed">{t('invoicing.sendStatus.failed')}</option>
+              </NativeSelect>
+              <NativeSelect
+                aria-label={t('invoicing.filterClient')}
+                value={filterClient}
+                onChange={(e) => setFilterClient(e.target.value)}
+                className="h-9 w-auto"
+              >
+                <option value="all">
+                  {t('invoicing.filterClient')}: {t('invoicing.filterAll')}
+                </option>
+                {clients.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </NativeSelect>
+              <NativeSelect
+                aria-label={t('invoicing.filterYear')}
+                value={filterYear}
+                onChange={(e) => setFilterYear(e.target.value)}
+                className="h-9 w-auto"
+              >
+                <option value="all">
+                  {t('invoicing.filterYear')}: {t('invoicing.filterAll')}
+                </option>
+                {years.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </NativeSelect>
+            </>
+          )}
+        </TableToolbar>
+
+        {counted.length > 0 && (
+          <dl className="mb-3 grid grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-lg)] border border-border bg-border sm:grid-cols-4">
+            {[
+              [t('invoicing.totalsCount'), String(counted.length)],
+              [t('invoicing.lineTotal'), formatEuros(sum('base_cents'))],
+              [t('invoicing.taxRate'), formatEuros(sum('tax_cents'))],
+              [t('invoicing.total'), formatEuros(sum('total_cents'))],
+            ].map(([label, value]) => (
+              <div key={label} className="bg-surface px-4 py-3">
+                <dt className="text-xs text-text-muted">{label}</dt>
+                <dd className="font-display text-lg font-semibold text-text tabular-nums">
+                  {value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        )}
+
+        <DataTable
+          caption={t('invoicing.history')}
+          columns={columns}
+          rows={visible}
+          getRowId={(inv) => inv.id}
+          rowHref={(inv) => `/invoices/${inv.id}`}
+          loading={loading}
+          empty={
+            invoices.length === 0 ? (
+              <EmptyState
+                icon={<ReceiptText size={22} />}
+                title={t('invoicing.empty')}
+                description={
+                  setupDone ? t('invoicing.emptyHint') : t('invoicing.newInvoiceBlocked')
+                }
+                action={
+                  canWrite &&
+                  setupDone && (
+                    <Button onClick={() => setCreating(true)}>
+                      <Plus aria-hidden size={16} />
+                      {t('invoicing.newInvoice')}
+                    </Button>
+                  )
+                }
+              />
+            ) : (
+              <EmptyState
+                compact
+                icon={<ReceiptText size={20} />}
+                title={t('invoicing.noMatches')}
+              />
+            )
+          }
+        />
+      </section>
+
+      <Sheet
+        open={creating}
+        onOpenChange={setCreating}
+        title={t('invoicing.newInvoice')}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setCreating(false)}>
+              {t('common.cancel')}
+            </Button>
             <Button
               onClick={onCreateDraft}
               loading={busy}
@@ -215,127 +405,47 @@ export function InvoicesPage() {
             >
               {t('invoicing.createDraft')}
             </Button>
-          </div>
-        </Card>
-      )}
-
-      <Card>
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-1">
-            {(['todas', 'rectificativas'] as const).map((x) => (
-              <button
-                key={x}
-                type="button"
-                onClick={() => setTab(x)}
-                className={`rounded-[var(--radius-md)] px-3 py-1.5 text-sm transition-colors ${
-                  tab === x
-                    ? 'bg-surface-muted font-medium text-text'
-                    : 'text-text-muted hover:text-text'
-                }`}
-              >
-                {t(`invoicing.tab.${x}`)}
-              </button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <DbFailureAlert failure={failure} />
+          <SelectField
+            label={t('invoicing.series')}
+            value={seriesId}
+            onChange={(e) => setSeriesId(e.target.value)}
+            disabled={!setupDone}
+          >
+            <option value="">—</option>
+            {series.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.code}
+              </option>
             ))}
-          </div>
-          <Link to="/invoices/settings" className="text-sm text-accent hover:underline">
-            {t('invoicing.editFiscal')}
-          </Link>
+          </SelectField>
+          <SelectField
+            label={t('invoicing.client')}
+            value={clientId}
+            onChange={(e) => setClientId(e.target.value)}
+            disabled={!setupDone}
+          >
+            <option value="">—</option>
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </SelectField>
+          <TextField
+            label={t('invoicing.descripcion')}
+            value={descripcion}
+            onChange={(e) => setDescripcion(e.target.value)}
+            placeholder={t('invoicing.descripcionPlaceholder')}
+            disabled={!setupDone}
+          />
+          <p className="text-xs text-text-muted">{t('invoicing.draftHint')}</p>
         </div>
-
-        {invoices.length > 0 && (
-          <div className="mb-3 grid gap-3 sm:grid-cols-3">
-            <SelectField
-              label={t('invoicing.filterStatus')}
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              <option value="all">{t('invoicing.filterAll')}</option>
-              <option value="attention">{t('invoicing.filterAttention')}</option>
-              <option value="draft">{t('invoicing.status.draft')}</option>
-              <option value="not_sent">{t('invoicing.sendStatus.not_sent')}</option>
-              <option value="queued">{t('invoicing.sendStatus.queued')}</option>
-              <option value="sending">{t('invoicing.sendStatus.sending')}</option>
-              <option value="accepted">{t('invoicing.sendStatus.accepted')}</option>
-              <option value="rejected">{t('invoicing.sendStatus.rejected')}</option>
-              <option value="failed">{t('invoicing.sendStatus.failed')}</option>
-            </SelectField>
-            <SelectField
-              label={t('invoicing.filterClient')}
-              value={filterClient}
-              onChange={(e) => setFilterClient(e.target.value)}
-            >
-              <option value="all">{t('invoicing.filterAll')}</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </SelectField>
-            <SelectField
-              label={t('invoicing.filterYear')}
-              value={filterYear}
-              onChange={(e) => setFilterYear(e.target.value)}
-            >
-              <option value="all">{t('invoicing.filterAll')}</option>
-              {years.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </SelectField>
-          </div>
-        )}
-
-        {invoices.length === 0 ? (
-          <p className="text-text-muted">{t('invoicing.empty')}</p>
-        ) : visible.length === 0 ? (
-          <p className="text-text-muted">{t('invoicing.noMatches')}</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[34rem] text-sm">
-              <thead>
-                <tr className="text-left text-text-muted">
-                  <th className="py-1 pr-3 font-medium">{t('invoicing.number')}</th>
-                  <th className="py-1 pr-3 font-medium">{t('invoicing.issueDate')}</th>
-                  <th className="py-1 pr-3 font-medium">{t('invoicing.client')}</th>
-                  <th className="py-1 pr-3 text-right font-medium">{t('invoicing.total')}</th>
-                  <th className="py-1 pr-3 font-medium">{t('invoicing.state')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((inv) => (
-                  <tr key={inv.id} className="border-t border-border">
-                    <td className="py-2 pr-3">
-                      <Link to={`/invoices/${inv.id}`} className="text-accent hover:underline">
-                        {formatInvoiceNumber(inv.invoice_series?.code ?? '', inv.number)}
-                      </Link>
-                    </td>
-                    <td className="py-2 pr-3 text-text-muted">
-                      {inv.issue_date
-                        ? new Date(inv.issue_date).toLocaleDateString('es-ES')
-                        : t('invoicing.status.draft')}
-                    </td>
-                    <td className="py-2 pr-3 text-text">{inv.client?.name ?? '—'}</td>
-                    <td className="py-2 pr-3 text-right text-text">
-                      {formatEuros(Number(inv.total_cents))}
-                    </td>
-                    <td className="py-2 pr-3">
-                      <span className="flex flex-wrap items-center gap-1.5">
-                        <FiscalStateBadge invoice={{ ...inv, rectified: rectified.has(inv.id) }} />
-                        <PaymentBadge
-                          paymentStatus={inv.payment_status}
-                          dueDate={inv.due_date}
-                          status={inv.status}
-                        />
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
+      </Sheet>
     </div>
   );
 }

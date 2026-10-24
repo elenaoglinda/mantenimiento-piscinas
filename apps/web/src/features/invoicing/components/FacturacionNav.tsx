@@ -1,5 +1,6 @@
-import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { StatusPill } from '../../../components/ui/StatusPill.js';
+import { TabsNav } from '../../../components/ui/Tabs.js';
 
 /**
  * Secondary navigation for the Facturación section.
@@ -20,39 +21,16 @@ const ITEMS = [
 export function FacturacionNav() {
   const { t } = useTranslation();
   return (
-    <nav className="-mx-1 overflow-x-auto">
-      <ul className="flex min-w-max items-center gap-1 border-b border-border pb-px">
-        {ITEMS.map((item) =>
-          item.soon ? (
-            <li key={item.key}>
-              <span
-                aria-disabled
-                title={t('invoicing.nav.soon')}
-                className="inline-block cursor-not-allowed rounded-t-[var(--radius-md)] px-3 py-2 text-sm text-text-muted opacity-50"
-              >
-                {t(`invoicing.nav.${item.key}`)}
-              </span>
-            </li>
-          ) : (
-            <li key={item.key}>
-              <NavLink
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  `inline-block rounded-t-[var(--radius-md)] px-3 py-2 text-sm transition-colors ${
-                    isActive
-                      ? 'border-b-2 border-accent font-medium text-accent'
-                      : 'text-text-muted hover:text-text'
-                  }`
-                }
-              >
-                {t(`invoicing.nav.${item.key}`)}
-              </NavLink>
-            </li>
-          ),
-        )}
-      </ul>
-    </nav>
+    <TabsNav
+      label={t('invoicing.sectionTitle')}
+      items={ITEMS.map((item) => ({
+        to: item.to,
+        end: item.end,
+        label: t(`invoicing.nav.${item.key}`),
+        disabled: item.soon,
+        hint: item.soon ? t('invoicing.nav.soon') : undefined,
+      }))}
+    />
   );
 }
 
@@ -62,10 +40,5 @@ export function FacturacionNav() {
  */
 export function TestEnvBadge() {
   const { t } = useTranslation();
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-status-amber/15 px-2.5 py-1 text-xs font-semibold text-status-amber-text">
-      <span aria-hidden className="size-1.5 rounded-full bg-status-amber" />
-      {t('invoicing.testBadge')}
-    </span>
-  );
+  return <StatusPill tone="amber">{t('invoicing.testBadge')}</StatusPill>;
 }

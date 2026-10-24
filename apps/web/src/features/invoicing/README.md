@@ -15,7 +15,8 @@ components/FiscalStateBadge.tsx fiscal badge + the separate payment badge
 components/InvoiceTimeline.tsx  the append-only history of one invoice
 components/RejectionPanel.tsx   the three legal exits from a rejected record
 components/RectificativaDialog.tsx  R1–R5, por diferencias / por sustitución
-components/FacturacionNav.tsx   section sub-nav + the TEST environment badge
+components/InvoicingHeader.tsx  the header every tab shares: "Facturación", TEST badge, tabs
+components/FacturacionNav.tsx   section sub-nav (kit TabsNav) + the TEST environment badge
 components/DbFailureAlert.tsx   renders a DbFailure as something actionable
 lib/data.ts                  all Supabase access + the Veri*Factu send orchestration
 ```

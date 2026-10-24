@@ -13,7 +13,7 @@ export function InvoiceTimeline({ entries }: { entries: Tables<'invoice_activity
   if (entries.length === 0) {
     return (
       <Card>
-        <h2 className="mb-2 text-lg font-semibold text-text">{t('invoicing.timeline')}</h2>
+        <h2 className="mb-2 text-base font-semibold text-text">{t('invoicing.timeline')}</h2>
         <p className="text-sm text-text-muted">{t('invoicing.timelineEmpty')}</p>
       </Card>
     );
@@ -21,7 +21,7 @@ export function InvoiceTimeline({ entries }: { entries: Tables<'invoice_activity
 
   return (
     <Card>
-      <h2 className="mb-3 text-lg font-semibold text-text">{t('invoicing.timeline')}</h2>
+      <h2 className="mb-3 text-base font-semibold text-text">{t('invoicing.timeline')}</h2>
       <ol className="flex flex-col gap-3">
         {entries.map((e) => {
           const payload = (e.payload ?? {}) as Record<string, unknown>;

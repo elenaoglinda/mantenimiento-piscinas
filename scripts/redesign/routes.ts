@@ -19,7 +19,7 @@ export const ROUTES: { slug: string; path: string; auth: AuthMode }[] = [
   { slug: 'invoices', path: '/invoices', auth: 'full' },
   { slug: 'invoices-resumen', path: '/invoices/resumen', auth: 'full' },
   { slug: 'invoices-settings', path: '/invoices/settings', auth: 'full' },
-  { slug: 'invoice-detail', path: '/invoices/demo', auth: 'full' },
+  { slug: 'invoice-detail', path: '/invoices/inv-1', auth: 'full' },
   { slug: 'clients', path: '/clients', auth: 'full' },
   { slug: 'team', path: '/team', auth: 'full' },
 ];

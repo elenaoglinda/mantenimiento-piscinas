@@ -179,7 +179,7 @@ export function DataTable<T>({
                         key={col.id}
                         className={cn(
                           'h-12 px-4 py-2 align-middle text-text',
-                          col.align === 'right' && 'text-right tabular-nums',
+                          col.align === 'right' && 'text-right whitespace-nowrap tabular-nums',
                           col.hideBelow && hide[col.hideBelow],
                           col.className,
                         )}

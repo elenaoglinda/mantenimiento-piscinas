@@ -661,7 +661,13 @@
       "unknown_outcome": "No sabemos si el envío llegó. No se ha reenviado para no duplicar el registro; actualiza el estado.",
       "failed": "No se ha podido enviar la factura.",
       "invalidLine": "Revisa el concepto, la cantidad y el precio."
-    }
+    },
+    "sectionTitle": "Facturación",
+    "searchPlaceholder": "Buscar por número, cliente o concepto",
+    "totalsCount": "Facturas emitidas",
+    "emptyHint": "Crea un borrador, añade las líneas y emítelo cuando esté listo.",
+    "draftHint": "Se crea como borrador: podrás añadir líneas y revisarla antes de emitirla.",
+    "actions": "Acciones"
   },
   "siloe": {
     "title": "Exportar a SILOÉ",
