@@ -1,4 +1,8 @@
 import type { ReactNode } from 'react';
+import { CircleAlert, CircleCheck, Info, TriangleAlert } from 'lucide-react';
+import { cn } from './utils.js';
+
+export { Card } from './Card.js';
 
 export function Spinner({ label }: { label?: string }) {
   return (
@@ -12,31 +16,44 @@ export function Spinner({ label }: { label?: string }) {
   );
 }
 
-type AlertTone = 'error' | 'success' | 'info';
+type AlertTone = 'error' | 'warning' | 'success' | 'info';
 
 const toneStyles: Record<AlertTone, string> = {
-  error: 'bg-status-red-bg text-status-red-text',
-  success: 'bg-status-green-bg text-status-green-text',
-  info: 'bg-surface-muted text-text',
+  error: 'border-status-red/30 bg-status-red-bg text-status-red-text',
+  warning: 'border-status-amber/30 bg-status-amber-bg text-status-amber-text',
+  success: 'border-status-green/30 bg-status-green-bg text-status-green-text',
+  info: 'border-border bg-surface-muted text-text',
 };
 
-export function Alert({ tone = 'info', children }: { tone?: AlertTone; children: ReactNode }) {
+const toneIcon = {
+  error: CircleAlert,
+  warning: TriangleAlert,
+  success: CircleCheck,
+  info: Info,
+} as const;
+
+/** Inline message. Errors are announced immediately (`role="alert"`), the rest politely. */
+export function Alert({
+  tone = 'info',
+  className,
+  children,
+}: {
+  tone?: AlertTone;
+  className?: string;
+  children: ReactNode;
+}) {
+  const Icon = toneIcon[tone];
   return (
     <div
       role={tone === 'error' ? 'alert' : 'status'}
-      className={`rounded-[var(--radius-md)] px-4 py-3 text-sm ${toneStyles[tone]}`}
+      className={cn(
+        'flex items-start gap-2.5 rounded-[var(--radius-md)] border px-4 py-3 text-sm',
+        toneStyles[tone],
+        className,
+      )}
     >
-      {children}
-    </div>
-  );
-}
-
-export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return (
-    <div
-      className={`rounded-[var(--radius-lg)] border border-border bg-surface p-6 shadow-sm ${className}`}
-    >
-      {children}
+      <Icon aria-hidden size={16} className="mt-0.5 shrink-0" />
+      <div className="min-w-0 flex-1">{children}</div>
     </div>
   );
 }

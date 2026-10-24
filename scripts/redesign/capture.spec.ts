@@ -32,6 +32,11 @@ const ROUTES: { slug: string; path: string; auth: AuthMode }[] = [
   { slug: 'team', path: '/team', auth: 'full' },
 ];
 
+// Added by the redesign; the "before" build doesn't have it.
+if (process.env.SHOT_DIR !== 'before') {
+  ROUTES.push({ slug: 'design', path: '/design', auth: 'none' });
+}
+
 const WIDTHS = [
   { w: 1440, h: 900 },
   { w: 1024, h: 768 },

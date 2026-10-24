@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider.js';
 import { PublicOnly, RequireAuth, RequireOnboarded } from './auth/guards.js';
@@ -23,48 +24,70 @@ import {
 } from './features/invoicing/index.js';
 import { RoutesPage } from './pages/RoutesPage.js';
 import { InvitePage } from './pages/InvitePage.js';
+import { Toaster } from './components/ui/Toast.js';
+import { TooltipProvider } from './components/ui/Tooltip.js';
+import { showDesignPage } from './features/design/visibility.js';
+
+// Internal component gallery: dev and Vercel previews only, and never in the main bundle.
+const DesignPage = lazy(() =>
+  import('./features/design/DesignPage.js').then((m) => ({ default: m.DesignPage })),
+);
 
 export function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Public: reachable in any auth state; the page itself branches on session. */}
-          <Route path="/invite/:token" element={<InvitePage />} />
+      <TooltipProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public: reachable in any auth state; the page itself branches on session. */}
+            <Route path="/invite/:token" element={<InvitePage />} />
 
-          <Route element={<PublicOnly />}>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-          </Route>
+            {showDesignPage && (
+              <Route
+                path="/design"
+                element={
+                  <Suspense fallback={null}>
+                    <DesignPage />
+                  </Suspense>
+                }
+              />
+            )}
 
-          <Route element={<RequireAuth />}>
-            <Route path="/onboarding" element={<OnboardingPage />} />
+            <Route element={<PublicOnly />}>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+            </Route>
 
-            <Route element={<RequireOnboarded />}>
-              <Route element={<AppShell />}>
-                <Route index element={<DashboardPage />} />
-                <Route path="/pools" element={<PoolsPage />} />
-                <Route path="/pools/:poolId" element={<PoolDetailPage />} />
-                <Route path="/reports" element={<ReportsPage />} />
-                <Route path="/reports/new" element={<ReportFormPage />} />
-                <Route path="/reports/import" element={<ImportReportPage />} />
-                <Route path="/reports/:reportId" element={<ReportDetailPage />} />
-                <Route path="/reports/:reportId/edit" element={<ReportFormPage />} />
-                <Route path="/routes" element={<RoutesPage />} />
-                <Route path="/siloe" element={<SiloeExportPage />} />
-                <Route path="/invoices" element={<InvoicesPage />} />
-                <Route path="/invoices/resumen" element={<ResumenPage />} />
-                <Route path="/invoices/settings" element={<BillingSettingsPage />} />
-                <Route path="/invoices/:invoiceId" element={<InvoiceDetailPage />} />
-                <Route path="/clients" element={<ClientsPage />} />
-                <Route path="/team" element={<TeamPage />} />
+            <Route element={<RequireAuth />}>
+              <Route path="/onboarding" element={<OnboardingPage />} />
+
+              <Route element={<RequireOnboarded />}>
+                <Route element={<AppShell />}>
+                  <Route index element={<DashboardPage />} />
+                  <Route path="/pools" element={<PoolsPage />} />
+                  <Route path="/pools/:poolId" element={<PoolDetailPage />} />
+                  <Route path="/reports" element={<ReportsPage />} />
+                  <Route path="/reports/new" element={<ReportFormPage />} />
+                  <Route path="/reports/import" element={<ImportReportPage />} />
+                  <Route path="/reports/:reportId" element={<ReportDetailPage />} />
+                  <Route path="/reports/:reportId/edit" element={<ReportFormPage />} />
+                  <Route path="/routes" element={<RoutesPage />} />
+                  <Route path="/siloe" element={<SiloeExportPage />} />
+                  <Route path="/invoices" element={<InvoicesPage />} />
+                  <Route path="/invoices/resumen" element={<ResumenPage />} />
+                  <Route path="/invoices/settings" element={<BillingSettingsPage />} />
+                  <Route path="/invoices/:invoiceId" element={<InvoiceDetailPage />} />
+                  <Route path="/clients" element={<ClientsPage />} />
+                  <Route path="/team" element={<TeamPage />} />
+                </Route>
               </Route>
             </Route>
-          </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+        <Toaster />
+      </TooltipProvider>
     </AuthProvider>
   );
 }

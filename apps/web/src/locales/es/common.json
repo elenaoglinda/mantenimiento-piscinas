@@ -22,7 +22,8 @@
     "none": "—",
     "confirmDelete": "¿Seguro que quieres eliminar esto?",
     "genericError": "Algo ha salido mal. Inténtalo de nuevo.",
-    "requiredField": "Este campo es obligatorio"
+    "requiredField": "Este campo es obligatorio",
+    "close": "Cerrar"
   },
   "status": {
     "green": "Correcto",
@@ -685,7 +686,12 @@
       "empty": "Sin resultados",
       "hint": "↑ ↓ para moverte · Intro para abrir · Esc para cerrar",
       "recordsSoon": "Buscar piscinas, clientes e informes: próximamente",
-      "importReport": "Importar parte (foto)"
+      "importReport": "Importar parte (foto)",
+      "actions": "Acciones",
+      "pages": "Páginas"
     }
+  },
+  "ui": {
+    "notifications": "Notificaciones"
   }
 }

@@ -4,6 +4,11 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  define: {
+    // Vercel sets VERCEL_ENV (production | preview | development) at build time. Exposed so the
+    // internal /design page can exist on previews but never in production.
+    'import.meta.env.VITE_VERCEL_ENV': JSON.stringify(process.env.VERCEL_ENV ?? ''),
+  },
   server: {
     port: 5173,
   },

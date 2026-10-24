@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../auth/context.js';
 import { Logo } from '../../components/brand/Logo.js';
+import { Avatar } from '../../components/ui/Avatar.js';
 import { visibleGroups, type NavItem } from './nav.js';
 
 /** Where "Ayuda" points until there is real help content. See README → follow-ups. */
@@ -168,11 +169,6 @@ function SidebarLink({
   );
 }
 
-function initials(name: string | null | undefined): string {
-  const parts = (name ?? '').trim().split(/\s+/).filter(Boolean);
-  return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || '·';
-}
-
 /** Avatar + name + role; opens a small menu with Ajustes and Cerrar sesión. */
 function UserCard({ rail }: { rail: boolean }) {
   const { t } = useTranslation();
@@ -229,12 +225,7 @@ function UserCard({ rail }: { rail: boolean }) {
           rail ? 'justify-center' : 'px-2'
         }`}
       >
-        <span
-          aria-hidden
-          className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold text-navy-800"
-        >
-          {initials(name)}
-        </span>
+        <Avatar name={name} />
         {!rail && (
           <>
             <span className="min-w-0 flex-1">

@@ -1,7 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Bell, ChevronRight, CircleHelp, Menu, Plus, Search } from 'lucide-react';
+import { Bell, CircleHelp, Menu, Plus, Search } from 'lucide-react';
 import { useAuth } from '../../auth/context.js';
+import { Breadcrumb, type Crumb } from '../../components/ui/Breadcrumb.js';
 import { resolveRoute } from './nav.js';
 
 const HELP_URL = 'https://cloro.app';
@@ -33,7 +34,7 @@ export function Topbar({ drawerOpen, onOpenDrawer, onOpenSearch, menuButtonRef }
         <Menu aria-hidden size={20} />
       </button>
 
-      <Breadcrumb />
+      <TopbarBreadcrumb />
 
       <button
         type="button"
@@ -117,50 +118,16 @@ function IconAction({
  * Group / page / sub-page, derived from the URL by the same rule as the sidebar's active
  * state. Record names (e.g. a pool's) are page data the shell doesn't load — see README.
  */
-function Breadcrumb() {
+function TopbarBreadcrumb() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const { group, item, subKey } = resolveRoute(pathname);
   if (!item) return <div className="flex-1" />;
 
-  const crumbs: { label: string; to?: string }[] = [];
+  const crumbs: Crumb[] = [];
   if (group?.labelKey) crumbs.push({ label: t(group.labelKey) });
   crumbs.push({ label: t(item.labelKey), to: subKey ? item.to : undefined });
   if (subKey) crumbs.push({ label: t(subKey) });
 
-  return (
-    <nav aria-label={t('shell.breadcrumb')} className="min-w-0 flex-1">
-      <ol className="flex min-w-0 items-center gap-1.5 text-sm">
-        {crumbs.map((c, i) => {
-          const last = i === crumbs.length - 1;
-          return (
-            <li
-              key={i}
-              // On phones only the current page fits; the trail returns from `sm` up.
-              className={`min-w-0 items-center gap-1.5 ${last ? 'flex' : 'hidden sm:flex'}`}
-            >
-              {i > 0 && (
-                <ChevronRight
-                  aria-hidden
-                  size={14}
-                  className="hidden shrink-0 text-text-muted sm:block"
-                />
-              )}
-              {last ? (
-                <span aria-current="page" className="truncate font-medium text-text">
-                  {c.label}
-                </span>
-              ) : c.to ? (
-                <Link to={c.to} className="truncate text-text-muted hover:text-text">
-                  {c.label}
-                </Link>
-              ) : (
-                <span className="truncate text-text-muted">{c.label}</span>
-              )}
-            </li>
-          );
-        })}
-      </ol>
-    </nav>
-  );
+  return <Breadcrumb items={crumbs} label={t('shell.breadcrumb')} className="flex-1" />;
 }

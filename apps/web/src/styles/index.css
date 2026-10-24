@@ -115,3 +115,77 @@ time {
     font-size: 16px;
   }
 }
+
+/* Motion for the component kit (dialogs, sheets, toasts). Off when the user asks for less. */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    /* `transform`, not `translate`: Tailwind v4 centres with the separate `translate` property. */
+    transform: translateY(8px);
+  }
+}
+@keyframes sheet-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* react-day-picker, themed with our tokens (see components/ui/DatePicker.tsx). */
+.cloro-calendar .rdp-root {
+  --rdp-accent-color: var(--accent);
+  --rdp-accent-background-color: var(--accent-soft);
+  --rdp-today-color: var(--accent);
+  --rdp-day-height: 36px;
+  --rdp-day-width: 36px;
+  --rdp-day_button-height: 34px;
+  --rdp-day_button-width: 34px;
+  --rdp-day_button-border-radius: var(--radius-md);
+  --rdp-nav_button-height: 2rem;
+  --rdp-nav_button-width: 2rem;
+  font-size: 0.875rem;
+}
+.cloro-calendar .rdp-caption_label {
+  font-family: var(--font-heading);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.cloro-calendar .rdp-weekday {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  opacity: 1;
+}
+.cloro-calendar .rdp-selected .rdp-day_button {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-contrast);
+}
+.cloro-calendar .rdp-day_button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}

@@ -22,7 +22,8 @@ export default defineConfig({
   },
   webServer: {
     command:
-      'VITE_SUPABASE_URL=https://mock.supabase.co VITE_SUPABASE_ANON_KEY=mock-anon-key ' +
+      // VERCEL_ENV=preview includes the internal /design gallery, as on a Vercel preview.
+      'VITE_SUPABASE_URL=https://mock.supabase.co VITE_SUPABASE_ANON_KEY=mock-anon-key VERCEL_ENV=preview ' +
       'npm run build -w @piscinas/web && npm run preview -w @piscinas/web -- --port 4174 --strictPort',
     url: 'http://localhost:4174',
     reuseExistingServer: false,
