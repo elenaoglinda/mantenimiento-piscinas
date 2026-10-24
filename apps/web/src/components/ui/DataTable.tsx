@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowDown, ArrowUp, ChevronsUpDown, Search } from 'lucide-react';
 import { cn, focusRing } from './utils.js';
 import { Input } from './Input.js';
+import { HScroll } from './HScroll.js';
 import { Skeleton } from './Skeleton.js';
 
 export interface Column<T> {
@@ -89,7 +90,7 @@ export function DataTable<T>({
         className,
       )}
     >
-      <div className="overflow-x-auto">
+      <HScroll label={caption}>
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">{caption}</caption>
           <thead>
@@ -222,7 +223,7 @@ export function DataTable<T>({
             )}
           </tbody>
         </table>
-      </div>
+      </HScroll>
     </div>
   );
 }

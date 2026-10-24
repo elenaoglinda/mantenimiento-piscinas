@@ -25,6 +25,7 @@ import { StatusChip } from '../components/ui/StatusChip.js';
 import { cn } from '../components/ui/utils.js';
 import { useRecordCrumb } from '../features/app-shell/index.js';
 import type { Enums } from '../lib/database.types.js';
+import { HScroll } from '../components/ui/HScroll.js';
 
 type Lugar = Enums<'measurement_lugar'>;
 type AnalysisType = Enums<'analysis_type'>;
@@ -402,7 +403,7 @@ export function ReportFormPage() {
             {!basinId ? (
               <p className="text-sm text-text-muted">{t('reports.parametersHint')}</p>
             ) : (
-              <div className="-mx-1 overflow-x-auto">
+              <HScroll label={t('reports.parameters')} className="-mx-1">
                 <table className="w-full min-w-[520px] text-sm">
                   <thead>
                     <tr className="border-b border-border text-left text-xs text-text-muted">
@@ -477,7 +478,7 @@ export function ReportFormPage() {
                     })}
                   </tbody>
                 </table>
-              </div>
+              </HScroll>
             )}
           </Section>
 

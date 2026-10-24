@@ -3,6 +3,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn, focusRing } from './utils.js';
+import { useReturnFocus } from './useReturnFocus.js';
 
 /**
  * Modal dialog (Radix): traps focus, closes on Esc and backdrop click, returns focus to the
@@ -28,6 +29,7 @@ export function Dialog({
   children: ReactNode;
 }) {
   const { t } = useTranslation();
+  useReturnFocus(open);
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
@@ -95,6 +97,7 @@ export function Sheet({
   children: ReactNode;
 }) {
   const { t } = useTranslation();
+  useReturnFocus(open);
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>

@@ -48,7 +48,7 @@ test('shell states', async ({ browser }) => {
     await page.getByRole('combobox').fill('silo');
     await page.screenshot({ path: join(OUT, 'shell-palette--1440.png') });
     await page.keyboard.press('Escape');
-    await page.getByRole('button', { name: 'Menú de usuario' }).click();
+    await page.getByRole('button', { name: /Elena Oglinda/ }).click();
     await page.screenshot({ path: join(OUT, 'shell-usermenu--1440.png') });
     await ctx.close();
   }

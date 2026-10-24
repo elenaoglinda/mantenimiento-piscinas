@@ -26,6 +26,9 @@ export default defineConfig({
       'VITE_SUPABASE_URL=https://mock.supabase.co VITE_SUPABASE_ANON_KEY=mock-anon-key VERCEL_ENV=preview ' +
       'npm run build -w @piscinas/web && npm run preview -w @piscinas/web -- --port 4174 --strictPort',
     url: 'http://localhost:4174',
+    // APP_DIR=<checkout> captures another checkout (e.g. a worktree of main for the "before"
+    // set) with this harness and these fixtures, so before/after compare like with like.
+    cwd: process.env.APP_DIR,
     reuseExistingServer: false,
     timeout: 180_000,
   },

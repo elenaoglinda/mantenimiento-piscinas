@@ -107,9 +107,7 @@ describe('AppShell sidebar', () => {
   it('moves Cerrar sesión into the user menu', () => {
     const signOut = vi.fn(() => Promise.resolve());
     renderShell({ signOut });
-    fireEvent.click(
-      within(rail().closest('aside')!).getByRole('button', { name: 'Menú de usuario' }),
-    );
+    fireEvent.click(within(rail().closest('aside')!).getByRole('button', { name: /Ana López/ }));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Cerrar sesión' }));
     expect(signOut).toHaveBeenCalled();
   });

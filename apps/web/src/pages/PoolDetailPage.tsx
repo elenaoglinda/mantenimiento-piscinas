@@ -174,7 +174,7 @@ export function PoolDetailPage() {
                 {t('common.edit')}
               </Button>
               <Button asChild>
-                <Link to="/reports/new">
+                <Link to={`/reports/new?poolId=${pool.id}`}>
                   <Plus aria-hidden size={16} />
                   {t('reports.addReport')}
                 </Link>
@@ -385,7 +385,7 @@ export function PoolDetailPage() {
                 action={
                   canWrite && (
                     <Button asChild>
-                      <Link to="/reports/new">{t('reports.addReport')}</Link>
+                      <Link to={`/reports/new?poolId=${pool.id}`}>{t('reports.addReport')}</Link>
                     </Button>
                   )
                 }

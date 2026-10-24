@@ -43,6 +43,7 @@ import { InvoiceTimeline } from '../components/InvoiceTimeline.js';
 import { RejectionPanel } from '../components/RejectionPanel.js';
 import { RectificativaDialog } from '../components/RectificativaDialog.js';
 import type { Tables } from '../../../lib/database.types.js';
+import { HScroll } from '../../../components/ui/HScroll.js';
 
 export function InvoiceDetailPage() {
   const { t } = useTranslation();
@@ -299,7 +300,7 @@ export function InvoiceDetailPage() {
             {lines.length === 0 ? (
               <p className="text-sm text-text-muted">{t('invoicing.noLines')}</p>
             ) : (
-              <div className="overflow-x-auto">
+              <HScroll label={t('invoicing.lines')}>
                 <table className="w-full min-w-[32rem] text-sm">
                   <thead>
                     <tr className="border-b border-border text-left text-xs text-text-muted">
@@ -348,7 +349,7 @@ export function InvoiceDetailPage() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </HScroll>
             )}
 
             {isDraft && canWrite && (

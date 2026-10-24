@@ -3,6 +3,7 @@ import { Command as CommandPrimitive } from 'cmdk';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Search } from 'lucide-react';
 import { cn, foldFilter } from './utils.js';
+import { useReturnFocus } from './useReturnFocus.js';
 
 /**
  * Searchable list of actions (cmdk). Arrow keys move, Enter picks, typing filters. Use inside a
@@ -104,6 +105,7 @@ export function CommandDialog({
   footer?: ReactNode;
   children: ReactNode;
 }) {
+  useReturnFocus(open);
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>

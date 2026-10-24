@@ -212,7 +212,7 @@ const parameterDefs = [
   {
     ...paramBase,
     id: 'pd-1',
-    siloe_param_id: 1,
+    siloe_param_id: 10,
     name_es: 'Cloro libre',
     unit: 'mg/L',
     min_ok: 0.5,
@@ -221,7 +221,7 @@ const parameterDefs = [
   {
     ...paramBase,
     id: 'pd-2',
-    siloe_param_id: 2,
+    siloe_param_id: 9,
     name_es: 'Cloro combinado',
     unit: 'mg/L',
     min_ok: null,
@@ -230,7 +230,7 @@ const parameterDefs = [
   {
     ...paramBase,
     id: 'pd-3',
-    siloe_param_id: 3,
+    siloe_param_id: 1,
     name_es: 'pH',
     unit: null,
     min_ok: 7.2,
@@ -239,7 +239,7 @@ const parameterDefs = [
   {
     ...paramBase,
     id: 'pd-4',
-    siloe_param_id: 4,
+    siloe_param_id: 6,
     name_es: 'Turbidez',
     unit: 'UNF',
     min_ok: null,
@@ -248,7 +248,7 @@ const parameterDefs = [
   {
     ...paramBase,
     id: 'pd-5',
-    siloe_param_id: 5,
+    siloe_param_id: 3,
     name_es: 'Temperatura',
     unit: '°C',
     min_ok: null,
@@ -257,7 +257,7 @@ const parameterDefs = [
   {
     ...paramBase,
     id: 'pd-6',
-    siloe_param_id: 6,
+    siloe_param_id: 7,
     name_es: 'Ácido isocianúrico',
     unit: 'mg/L',
     min_ok: null,

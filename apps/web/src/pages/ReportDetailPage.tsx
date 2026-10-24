@@ -15,6 +15,7 @@ import { ReportStatusBadge } from '../components/ReportStatusBadge.js';
 import { SignModal } from '../components/SignModal.js';
 import { AttachmentsSection } from '../components/AttachmentsSection.js';
 import type { Tables } from '../lib/database.types.js';
+import { HScroll } from '../components/ui/HScroll.js';
 
 type Report = Tables<'report'> & {
   pool: { denominacion: string } | null;
@@ -138,7 +139,7 @@ export function ReportDetailPage() {
             {measurements.length === 0 ? (
               <p className="px-5 pb-5 text-sm text-text-muted sm:px-6">{t('common.none')}</p>
             ) : (
-              <div className="overflow-x-auto">
+              <HScroll label={t('reports.parameters')}>
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="border-y border-border bg-surface-muted/60 text-xs text-text-muted">
@@ -180,7 +181,7 @@ export function ReportDetailPage() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </HScroll>
             )}
           </Card>
 

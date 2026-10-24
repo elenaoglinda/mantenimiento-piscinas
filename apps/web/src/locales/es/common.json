@@ -211,7 +211,8 @@
     "goHome": "Ir al inicio",
     "pending": "Pendiente",
     "pendingEmpty": "No hay invitaciones pendientes",
-    "pendingEmptyHint": "Invita a tus técnicos para que registren visitas desde su móvil."
+    "pendingEmptyHint": "Invita a tus técnicos para que registren visitas desde su móvil.",
+    "linkLabel": "Enlace de invitación"
   },
   "roles": {
     "admin": "Administrador",

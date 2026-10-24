@@ -306,22 +306,22 @@
     "finalUrl": "/invoices/settings"
   },
   {
-    "route": "/invoices/demo",
+    "route": "/invoices/inv-1",
     "width": 1440,
     "errors": [],
-    "finalUrl": "/invoices/demo"
+    "finalUrl": "/invoices/inv-1"
   },
   {
-    "route": "/invoices/demo",
+    "route": "/invoices/inv-1",
     "width": 1024,
     "errors": [],
-    "finalUrl": "/invoices/demo"
+    "finalUrl": "/invoices/inv-1"
   },
   {
-    "route": "/invoices/demo",
+    "route": "/invoices/inv-1",
     "width": 390,
     "errors": [],
-    "finalUrl": "/invoices/demo"
+    "finalUrl": "/invoices/inv-1"
   },
   {
     "route": "/clients",

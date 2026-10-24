@@ -1,4 +1,4 @@
-import type { Page, Route } from '@playwright/test';
+import type { BrowserContext, Page, Route } from '@playwright/test';
 import { appUser, session, tables, teamMembers } from './fixtures';
 
 /** Fake Supabase backend shared by the capture specs. See AUDIT.md for why each rule exists. */
@@ -19,7 +19,8 @@ function json(route: Route, body: unknown, status = 200, extra: Record<string, s
   });
 }
 
-export async function mockSupabase(page: Page, auth: AuthMode) {
+/** Works on a page, or on a whole context (so tabs opened by other tools — Lighthouse — match). */
+export async function mockSupabase(page: Page | BrowserContext, auth: AuthMode) {
   await page.route('https://mock.supabase.co/**', async (route) => {
     const req = route.request();
     const url = new URL(req.url());

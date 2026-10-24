@@ -14,6 +14,8 @@ MobileDrawer.tsx       the sidebar as a modal drawer below 1024px
 nav.ts                 the navigation table + resolveRoute(): one source for sidebar,
                        breadcrumb, palette and page titles
 useSidebarCollapsed.ts collapsed state in localStorage, crash-proof
+recordCrumb.ts         useRecordCrumb(): detail pages name their record for the breadcrumb
+RecordCrumbProvider.tsx holds that name for the shell
 ```
 
 ## Adding a page to the sidebar
@@ -40,16 +42,21 @@ will read as a record called "new". `nav.test.ts` covers this ordering.
 - **Collapsed state** survives reloads via `localStorage` under `cloro.sidebar.collapsed`, wrapped
   in try/catch: private mode or blocked storage just means it starts expanded.
 
+## Record names in the breadcrumb
+
+Detail pages call `useRecordCrumb(name)` (exported from `index.ts`) once their record has loaded,
+so the breadcrumb and the tab title read "Piscinas › Villa Mar" instead of "Detalle". The name is
+stored with the path it belongs to, so it never leaks onto the next page while that one loads.
+
 ## Placeholders and follow-ups
 
 These are visible in the UI and deliberately not wired to anything yet:
 
-| Element                 | Today                                        | Needs                                                               |
-| ----------------------- | -------------------------------------------- | ------------------------------------------------------------------- |
-| Company row             | Shows the one company; chevron is decorative | Multi-company switching                                             |
-| Ajustes (user menu)     | Disabled, "Próximamente"                     | A general settings page — none exists                               |
-| Ayuda                   | Opens cloro.app                              | A real help centre or contact address                               |
-| Notifications bell      | `aria-disabled`, "Próximamente"              | A notifications source                                              |
-| Record search           | The palette jumps to pages only, and says so | A search endpoint                                                   |
-| Sidebar count badges    | Not shown                                    | Counts the shell can load cheaply (e.g. invoices needing attention) |
-| Breadcrumb record names | Shows "Detalle", not "Villa Mar"             | Pages passing their record name up (phase 4, with `PageHeader`)     |
+| Element              | Today                                        | Needs                                                               |
+| -------------------- | -------------------------------------------- | ------------------------------------------------------------------- |
+| Company row          | Shows the one company; chevron is decorative | Multi-company switching                                             |
+| Ajustes (user menu)  | Disabled, "Próximamente"                     | A general settings page — none exists                               |
+| Ayuda                | Opens cloro.app                              | A real help centre or contact address                               |
+| Notifications bell   | `aria-disabled`, "Próximamente"              | A notifications source                                              |
+| Record search        | The palette jumps to pages only, and says so | A search endpoint                                                   |
+| Sidebar count badges | Not shown                                    | Counts the shell can load cheaply (e.g. invoices needing attention) |

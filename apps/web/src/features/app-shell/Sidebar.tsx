@@ -219,7 +219,9 @@ function UserCard({ rail }: { rail: boolean }) {
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={rail ? `${t('shell.userMenu')}: ${name}` : t('shell.userMenu')}
+        // Expanded, the visible name and role are the label (WCAG 2.5.3); the rail shows only
+        // the avatar, so it needs one.
+        aria-label={rail ? `${t('shell.userMenu')}: ${name}` : undefined}
         onClick={() => setOpen((o) => !o)}
         className={`flex w-full items-center gap-2.5 rounded-[var(--radius-md)] py-1.5 text-left transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
           rail ? 'justify-center' : 'px-2'

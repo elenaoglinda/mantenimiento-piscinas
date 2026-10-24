@@ -69,3 +69,36 @@ must be CORS-exposed, or every count silently reads as 0 (the first baseline run
 that bug and showed "add a client first" with two clients present).
 
 Re-run for the after shots: `SHOT_DIR=after npx playwright test -c scripts/redesign/playwright.config.ts`.
+
+## Phase 5 — QA results
+
+Run with `SHOT_DIR=after LIGHTHOUSE=1 npx playwright test -c scripts/redesign/playwright.config.ts`
+(see [`scripts/redesign/README.md`](../../scripts/redesign/README.md)).
+
+| Check                                                                              | Result                                      |
+| ---------------------------------------------------------------------------------- | ------------------------------------------- |
+| Screenshots: 21 pages × 1440 / 1024 / 390 + 4 shell states → `after/`              | 63 + 4 captured, 0 page errors              |
+| axe-core WCAG 2.1 A/AA, every page at 1440 and 390 (`after/_axe.json`)             | **0 violations**                            |
+| axe on open overlays (pool sheet, ⌘K, user menu, mobile drawer, client sheet)      | **0 violations**                            |
+| Lighthouse accessibility, every page (`after/_lighthouse.json`)                    | **100** on all 21 (target ≥ 95)             |
+| Keyboard: skip link, palette, drawer + sheet focus trap/return, tables, tabs, rail | 7/7 pass                                    |
+| No horizontal scroll at 390px                                                      | 21/21 pass                                  |
+| End to end: client → pool → vaso → report → SILOÉ XML download                     | pass (XML carries the pool and basin codes) |
+| Repo e2e smoke (`e2e/`) and unit tests                                             | 3/3 · 80 web + 73 shared                    |
+
+Found and fixed during QA:
+
+- **User menu label** didn't contain its visible text (WCAG 2.5.3, every page). The expanded
+  button is now named by the visible name and role; only the icon rail keeps an `aria-label`.
+- **Invite link input** had no label.
+- **Wide tables** on phones weren't keyboard-scrollable. `HScroll` makes them a focusable region
+  only while they overflow.
+- **Focus return**: pages that unmount their modal (`{open && <Modal/>}`) dropped focus on
+  `<body>` when it closed. `useReturnFocus` in the kit restores it to the trigger.
+
+The **before** set was re-captured in phase 5 from a worktree of `main` with the same harness and
+the same (richer) fake data, so before/after compare like with like.
+
+Pre-existing gap surfaced by the flow test: there is **no UI to enter a basin's SILOÉ code**
+(`basin.siloe_cod_v`), which the XML export requires. The flow spec sets it directly; it is listed
+as a follow-up in the PR.
