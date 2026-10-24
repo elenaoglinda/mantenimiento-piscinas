@@ -1,0 +1,71 @@
+# Phase 0 — audit (24 Oct 2026)
+
+Baseline for the panel redesign. Screenshots of every route at 1440 / 1024 / 390 px are in
+[`before/`](./before/), captured with the harness in `scripts/redesign/` against a **fake
+Supabase backend** (see below), so they show realistic logged-in pages without credentials and
+without touching the real database. All 60 captures loaded with **zero page or console errors**
+(`before/_report.json`).
+
+## Routes
+
+| Route                                                                              | Page                                | Auth                        | In sidebar  |
+| ---------------------------------------------------------------------------------- | ----------------------------------- | --------------------------- | ----------- |
+| `/login`                                                                           | LoginPage                           | public                      | —           |
+| `/signup`                                                                          | SignupPage                          | public                      | —           |
+| `/invite/:token`                                                                   | InvitePage                          | public                      | —           |
+| `/onboarding`                                                                      | OnboardingPage                      | session, no profile         | —           |
+| `/`                                                                                | DashboardPage                       | full                        | Inicio      |
+| `/pools`, `/pools/:poolId`                                                         | PoolsPage, PoolDetailPage           | full                        | Piscinas    |
+| `/reports`, `/reports/new`, `/reports/import`, `/reports/:id`, `/reports/:id/edit` | Reports\*, ReportForm, ImportReport | full                        | Informes    |
+| `/routes`                                                                          | RoutesPage                          | full                        | Rutas       |
+| `/siloe`                                                                           | SiloeExportPage                     | full                        | SILOÉ       |
+| `/invoices`, `/invoices/resumen`, `/invoices/settings`, `/invoices/:id`            | invoicing feature                   | full                        | Facturación |
+| `/clients`                                                                         | ClientsPage                         | full, **company orgs only** | Clientes    |
+| `/team`                                                                            | TeamPage                            | full                        | Equipo      |
+| `*`                                                                                | → `/`                               | —                           | —           |
+
+`/clients` is hidden from the nav for owner orgs today. The new sidebar keeps that rule — the plan's
+table lists Clientes unconditionally, but showing it to owners would be a behaviour change.
+
+## Colour findings
+
+The codebase is already well tokenised: every colour goes through `src/styles/tokens.css`.
+
+- **Teal brand** (`--brand-*`, hue ≈ 175°) in `tokens.css`, `#0d9488` as `theme-color` in
+  `index.html`. Replaced in phase 1.
+- **`bg-brand-50`** — 2 usages (`AppShell.tsx`, `OnboardingPage.tsx`).
+- **Literal hex** — only two places: `GoogleButton.tsx` (Google's own logo colours, which must
+  stay as-is) and `SignaturePad.tsx` (`#0f1f1d` ink, moved to a token in phase 1).
+- **No** `teal-*` / `emerald-*` / `green-*` Tailwind utilities anywhere.
+
+## Contrast (WCAG AA) — the plan's palette
+
+Computed, not eyeballed (`text ≥ 4.5:1`, UI components ≥ 3:1):
+
+| Pair                                                                  | Ratio         |                      |
+| --------------------------------------------------------------------- | ------------- | -------------------- |
+| text / text-muted on bg, surface, surface-muted, sidebar, accent-soft | 5.8 – 18.6    | pass                 |
+| accent (links) on surface, bg, accent-soft                            | 5.8 – 6.2     | pass                 |
+| white on primary navy-800 / navy-900                                  | 14.1 / 18.6   | pass                 |
+| **status-green / amber / red / unknown as pill text**                 | **2.3 – 3.9** | **fail**             |
+| **focus ring brand-400 vs bg / surface**                              | **2.4 / 2.5** | **fail (needs 3:1)** |
+
+The status failures are **not new** — the plan carried over today's values, so current pills
+already fail AA. Fix applied in phase 1:
+
+- Fills, dots and bars keep the vivid values from the plan (`--status-green: #16A34A`, …).
+- Status-coloured **text** uses new `--status-*-text` tokens: green `#166534`, amber `#A34A07`,
+  red `#B91C1C`, unknown `#5B677A` — the lightest shades that pass on both the `-bg` tint and the
+  15 % tints the pills use. 25 usages in 14 files move from `text-status-x` to `text-status-x-text`.
+- Focus ring moves from brand-400 to **brand-500 `#1394B5`** (3.3:1).
+
+## How the harness fakes the backend
+
+`scripts/redesign/capture.spec.ts` builds the app with `VITE_SUPABASE_URL=https://mock.supabase.co`,
+seeds a session into `localStorage`, and answers every Supabase request from
+`scripts/redesign/fixtures.ts` (a company org, two clients, three pools, three reports, a route).
+It honours `eq.` filters, `single()` vs `maybeSingle()`, and `count` via `Content-Range` — which
+must be CORS-exposed, or every count silently reads as 0 (the first baseline run had exactly
+that bug and showed "add a client first" with two clients present).
+
+Re-run for the after shots: `SHOT_DIR=after npx playwright test -c scripts/redesign/playwright.config.ts`.
