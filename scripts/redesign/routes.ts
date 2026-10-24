@@ -24,6 +24,14 @@ export const ROUTES: { slug: string; path: string; auth: AuthMode }[] = [
   { slug: 'team', path: '/team', auth: 'full' },
 ];
 
+// Added after the redesign; main doesn't have them.
+if (process.env.SHOT_DIR !== 'before') {
+  ROUTES.push(
+    { slug: 'settings', path: '/settings', auth: 'full' },
+    { slug: 'help', path: '/ayuda', auth: 'full' },
+  );
+}
+
 // Added by the redesign; the "before" build doesn't have it.
 if (process.env.SHOT_DIR !== 'before') {
   ROUTES.push({ slug: 'design', path: '/design', auth: 'none' });

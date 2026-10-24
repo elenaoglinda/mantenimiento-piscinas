@@ -60,3 +60,11 @@ describe('visibleGroups', () => {
     }
   });
 });
+
+describe('utility pages', () => {
+  it('resolves Ajustes and Ayuda without putting them in a group', () => {
+    expect(resolveRoute('/settings').item?.labelKey).toBe('shell.settings');
+    expect(resolveRoute('/settings').group).toBeUndefined();
+    expect(resolveRoute('/ayuda').item?.labelKey).toBe('shell.help');
+  });
+});

@@ -24,6 +24,8 @@ import {
 } from './features/invoicing/index.js';
 import { RoutesPage } from './pages/RoutesPage.js';
 import { InvitePage } from './pages/InvitePage.js';
+import { SettingsPage } from './pages/SettingsPage.js';
+import { HelpPage } from './pages/HelpPage.js';
 import { Toaster } from './components/ui/Toast.js';
 import { TooltipProvider } from './components/ui/Tooltip.js';
 import { showDesignPage } from './features/design/visibility.js';
@@ -79,6 +81,8 @@ export function App() {
                   <Route path="/invoices/:invoiceId" element={<InvoiceDetailPage />} />
                   <Route path="/clients" element={<ClientsPage />} />
                   <Route path="/team" element={<TeamPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/ayuda" element={<HelpPage />} />
                 </Route>
               </Route>
             </Route>

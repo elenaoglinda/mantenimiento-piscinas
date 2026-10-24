@@ -11,7 +11,7 @@ import {
   CommandItem,
   CommandList,
 } from '../../components/ui/Command.js';
-import { visibleGroups } from './nav.js';
+import { UTILITY_PAGES, visibleGroups } from './nav.js';
 
 /**
  * ⌘K palette. Jumps to pages and the two quick actions; searching records (pools, clients,
@@ -29,9 +29,10 @@ export function CommandMenu({ open, onClose }: { open: boolean; onClose: () => v
   const { profile } = useAuth();
 
   const { actions, pages } = useMemo(() => {
-    const pages: Entry[] = visibleGroups(profile?.org.type).flatMap((g) =>
-      g.items.map((i) => ({ to: i.to, label: t(i.labelKey), icon: i.icon })),
-    );
+    const pages: Entry[] = [
+      ...visibleGroups(profile?.org.type).flatMap((g) => g.items),
+      ...UTILITY_PAGES,
+    ].map((i) => ({ to: i.to, label: t(i.labelKey), icon: i.icon }));
     const canWrite = profile ? profile.user.role !== 'viewer' : false;
     const actions: Entry[] = canWrite
       ? [

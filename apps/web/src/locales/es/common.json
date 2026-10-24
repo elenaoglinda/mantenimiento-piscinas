@@ -817,5 +817,125 @@
   },
   "ui": {
     "notifications": "Notificaciones"
+  },
+  "settings": {
+    "subtitle": "Tu perfil, tu organización y accesos a la configuración de cada módulo.",
+    "profileTitle": "Tu perfil",
+    "dni": "DNI / NIF",
+    "dniHint": "Opcional. Para identificarte en los documentos que firmes.",
+    "orgTitle": "Organización",
+    "orgName": "Nombre de la organización",
+    "orgAdminOnly": "Solo un administrador puede cambiar el nombre.",
+    "teamHint": "Invita a tu equipo y gestiona los accesos.",
+    "saved": "Cambios guardados"
+  },
+  "help": {
+    "subtitle": "Respuestas rápidas sobre cada parte del panel.",
+    "search": "Buscar en la ayuda",
+    "noResults": "Nada coincide con tu búsqueda",
+    "noResultsHint": "Prueba con otra palabra, por ejemplo «SILOÉ», «firma» o «factura».",
+    "moreTitle": "¿No encuentras lo que buscas?",
+    "moreBody": "Escríbenos desde la web de Cloro y te ayudamos.",
+    "moreAction": "Ir a cloro.app",
+    "sections": {
+      "start": {
+        "title": "Primeros pasos",
+        "items": [
+          {
+            "q": "¿Por dónde empiezo?",
+            "a": "Sigue la tarjeta «Primeros pasos» de Inicio: añade un cliente (si eres empresa de mantenimiento), crea la piscina con su dirección y su código SILOÉ, añade sus vasos y registra el primer informe. Cuando tengas informes de la temporada, ya puedes exportar a SILOÉ."
+          },
+          {
+            "q": "¿Qué diferencia hay entre piscina y vaso?",
+            "a": "La piscina es la instalación (con dirección, cliente y código SILOÉ de instalación). Cada vaso es una lámina de agua dentro de ella —piscina principal, chapoteo, spa— y lleva sus propios análisis y su propio código SILOÉ."
+          }
+        ]
+      },
+      "reports": {
+        "title": "Informes",
+        "items": [
+          {
+            "q": "¿Cómo registro una visita?",
+            "a": "En Informes › Nuevo informe (o con el botón «+ Nuevo informe» de la barra superior), elige la piscina y el vaso, introduce los valores medidos y guarda. El resumen de la derecha te avisa de los valores fuera de rango antes de guardar."
+          },
+          {
+            "q": "¿Qué significan los colores de los parámetros?",
+            "a": "Verde: dentro del rango del RD 742/2013 (o del de tu comunidad autónoma, si tiene uno propio). Ámbar: cerca del límite. Rojo: fuera de rango. Gris: sin dato."
+          },
+          {
+            "q": "Borrador, completo y firmado",
+            "a": "Un borrador se puede seguir editando. Para marcarlo como completo hace falta al menos un valor. Un informe completo puede firmarlo el titular con su nombre y DNI; una vez firmado ya no se edita."
+          },
+          {
+            "q": "¿Puedo importar un parte en papel?",
+            "a": "Sí. En Informes › Importar parte (foto), haz o sube una foto del parte. Los valores leídos se marcan para revisar cuando hay dudas, y el informe se guarda siempre como borrador para que lo compruebes antes de completarlo."
+          }
+        ]
+      },
+      "siloe": {
+        "title": "SILOÉ",
+        "items": [
+          {
+            "q": "¿Qué año exporto?",
+            "a": "SILOÉ recibe los resultados de la temporada anterior. La página SILOÉ propone ese año por defecto."
+          },
+          {
+            "q": "¿Cómo genero el XML?",
+            "a": "En SILOÉ, elige año y tipo de análisis y pulsa «Generar resultados anuales»: se calculan a partir de los informes completados o firmados. Revisa cada vaso (código de laboratorio, apertura, cierre, días) y pulsa «Descargar XML». Después súbelo en la sede de SILOÉ."
+          },
+          {
+            "q": "Me dice que faltan códigos SILOÉ",
+            "a": "La exportación necesita el código de la instalación (en la ficha de la piscina › Editar) y el de cada vaso (en la pestaña SILOÉ o Vasos de la piscina › Editar vaso)."
+          }
+        ]
+      },
+      "routes": {
+        "title": "Rutas",
+        "items": [
+          {
+            "q": "¿Cómo planifico una ruta?",
+            "a": "En Rutas › Planificar ruta, selecciona al menos dos piscinas, la fecha y la hora de salida, y pulsa «Calcular ruta óptima». Guárdala para que aparezca en la Agenda y en Inicio, o ábrela en Google Maps."
+          },
+          {
+            "q": "No aparece una piscina para planificar",
+            "a": "Solo se pueden incluir piscinas con coordenadas. Edita la piscina y busca su dirección para que se rellenen."
+          }
+        ]
+      },
+      "invoicing": {
+        "title": "Facturación",
+        "items": [
+          {
+            "q": "¿Qué necesito antes de emitir?",
+            "a": "Tus datos fiscales (Facturación › Ajustes) y una serie de facturación. La pestaña Facturas te guía con los pasos que faltan."
+          },
+          {
+            "q": "Borrador, emitida y enviada",
+            "a": "Un borrador se puede modificar. Al emitirla, la factura recibe su número definitivo y ya no se puede cambiar. Después se envía a la AEAT mediante Veri*Factu: la AEAT responde en uno o dos minutos; pulsa «Actualizar estado» en la factura para ver la respuesta."
+          },
+          {
+            "q": "¿Cómo corrijo una factura emitida?",
+            "a": "Con una rectificativa (por diferencias o por sustitución) o anulándola y creando una nueva, desde las acciones de la propia factura."
+          },
+          {
+            "q": "¿Qué es el «Entorno de pruebas»?",
+            "a": "Mientras aparece esa etiqueta, las facturas se envían a la AEAT de prueba con el NIF de la cuenta de test de Verifacti, no con el de tu empresa."
+          }
+        ]
+      },
+      "team": {
+        "title": "Equipo y accesos",
+        "items": [
+          {
+            "q": "¿Cómo invito a alguien?",
+            "a": "En Equipo › Invitar, indica el correo y el rol. Comparte el enlace que se genera; la invitación queda pendiente hasta que la acepten."
+          },
+          {
+            "q": "¿Qué puede hacer cada rol?",
+            "a": "Administrador: todo, incluido el equipo, los datos fiscales y el nombre de la organización. Técnico: registrar informes, planificar rutas y trabajar con piscinas y clientes. Solo lectura: consultar sin modificar."
+          }
+        ]
+      }
+    }
   }
 }

@@ -6,8 +6,6 @@ import { Breadcrumb, type Crumb } from '../../components/ui/Breadcrumb.js';
 import { resolveRoute } from './nav.js';
 import { useCurrentRecordLabel } from './recordCrumb.js';
 
-const HELP_URL = 'https://cloro.app';
-
 interface TopbarProps {
   drawerOpen: boolean;
   onOpenDrawer: () => void;
@@ -64,16 +62,14 @@ export function Topbar({ drawerOpen, onOpenDrawer, onOpenSearch, menuButtonRef }
         </Link>
       )}
 
-      <a
-        href={HELP_URL}
-        target="_blank"
-        rel="noreferrer"
+      <Link
+        to="/ayuda"
         aria-label={t('shell.help')}
         title={t('shell.help')}
         className="hidden size-9 items-center justify-center rounded-[var(--radius-md)] text-text-muted transition-colors hover:bg-surface-muted hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:inline-flex"
       >
         <CircleHelp aria-hidden size={18} />
-      </a>
+      </Link>
       {/* Placeholder until notifications exist; aria-disabled keeps it focusable for the label. */}
       <IconAction
         label={`${t('shell.notifications')} · ${t('shell.comingSoon')}`}

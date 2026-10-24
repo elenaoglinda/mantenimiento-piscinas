@@ -1,6 +1,8 @@
 import {
+  CircleHelp,
   ClipboardList,
   House,
+  Settings,
   Receipt,
   Route,
   ShieldCheck,
@@ -63,6 +65,15 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
+/**
+ * Pages reached from the user menu and the help links rather than the main nav. They aren't
+ * listed in the sidebar groups, but the breadcrumb, `document.title` and ⌘K still know them.
+ */
+export const UTILITY_PAGES: NavItem[] = [
+  { to: '/settings', labelKey: 'shell.settings', icon: Settings },
+  { to: '/ayuda', labelKey: 'shell.help', icon: CircleHelp },
+];
+
 /** Groups as a given org should see them: company-only items removed, empty groups dropped. */
 export function visibleGroups(orgType: string | undefined): NavGroup[] {
   return NAV_GROUPS.map((g) => ({
@@ -101,6 +112,10 @@ export function resolveRoute(pathname: string): ResolvedRoute {
         : pathname === item.to || pathname.startsWith(`${item.to}/`);
       if (matches && (!best || item.to.length > best.item.to.length)) best = { group, item };
     }
+  }
+  if (!best) {
+    const utility = UTILITY_PAGES.find((u) => pathname === u.to || pathname.startsWith(`${u.to}/`));
+    if (utility) return { item: utility };
   }
   const subKey = SUB_PAGES.find((s) => s.pattern.test(pathname))?.labelKey;
   return { group: best?.group, item: best?.item, subKey };

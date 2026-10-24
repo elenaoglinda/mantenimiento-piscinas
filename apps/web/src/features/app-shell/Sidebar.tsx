@@ -1,22 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import {
-  ChevronsUpDown,
-  CircleHelp,
-  LogOut,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Settings,
-  X,
-} from 'lucide-react';
+import { ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen, Settings, X } from 'lucide-react';
 import { useAuth } from '../../auth/context.js';
 import { Logo } from '../../components/brand/Logo.js';
 import { Avatar } from '../../components/ui/Avatar.js';
-import { visibleGroups, type NavItem } from './nav.js';
-
-/** Where "Ayuda" points until there is real help content. See README → follow-ups. */
-const HELP_URL = 'https://cloro.app';
+import { UTILITY_PAGES, visibleGroups, type NavItem } from './nav.js';
 
 interface SidebarProps {
   /** `rail` is the desktop sidebar; `drawer` is the same content inside the mobile drawer. */
@@ -102,21 +91,12 @@ export function Sidebar({ variant, collapsed = false, onToggleCollapse, onClose 
       </nav>
 
       <div className="shrink-0 border-t border-border px-2 py-2">
-        <RailTooltip label={t('shell.help')} enabled={rail}>
-          <a
-            href={HELP_URL}
-            target="_blank"
-            rel="noreferrer"
-            aria-label={rail ? t('shell.help') : undefined}
-            className={`flex h-9 items-center gap-3 rounded-[var(--radius-md)] text-sm font-medium text-text-muted transition-colors hover:bg-surface-muted hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
-              rail ? 'justify-center' : 'px-3'
-            }`}
-          >
-            <CircleHelp aria-hidden size={18} />
-            {!rail && t('shell.help')}
-          </a>
-        </RailTooltip>
-        <UserCard rail={rail} />
+        <SidebarLink
+          item={UTILITY_PAGES.find((p) => p.to === '/ayuda')!}
+          rail={rail}
+          onNavigate={onClose}
+        />
+        <UserCard rail={rail} onNavigate={onClose} />
       </div>
     </aside>
   );
@@ -170,7 +150,7 @@ function SidebarLink({
 }
 
 /** Avatar + name + role; opens a small menu with Ajustes and Cerrar sesión. */
-function UserCard({ rail }: { rail: boolean }) {
+function UserCard({ rail, onNavigate }: { rail: boolean; onNavigate?: () => void }) {
   const { t } = useTranslation();
   const { profile, signOut } = useAuth();
   const [open, setOpen] = useState(false);
@@ -180,7 +160,7 @@ function UserCard({ rail }: { rail: boolean }) {
 
   useEffect(() => {
     if (!open) return;
-    menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]:not([aria-disabled])')?.focus();
+    menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
 
     const onPointer = (e: MouseEvent) => {
       if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
@@ -248,17 +228,18 @@ function UserCard({ rail }: { rail: boolean }) {
             rail ? 'bottom-0 left-full ml-2' : 'bottom-full left-0 mb-2'
           }`}
         >
-          <span
+          <Link
+            to="/settings"
             role="menuitem"
-            aria-disabled="true"
-            tabIndex={-1}
-            title={t('shell.comingSoon')}
-            className="flex h-9 cursor-not-allowed items-center gap-2.5 rounded-[var(--radius-md)] px-2.5 text-sm text-text-muted"
+            onClick={() => {
+              setOpen(false);
+              onNavigate?.();
+            }}
+            className="flex h-9 w-full items-center gap-2.5 rounded-[var(--radius-md)] px-2.5 text-sm text-text transition-colors hover:bg-surface-muted focus-visible:bg-surface-muted focus-visible:outline-none"
           >
             <Settings aria-hidden size={16} />
             {t('shell.settings')}
-            <span className="ml-auto text-xs">{t('shell.comingSoon')}</span>
-          </span>
+          </Link>
           <button
             type="button"
             role="menuitem"
