@@ -81,11 +81,11 @@ export function ResumenPage() {
               const inv = invoices.find((i) => i.id === a.invoice_id);
               return (
                 <li key={a.invoice_id} className="flex flex-wrap justify-between gap-2">
-                  <Link to={`/invoices/${a.invoice_id}`} className="text-primary hover:underline">
+                  <Link to={`/invoices/${a.invoice_id}`} className="text-accent hover:underline">
                     {inv?.invoice_series?.code ?? ''}/{inv?.number ?? '—'} ·{' '}
                     {inv?.client?.name ?? ''}
                   </Link>
-                  <span className="text-status-red">
+                  <span className="text-status-red-text">
                     {t(`invoicing.resumen.reason.${a.reason}`, { defaultValue: a.reason })}
                   </span>
                 </li>
@@ -103,7 +103,7 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: 're
     <Card>
       <p className="text-sm text-text-muted">{label}</p>
       <p
-        className={`mt-1 text-2xl font-semibold ${tone === 'red' ? 'text-status-red' : 'text-text'}`}
+        className={`mt-1 text-2xl font-semibold ${tone === 'red' ? 'text-status-red-text' : 'text-text'}`}
       >
         {value}
       </p>

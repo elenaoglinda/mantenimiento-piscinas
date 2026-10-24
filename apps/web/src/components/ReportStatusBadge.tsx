@@ -3,8 +3,8 @@ import type { Enums } from '../lib/database.types.js';
 
 const styles: Record<Enums<'report_status'>, string> = {
   draft: 'bg-surface-muted text-text-muted',
-  completed: 'bg-status-amber-bg text-status-amber',
-  signed: 'bg-status-green-bg text-status-green',
+  completed: 'bg-status-amber-bg text-status-amber-text',
+  signed: 'bg-status-green-bg text-status-green-text',
 };
 
 export function ReportStatusBadge({ status }: { status: Enums<'report_status'> }) {

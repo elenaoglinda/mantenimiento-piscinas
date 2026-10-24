@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Cloro mark: lucide "waves" (paths copied from lucide-react) on navy, radius 8. -->
+  <rect width="32" height="32" rx="8" fill="#00303b"/>
+  <g transform="translate(4 4)" fill="none" stroke="#ffffff" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M2 5q2.5 2 5 0t5 0 5 0 5 0"/>
+    <path d="M2 12q2.5 2 5 0t5 0 5 0 5 0"/>
+    <path d="M2 19q2.5 2 5 0t5 0 5 0 5 0"/>
+  </g>
+</svg>

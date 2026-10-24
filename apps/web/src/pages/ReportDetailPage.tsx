@@ -80,7 +80,7 @@ export function ReportDetailPage() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <Link to="/reports" className="text-sm text-primary hover:underline">
+        <Link to="/reports" className="text-sm text-accent hover:underline">
           ← {t('nav.reports')}
         </Link>
         <div className="flex flex-wrap gap-2">

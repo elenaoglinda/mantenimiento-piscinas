@@ -6,7 +6,7 @@ import {
 } from 'react';
 
 const controlClass =
-  'rounded-[var(--radius-md)] border border-border bg-surface px-3 py-2.5 text-text outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30';
+  'rounded-[var(--radius-md)] border border-border bg-surface px-3 py-2.5 text-text outline-none transition-colors focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-focus/40';
 
 function FieldShell({ label, id, children }: { label: string; id: string; children: ReactNode }) {
   return (

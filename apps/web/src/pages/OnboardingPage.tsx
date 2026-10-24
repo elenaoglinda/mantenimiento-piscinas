@@ -72,7 +72,7 @@ export function OnboardingPage() {
                   key={opt.value}
                   className={`flex cursor-pointer flex-col gap-0.5 rounded-[var(--radius-md)] border p-4 transition-colors ${
                     selected
-                      ? 'border-primary bg-brand-50 ring-1 ring-primary'
+                      ? 'border-accent bg-accent-soft ring-1 ring-accent'
                       : 'border-border hover:bg-surface-muted'
                   }`}
                 >

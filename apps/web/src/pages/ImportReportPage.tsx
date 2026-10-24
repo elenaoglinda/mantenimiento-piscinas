@@ -267,7 +267,7 @@ export function ImportReportPage() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <Link to="/reports" className="text-sm text-primary hover:underline">
+        <Link to="/reports" className="text-sm text-accent hover:underline">
           ← {t('nav.reports')}
         </Link>
         <h1 className="mt-2 text-2xl font-semibold text-text">{t('photoImport.title')}</h1>
@@ -398,7 +398,7 @@ export function ImportReportPage() {
                         <span className="text-sm font-medium text-text">{d.name_es}</span>
                         {d.unit && <span className="ml-1 text-xs text-text-muted">({d.unit})</span>}
                         {needsCheck && (
-                          <span className="ml-2 rounded-[var(--radius-full)] bg-status-amber-bg px-2 py-0.5 text-xs font-medium text-status-amber">
+                          <span className="ml-2 rounded-[var(--radius-full)] bg-status-amber-bg px-2 py-0.5 text-xs font-medium text-status-amber-text">
                             {t('photoImport.verifyBadge')}
                           </span>
                         )}
@@ -408,7 +408,7 @@ export function ImportReportPage() {
                         value={raw}
                         onChange={(e) => setValue(d.id, e.target.value, d.siloe_param_id)}
                         aria-label={`${d.name_es} ${t('reports.value')}`}
-                        className={`w-24 rounded-[var(--radius-md)] border bg-surface px-2.5 py-1.5 text-text outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30 ${
+                        className={`w-24 rounded-[var(--radius-md)] border bg-surface px-2.5 py-1.5 text-text outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-focus/40 ${
                           needsCheck ? 'border-status-amber' : 'border-border'
                         }`}
                       />

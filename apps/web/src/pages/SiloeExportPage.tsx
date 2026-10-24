@@ -182,7 +182,7 @@ export function SiloeExportPage() {
 
       {errors.length > 0 && (
         <Card>
-          <h2 className="mb-2 text-lg font-semibold text-status-red">
+          <h2 className="mb-2 text-lg font-semibold text-status-red-text">
             {t('siloe.validationTitle')}
           </h2>
           <ul className="flex flex-col gap-1 text-sm text-text">

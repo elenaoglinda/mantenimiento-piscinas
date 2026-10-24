@@ -97,7 +97,7 @@ export function BillingSettingsPage() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <Link to="/invoices" className="text-sm text-primary hover:underline">
+        <Link to="/invoices" className="text-sm text-accent hover:underline">
           ← {t('invoicing.backToInvoices')}
         </Link>
         <h1 className="mt-1 text-2xl font-semibold text-text">{t('invoicing.fiscalTitle')}</h1>

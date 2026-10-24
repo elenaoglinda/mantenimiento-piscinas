@@ -83,7 +83,7 @@ export function RoutesCalendar({
                   : day.inMonth
                     ? 'text-text hover:bg-surface-muted'
                     : 'text-text-muted/50 hover:bg-surface-muted'
-              } ${day.isToday && !isSelected ? 'ring-1 ring-primary' : ''}`}
+              } ${day.isToday && !isSelected ? 'ring-1 ring-accent' : ''}`}
             >
               {Number(day.date.slice(8, 10))}
               {count > 0 && (
@@ -132,7 +132,7 @@ export function RoutesCalendar({
         )}
         <Link
           to="/routes"
-          className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
+          className="mt-3 inline-block text-sm font-medium text-accent hover:underline"
         >
           {t('dashboard.planRouteLink')}
         </Link>

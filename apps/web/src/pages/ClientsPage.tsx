@@ -69,7 +69,7 @@ export function ClientsPage() {
               className="flex flex-col items-start gap-1 rounded-[var(--radius-lg)] border border-border bg-surface p-4 text-left shadow-sm transition-colors hover:bg-surface-muted"
             >
               <span className="font-medium text-text">{c.name}</span>
-              {c.is_self && <span className="text-xs text-primary">{t('clients.self')}</span>}
+              {c.is_self && <span className="text-xs text-accent">{t('clients.self')}</span>}
               {c.cif_nif && <span className="text-sm text-text-muted">{c.cif_nif}</span>}
               <span className="text-sm text-text-muted">
                 {t('clients.poolsCount', { count: counts[c.id] ?? 0 })}

@@ -323,7 +323,7 @@ export function DashboardPage() {
                             <span className="block truncate text-sm font-medium text-text">
                               {r.pool?.denominacion ?? '—'} · {r.basin?.denominacion ?? '—'}
                             </span>
-                            <span className="text-xs text-status-red">
+                            <span className="text-xs text-status-red-text">
                               {t('dashboard.outOfRangeReading')}
                             </span>
                           </span>
@@ -358,7 +358,7 @@ export function DashboardPage() {
                   <h2 className="text-lg font-semibold text-text">
                     {t('dashboard.recentReports')}
                   </h2>
-                  <Link to="/reports" className="text-sm font-medium text-primary hover:underline">
+                  <Link to="/reports" className="text-sm font-medium text-accent hover:underline">
                     {t('dashboard.viewAll')}
                   </Link>
                 </div>

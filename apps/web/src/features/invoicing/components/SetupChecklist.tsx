@@ -62,7 +62,7 @@ export function SetupChecklist({
                 aria-hidden
                 className={`inline-flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
                   step.done
-                    ? 'bg-status-green/15 text-status-green'
+                    ? 'bg-status-green/15 text-status-green-text'
                     : 'bg-surface-muted text-text-muted'
                 }`}
               >

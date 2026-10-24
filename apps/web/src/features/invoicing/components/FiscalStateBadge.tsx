@@ -4,10 +4,10 @@ import type { Enums } from '../../../lib/database.types.js';
 
 const TONE: Record<FiscalState, string> = {
   draft: 'bg-surface-muted text-text-muted',
-  pending_send: 'bg-status-amber/15 text-status-amber',
-  sent: 'bg-status-green/15 text-status-green',
-  sent_with_errors: 'bg-status-amber/15 text-status-amber',
-  rejected: 'bg-status-red/15 text-status-red',
+  pending_send: 'bg-status-amber/15 text-status-amber-text',
+  sent: 'bg-status-green/15 text-status-green-text',
+  sent_with_errors: 'bg-status-amber/15 text-status-amber-text',
+  rejected: 'bg-status-red/15 text-status-red-text',
   cancelled: 'bg-surface-muted text-text-muted line-through',
   rectified: 'bg-surface-muted text-text-muted',
 };
@@ -52,9 +52,9 @@ export function PaymentBadge({
   const key = paymentStatus === 'paid' ? 'paid' : overdue ? 'overdue' : 'pending';
   const tone =
     key === 'paid'
-      ? 'bg-status-green/15 text-status-green'
+      ? 'bg-status-green/15 text-status-green-text'
       : key === 'overdue'
-        ? 'bg-status-red/15 text-status-red'
+        ? 'bg-status-red/15 text-status-red-text'
         : 'bg-surface-muted text-text-muted';
   return (
     <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${tone}`}>

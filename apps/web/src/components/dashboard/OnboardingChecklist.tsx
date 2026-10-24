@@ -18,7 +18,7 @@ function StepRow({ step, index }: { step: ChecklistStep; index?: number }) {
         aria-hidden
         className={`flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
           step.done
-            ? 'bg-status-green-bg text-status-green'
+            ? 'bg-status-green-bg text-status-green-text'
             : 'border border-border text-text-muted'
         }`}
       >

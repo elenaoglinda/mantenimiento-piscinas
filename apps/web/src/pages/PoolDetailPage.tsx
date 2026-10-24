@@ -80,7 +80,7 @@ export function PoolDetailPage() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <Link to="/pools" className="text-sm text-primary hover:underline">
+        <Link to="/pools" className="text-sm text-accent hover:underline">
           ← {t('nav.pools')}
         </Link>
       </div>
@@ -176,7 +176,7 @@ export function PoolDetailPage() {
                   <button
                     type="button"
                     onClick={() => setTreatmentModal({ basinId: b.id, treatment: null })}
-                    className="text-sm font-medium text-primary hover:underline"
+                    className="text-sm font-medium text-accent hover:underline"
                   >
                     {t('treatments.addTreatment')}
                   </button>
@@ -197,7 +197,7 @@ export function PoolDetailPage() {
                           <button
                             type="button"
                             onClick={() => setTreatmentModal({ basinId: b.id, treatment: tr })}
-                            className="text-primary hover:underline"
+                            className="text-accent hover:underline"
                           >
                             {t('common.edit')}
                           </button>

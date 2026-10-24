@@ -343,7 +343,7 @@ export function ReportFormPage() {
                     inputMode="decimal"
                     value={raw}
                     onChange={(e) => setValue(d.id, { value: e.target.value }, d.siloe_param_id)}
-                    className="w-24 rounded-[var(--radius-md)] border border-border bg-surface px-2.5 py-1.5 text-text outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30"
+                    className="w-24 rounded-[var(--radius-md)] border border-border bg-surface px-2.5 py-1.5 text-text outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-focus/40"
                     aria-label={`${d.name_es} ${t('reports.value')}`}
                   />
                   <select
@@ -373,7 +373,7 @@ export function ReportFormPage() {
           <button
             type="button"
             onClick={() => setIncidents((p) => [...p, { description: '', corrective_action: '' }])}
-            className="text-sm font-medium text-primary hover:underline"
+            className="text-sm font-medium text-accent hover:underline"
           >
             {t('reports.addIncident')}
           </button>

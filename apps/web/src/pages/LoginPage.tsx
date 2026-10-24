@@ -91,7 +91,7 @@ export function LoginPage() {
           type="button"
           onClick={onMagicLink}
           disabled={loading}
-          className="mt-3 w-full text-center text-sm font-medium text-primary hover:underline disabled:opacity-60"
+          className="mt-3 w-full text-center text-sm font-medium text-accent hover:underline disabled:opacity-60"
         >
           {t('auth.magicLink')}
         </button>
@@ -105,7 +105,7 @@ export function LoginPage() {
 
         <p className="mt-6 text-center text-sm text-text-muted">
           {t('auth.noAccount')}{' '}
-          <Link to="/signup" className="font-medium text-primary hover:underline">
+          <Link to="/signup" className="font-medium text-accent hover:underline">
             {t('auth.createOne')}
           </Link>
         </p>

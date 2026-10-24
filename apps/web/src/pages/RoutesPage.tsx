@@ -272,7 +272,7 @@ export function RoutesPage() {
                 </div>
                 <Link
                   to={`/reports/new?poolId=${s.pool.id}`}
-                  className="shrink-0 text-sm font-medium text-primary hover:underline"
+                  className="shrink-0 text-sm font-medium text-accent hover:underline"
                 >
                   {t('routes.startVisit')}
                 </Link>

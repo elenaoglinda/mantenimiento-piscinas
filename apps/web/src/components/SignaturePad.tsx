@@ -25,7 +25,9 @@ export function SignaturePad({ onChange }: { onChange: (dataUrl: string) => void
       ctx.scale(ratio, ratio);
       ctx.lineWidth = 2;
       ctx.lineCap = 'round';
-      ctx.strokeStyle = '#0f1f1d';
+      // Ink follows the --text token rather than a literal colour, so a re-skin reaches it too.
+      ctx.strokeStyle =
+        getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#00161c';
     }
   }, []);
 

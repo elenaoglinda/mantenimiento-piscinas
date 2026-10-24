@@ -41,7 +41,7 @@ export function FacturacionNav() {
                 className={({ isActive }) =>
                   `inline-block rounded-t-[var(--radius-md)] px-3 py-2 text-sm transition-colors ${
                     isActive
-                      ? 'border-b-2 border-primary font-medium text-primary'
+                      ? 'border-b-2 border-accent font-medium text-accent'
                       : 'text-text-muted hover:text-text'
                   }`
                 }
@@ -63,7 +63,7 @@ export function FacturacionNav() {
 export function TestEnvBadge() {
   const { t } = useTranslation();
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-status-amber/15 px-2.5 py-1 text-xs font-semibold text-status-amber">
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-status-amber/15 px-2.5 py-1 text-xs font-semibold text-status-amber-text">
       <span aria-hidden className="size-1.5 rounded-full bg-status-amber" />
       {t('invoicing.testBadge')}
     </span>

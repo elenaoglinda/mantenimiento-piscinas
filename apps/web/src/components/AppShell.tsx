@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/context.js';
+import { Logo } from './brand/Logo.js';
 
 interface NavItem {
   to: string;
@@ -37,7 +38,7 @@ export function AppShell() {
       <header className="sticky top-0 z-10 border-b border-border bg-surface/95 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="text-base font-semibold text-primary">{t('app.name')}</span>
+            <Logo size="sm" />
             {profile && (
               <span className="hidden truncate text-sm text-text-muted sm:inline">
                 · {profile.org.name}
@@ -93,7 +94,7 @@ export function AppShell() {
               className={({ isActive }) =>
                 `-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
                   isActive
-                    ? 'border-primary text-primary'
+                    ? 'border-accent text-accent'
                     : 'border-transparent text-text-muted hover:text-text'
                 }`
               }
@@ -113,7 +114,7 @@ export function AppShell() {
                 end={item.end}
                 className={({ isActive }) =>
                   `block rounded-[var(--radius-md)] px-3 py-2.5 text-sm font-medium transition-colors ${
-                    isActive ? 'bg-brand-50 text-primary' : 'text-text hover:bg-surface-muted'
+                    isActive ? 'bg-accent-soft text-accent' : 'text-text hover:bg-surface-muted'
                   }`
                 }
               >

@@ -102,7 +102,7 @@ export function InvoiceDetailPage() {
   if (!invoice) {
     return (
       <div className="flex flex-col gap-3">
-        <Link to="/invoices" className="text-sm text-primary hover:underline">
+        <Link to="/invoices" className="text-sm text-accent hover:underline">
           ← {t('invoicing.backToInvoices')}
         </Link>
         <DbFailureAlert failure={failure} />
@@ -156,7 +156,7 @@ export function InvoiceDetailPage() {
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <Link to="/invoices" className="text-sm text-primary hover:underline">
+          <Link to="/invoices" className="text-sm text-accent hover:underline">
             ← {t('invoicing.backToInvoices')}
           </Link>
           <h1 className="mt-1 text-2xl font-semibold text-text">
@@ -188,7 +188,7 @@ export function InvoiceDetailPage() {
             {rectificativa && (
               <li>
                 {t('invoicing.link.rectifiedBy')}{' '}
-                <Link to={`/invoices/${rectificativa.id}`} className="text-primary hover:underline">
+                <Link to={`/invoices/${rectificativa.id}`} className="text-accent hover:underline">
                   {t('invoicing.link.open')}
                 </Link>
               </li>
@@ -198,7 +198,7 @@ export function InvoiceDetailPage() {
                 {t('invoicing.link.rectifies')}{' '}
                 <Link
                   to={`/invoices/${invoice.rectifies_invoice_id}`}
-                  className="text-primary hover:underline"
+                  className="text-accent hover:underline"
                 >
                   {t('invoicing.link.open')}
                 </Link>
@@ -209,7 +209,7 @@ export function InvoiceDetailPage() {
                 {t('invoicing.link.replacedBy')}{' '}
                 <Link
                   to={`/invoices/${invoice.replaced_by_invoice_id}`}
-                  className="text-primary hover:underline"
+                  className="text-accent hover:underline"
                 >
                   {t('invoicing.link.open')}
                 </Link>
@@ -273,7 +273,7 @@ export function InvoiceDetailPage() {
                       <td className="py-2 text-right">
                         <button
                           type="button"
-                          className="text-sm text-status-red hover:underline"
+                          className="text-sm text-status-red-text hover:underline"
                           onClick={() => void run(() => deleteLine(l.id))}
                         >
                           {t('common.delete')}
@@ -350,7 +350,7 @@ export function InvoiceDetailPage() {
               href={invoice.aeat_url}
               target="_blank"
               rel="noreferrer"
-              className="mt-3 inline-block text-sm text-primary hover:underline"
+              className="mt-3 inline-block text-sm text-accent hover:underline"
             >
               {t('invoicing.validateAtAeat')}
             </a>

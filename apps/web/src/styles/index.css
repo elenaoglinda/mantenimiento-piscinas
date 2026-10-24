@@ -18,29 +18,47 @@
   --color-brand-800: var(--brand-800);
   --color-brand-900: var(--brand-900);
 
+  --color-navy-700: var(--navy-700);
+  --color-navy-800: var(--navy-800);
+  --color-navy-900: var(--navy-900);
+
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-primary-contrast: var(--primary-contrast);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-focus: var(--focus-ring);
 
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-surface-muted: var(--surface-muted);
+  --color-sidebar: var(--sidebar-bg);
   --color-text: var(--text);
   --color-text-muted: var(--text-muted);
   --color-border: var(--border);
 
   --color-status-green: var(--status-green);
   --color-status-green-bg: var(--status-green-bg);
+  --color-status-green-text: var(--status-green-text);
   --color-status-amber: var(--status-amber);
   --color-status-amber-bg: var(--status-amber-bg);
+  --color-status-amber-text: var(--status-amber-text);
   --color-status-red: var(--status-red);
   --color-status-red-bg: var(--status-red-bg);
+  --color-status-red-text: var(--status-red-text);
   --color-status-unknown: var(--status-unknown);
   --color-status-unknown-bg: var(--status-unknown-bg);
+  --color-status-unknown-text: var(--status-unknown-text);
 
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
+  --radius-full: var(--radius-full);
+
+  --shadow-card: var(--shadow-card);
+
+  --font-sans: var(--font-body);
+  --font-display: var(--font-heading);
 }
 
 html,
@@ -59,15 +77,31 @@ body {
   margin: 0;
   background-color: var(--bg);
   color: var(--text);
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
+  font-family: var(--font-body);
+  font-size: 0.875rem; /* 14px body, per the type scale */
+  line-height: 1.25rem;
   -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * Type: Space Grotesk for headings (and KPI numbers, via `font-display`); DM Sans everywhere
+ * else. Same pairing as cloro.app.
+ */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.01em;
+}
+
+/*
+ * Tables in this app are mostly ppm, pH, €, counts and dates — columns that should line up.
+ * Tabular figures stop a "1,4" and an "8,0" from being different widths.
+ */
+table,
+time {
+  font-variant-numeric: tabular-nums;
 }
 
 /*

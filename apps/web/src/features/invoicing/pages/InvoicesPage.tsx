@@ -237,7 +237,7 @@ export function InvoicesPage() {
               </button>
             ))}
           </div>
-          <Link to="/invoices/settings" className="text-sm text-primary hover:underline">
+          <Link to="/invoices/settings" className="text-sm text-accent hover:underline">
             {t('invoicing.editFiscal')}
           </Link>
         </div>
@@ -306,7 +306,7 @@ export function InvoicesPage() {
                 {visible.map((inv) => (
                   <tr key={inv.id} className="border-t border-border">
                     <td className="py-2 pr-3">
-                      <Link to={`/invoices/${inv.id}`} className="text-primary hover:underline">
+                      <Link to={`/invoices/${inv.id}`} className="text-accent hover:underline">
                         {formatInvoiceNumber(inv.invoice_series?.code ?? '', inv.number)}
                       </Link>
                     </td>
