@@ -35,3 +35,7 @@ test-results/
 supabase/.temp/
 supabase/.branches/
 .vercel
+
+# Redesign harness scratch output (committed sets are before/ and after/)
+docs/redesign/_check/
+docs/redesign/ci/
