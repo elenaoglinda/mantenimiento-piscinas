@@ -292,7 +292,8 @@
     "reportsEmpty": "Esta piscina aún no tiene informes",
     "siloeTitle": "Códigos SILOÉ",
     "siloeHint": "La exportación anual necesita el código de la instalación y el de cada vaso.",
-    "siloeCodV": "Código SILOÉ (vaso)"
+    "siloeCodV": "Código SILOÉ (vaso)",
+    "addCode": "Añadir código"
   },
   "poolType": {
     "tipo_1": "Tipo 1 — uso principal (públicas, ocio, spa)",
@@ -316,7 +317,9 @@
     "lamina": "Superficie lámina de agua (m²)",
     "profMax": "Profundidad máxima (m)",
     "profMin": "Profundidad mínima (m)",
-    "observaciones": "Observaciones"
+    "observaciones": "Observaciones",
+    "siloeCodV": "Código SILOÉ (vaso)",
+    "siloeCodVHint": "El código que SILOÉ asigna a este vaso. Lo exige la exportación anual."
   },
   "basinClass": {
     "cubierto": "Cubierto",

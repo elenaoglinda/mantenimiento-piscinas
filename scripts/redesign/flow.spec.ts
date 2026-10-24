@@ -77,12 +77,11 @@ test('client → pool → vaso → report → SILOÉ export', async ({ page }) =
   await page.getByRole('button', { name: 'Nuevo vaso' }).first().click();
   const basinDialog = page.getByRole('dialog', { name: 'Nuevo vaso' });
   await basinDialog.getByLabel('Nombre del vaso').fill('Vaso grande');
+  await basinDialog.getByLabel('Código SILOÉ (vaso)').fill('V-777-01');
   await basinDialog.getByRole('button', { name: 'Guardar' }).click();
   await expect(page.getByRole('heading', { name: 'Vaso grande' })).toBeVisible();
 
-  // There is no UI for a basin's SILOÉ code yet (see the PR's follow-ups), so set it the way
-  // an import or admin tool would.
-  backend.db.basin[0].siloe_cod_v = 'V-777-01';
+  expect(backend.db.basin[0].siloe_cod_v).toBe('V-777-01');
 
   // 4. Report, from the pool's own "Nuevo informe" (pool pre-selected), dated last season.
   await page.getByRole('link', { name: 'Nuevo informe' }).last().click();

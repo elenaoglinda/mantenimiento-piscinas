@@ -427,11 +427,22 @@ export function PoolDetailPage() {
                         {t('pools.siloeCodV')}: {b.siloe_cod_v || t('common.none')}
                       </p>
                     </div>
-                    {pool.siloe_cod_p && b.siloe_cod_v ? (
-                      <StatusPill tone="green">{t('pools.siloeReady')}</StatusPill>
-                    ) : (
-                      <StatusPill tone="amber">{t('pools.siloeMissing')}</StatusPill>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {pool.siloe_cod_p && b.siloe_cod_v ? (
+                        <StatusPill tone="green">{t('pools.siloeReady')}</StatusPill>
+                      ) : (
+                        <StatusPill tone="amber">{t('pools.siloeMissing')}</StatusPill>
+                      )}
+                      {canWrite && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setBasinModal({ basin: b })}
+                        >
+                          {b.siloe_cod_v ? t('common.edit') : t('pools.addCode')}
+                        </Button>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>
