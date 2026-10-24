@@ -693,7 +693,17 @@
     "missingSiloeCodes": "Faltan los códigos SILOÉ de la piscina o el vaso. Añádelos en la ficha de la piscina.",
     "history": "Exportaciones recientes",
     "historyEmpty": "Aún no hay exportaciones.",
-    "noResults": "Aún no hay resultados anuales para este año. Pulsa «Generar»."
+    "noResults": "Aún no hay resultados anuales para este año. Pulsa «Generar».",
+    "step1": "Elige año y tipo",
+    "step2": "Revisa los resultados",
+    "step3": "Descarga el XML",
+    "step1Hint": "SILOÉ recibe los resultados de la temporada anterior. Genera los resultados anuales a partir de los informes completados o firmados.",
+    "emptyTitle": "Sin resultados anuales de {{year}}",
+    "readiness": "{{ready}} de {{total}} vasos con los datos obligatorios",
+    "ready": "Datos completos",
+    "missing": "Falta: {{fields}}",
+    "exportedAt": "Fecha",
+    "kind": "Tipo"
   },
   "sign": {
     "title": "Firma del titular",
