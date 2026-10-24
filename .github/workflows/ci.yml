@@ -68,6 +68,8 @@ jobs:
           done
       - name: Fiscal state-machine tests
         run: psql -v ON_ERROR_STOP=1 -d app -f supabase/tests/invoicing_lifecycle.test.sql
+      - name: Privilege guard tests (members can't promote themselves)
+        run: psql -v ON_ERROR_STOP=1 -d app -f supabase/tests/app_user_privileges.test.sql
       - name: Rollback must refuse while issued invoices exist
         run: |
           if psql -v ON_ERROR_STOP=1 -q -d app \

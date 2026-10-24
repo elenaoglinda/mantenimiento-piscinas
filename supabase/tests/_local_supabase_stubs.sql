@@ -11,6 +11,9 @@ create table if not exists auth.users (id uuid primary key);
 create or replace function auth.uid() returns uuid language sql stable as $$
   select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
 $$;
+-- Supabase lets signed-in requests call auth.uid() (RLS policies and triggers do).
+grant usage on schema auth to anon, authenticated, service_role;
+grant execute on function auth.uid() to anon, authenticated, service_role;
 create extension if not exists pgcrypto;
 create schema if not exists storage;
 create table if not exists storage.buckets (
