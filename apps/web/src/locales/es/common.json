@@ -259,7 +259,25 @@
     "siloeCodP": "Código SILOÉ (instalación)",
     "observaciones": "Observaciones",
     "basinsCount": "{{count}} vaso",
-    "basinsCount_other": "{{count}} vasos"
+    "basinsCount_other": "{{count}} vasos",
+    "searchPlaceholder": "Buscar por nombre, cliente o localidad",
+    "location": "Ubicación",
+    "siloeReady": "Códigos SILOÉ",
+    "siloeMissing": "Faltan códigos SILOÉ",
+    "emptyTitle": "Todavía no hay piscinas",
+    "emptyHint": "Añade la primera para registrar visitas y preparar el informe de SILOÉ.",
+    "noMatches": "Ninguna piscina coincide",
+    "noMatchesHint": "Prueba con otro nombre, cliente o localidad.",
+    "tabs": {
+      "summary": "Resumen"
+    },
+    "lastVisit": "Última visita",
+    "details": "Datos de la instalación",
+    "basinsHint": "Cada vaso (piscina, chapoteo, spa…) lleva sus propios análisis.",
+    "reportsEmpty": "Esta piscina aún no tiene informes",
+    "siloeTitle": "Códigos SILOÉ",
+    "siloeHint": "La exportación anual necesita el código de la instalación y el de cada vaso.",
+    "siloeCodV": "Código SILOÉ (vaso)"
   },
   "poolType": {
     "tipo_1": "Tipo 1 — uso principal (públicas, ocio, spa)",

@@ -4,6 +4,7 @@ import { Bell, CircleHelp, Menu, Plus, Search } from 'lucide-react';
 import { useAuth } from '../../auth/context.js';
 import { Breadcrumb, type Crumb } from '../../components/ui/Breadcrumb.js';
 import { resolveRoute } from './nav.js';
+import { useCurrentRecordLabel } from './recordCrumb.js';
 
 const HELP_URL = 'https://cloro.app';
 
@@ -121,13 +122,22 @@ function IconAction({
 function TopbarBreadcrumb() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
+  const recordLabel = useCurrentRecordLabel();
   const { group, item, subKey } = resolveRoute(pathname);
   if (!item) return <div className="flex-1" />;
 
   const crumbs: Crumb[] = [];
   if (group?.labelKey) crumbs.push({ label: t(group.labelKey) });
   crumbs.push({ label: t(item.labelKey), to: subKey ? item.to : undefined });
-  if (subKey) crumbs.push({ label: t(subKey) });
+  if (subKey === 'shell.crumbs.detail' && recordLabel) {
+    crumbs.push({ label: recordLabel });
+  } else if (subKey === 'shell.crumbs.edit' && recordLabel) {
+    // /reports/:id/edit → Informes › {record} › Editar
+    crumbs.push({ label: recordLabel, to: pathname.replace(/\/edit\/?$/, '') });
+    crumbs.push({ label: t(subKey) });
+  } else if (subKey) {
+    crumbs.push({ label: t(subKey) });
+  }
 
   return <Breadcrumb items={crumbs} label={t('shell.breadcrumb')} className="flex-1" />;
 }

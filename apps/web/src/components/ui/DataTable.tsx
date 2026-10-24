@@ -232,7 +232,7 @@ export function TableToolbar({
   return (
     <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
       {onSearch && (
-        <div className="relative sm:w-72">
+        <div className="relative sm:w-80">
           <Search
             aria-hidden
             size={16}

@@ -1,19 +1,19 @@
 import { useTranslation } from 'react-i18next';
+import { StatusPill } from './ui/StatusPill.js';
+import type { Tone } from './ui/variants.js';
 import type { Enums } from '../lib/database.types.js';
 
-const styles: Record<Enums<'report_status'>, string> = {
-  draft: 'bg-surface-muted text-text-muted',
-  completed: 'bg-status-amber-bg text-status-amber-text',
-  signed: 'bg-status-green-bg text-status-green-text',
+const tones: Record<Enums<'report_status'>, Tone> = {
+  draft: 'neutral',
+  completed: 'amber',
+  signed: 'green',
 };
 
 export function ReportStatusBadge({ status }: { status: Enums<'report_status'> }) {
   const { t } = useTranslation();
   return (
-    <span
-      className={`shrink-0 rounded-[var(--radius-full)] px-2.5 py-0.5 text-xs font-medium ${styles[status]}`}
-    >
+    <StatusPill tone={tones[status]} className="shrink-0">
       {t(`reportStatus.${status}`)}
-    </span>
+    </StatusPill>
   );
 }

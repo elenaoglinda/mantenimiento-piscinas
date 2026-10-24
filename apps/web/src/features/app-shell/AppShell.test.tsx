@@ -3,11 +3,15 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../i18n.js';
 import { AppShell } from './AppShell.js';
+import { useRecordCrumb } from './recordCrumb.js';
 import { AuthContext, type AuthContextValue } from '../../auth/context.js';
 import type { Tables } from '../../lib/database.types.js';
 
 function Where() {
-  return <div data-testid="where">{useLocation().pathname}</div>;
+  const { pathname } = useLocation();
+  // Stands in for a detail page that names its record once loaded.
+  useRecordCrumb(pathname === '/pools/p1' ? 'Villa Mar' : null);
+  return <div data-testid="where">{pathname}</div>;
 }
 
 function renderShell({
@@ -162,6 +166,25 @@ describe('AppShell top bar', () => {
     unmount();
     renderShell({ role: 'viewer' });
     expect(screen.queryByRole('link', { name: 'Nuevo informe' })).toBeNull();
+  });
+});
+
+describe('AppShell record names', () => {
+  it('shows the record a detail page names, in the breadcrumb and the tab title', () => {
+    renderShell({ path: '/pools/p1' });
+    const crumbs = screen.getByRole('navigation', { name: 'Ruta de navegación' });
+    expect(within(crumbs).getByText('Villa Mar')).toHaveAttribute('aria-current', 'page');
+    expect(within(crumbs).getByRole('link', { name: 'Piscinas' })).toHaveAttribute(
+      'href',
+      '/pools',
+    );
+    expect(document.title).toBe('Cloro · Villa Mar');
+  });
+
+  it('falls back to "Detalle" while the record is unnamed', () => {
+    renderShell({ path: '/pools/p2' });
+    const crumbs = screen.getByRole('navigation', { name: 'Ruta de navegación' });
+    expect(within(crumbs).getByText('Detalle')).toBeInTheDocument();
   });
 });
 

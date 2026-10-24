@@ -7,26 +7,39 @@ import { Sidebar } from './Sidebar.js';
 import { Topbar } from './Topbar.js';
 import { resolveRoute } from './nav.js';
 import { useSidebarCollapsed } from './useSidebarCollapsed.js';
+import { RecordCrumbProvider } from './RecordCrumbProvider.js';
+import { useCurrentRecordLabel } from './recordCrumb.js';
 
 /**
  * The authenticated layout: sidebar (rail ≥ 1024px, drawer below), sticky top bar, fluid
  * content area, and the ⌘K palette. Pages render unchanged inside <Outlet />.
  */
 export function AppShell() {
+  return (
+    <RecordCrumbProvider>
+      <ShellLayout />
+    </RecordCrumbProvider>
+  );
+}
+
+function ShellLayout() {
   const { t } = useTranslation();
+  const recordLabel = useCurrentRecordLabel();
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useSidebarCollapsed();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Navigation closes the drawer, and every page gets "Cloro · {Page}".
+  // Navigation closes the drawer.
+  useEffect(() => setDrawerOpen(false), [pathname]);
+
+  // Every page gets "Cloro · {Page}", or "Cloro · {Record}" once a detail page names it.
   useEffect(() => {
-    setDrawerOpen(false);
     const { item, subKey } = resolveRoute(pathname);
-    const page = subKey ? t(subKey) : item ? t(item.labelKey) : null;
+    const page = recordLabel ?? (subKey ? t(subKey) : item ? t(item.labelKey) : null);
     document.title = page ? `Cloro · ${page}` : 'Cloro';
-  }, [pathname, t]);
+  }, [pathname, recordLabel, t]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

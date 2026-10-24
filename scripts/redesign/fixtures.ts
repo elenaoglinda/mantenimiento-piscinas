@@ -111,11 +111,23 @@ const basinBase = {
   siloe_cod_v: null,
   siloe_cod_v_p: null,
   tipo_vaso: ['recreativo'],
+  // The detail page selects `*, treatment(*)`, which always embeds an array.
+  treatment: [] as Record<string, unknown>[],
   created_at: iso(50),
   updated_at: iso(5),
 };
 const basins = [
-  { ...basinBase, id: 'bas-1', pool_id: 'pool-1', denominacion: 'Vaso principal', num_orden: 1 },
+  {
+    ...basinBase,
+    id: 'bas-1',
+    pool_id: 'pool-1',
+    denominacion: 'Vaso principal',
+    num_orden: 1,
+    siloe_cod_v: 'V-001',
+    treatment: [
+      { id: 'tr-1', basin_id: 'bas-1', kind: 'desinfeccion', comercial: 'Hipoclorito sódico 15 %' },
+    ],
+  },
   {
     ...basinBase,
     id: 'bas-2',
