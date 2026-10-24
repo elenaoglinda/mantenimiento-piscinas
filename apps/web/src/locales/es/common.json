@@ -430,7 +430,30 @@
     "saved": "Ruta guardada.",
     "history": "Rutas guardadas",
     "historyEmpty": "Aún no hay rutas guardadas.",
-    "stopsCount": "{{count}} parada(s)"
+    "stopsCount": "{{count}} parada(s)",
+    "tabs": {
+      "agenda": "Agenda",
+      "plan": "Planificar ruta"
+    },
+    "viewLabel": "Vista",
+    "day": "Día",
+    "week": "Semana",
+    "today": "Hoy",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "technician": "Técnico",
+    "allTechnicians": "Todos los técnicos",
+    "agendaEmpty": "No hay rutas planificadas",
+    "agendaEmptyHint": "Planifica una ruta para ver aquí el orden de visitas.",
+    "mapTitle": "Mapa de la ruta",
+    "mapPlaceholder": "El mapa aparece al ver un día con una ruta planificada.",
+    "mapUnavailable": "No se ha podido cargar el mapa.",
+    "noCoordsTitle": "Faltan coordenadas",
+    "searchPools": "Buscar piscina",
+    "selectedCount_one": "{{count}} seleccionada",
+    "selectedCount_other": "{{count}} seleccionadas",
+    "planEmptyTitle": "Calcula una ruta",
+    "planEmptyHint": "Selecciona al menos dos piscinas y pulsa «Calcular ruta óptima»."
   },
   "invoicing": {
     "title": "Facturas",
