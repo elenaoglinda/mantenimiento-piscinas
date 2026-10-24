@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { evaluate, type ParameterStatus, type ReadingExtraction } from '@piscinas/shared';
 import { supabase } from '../lib/supabase.js';
@@ -17,8 +17,13 @@ import {
   type MeasurementInput,
   type PhotoImportErrorCode,
 } from '../lib/photoImport.js';
-import { Alert, Card, Spinner } from '../components/ui/feedback.js';
+import { Camera, Sparkles } from 'lucide-react';
+import { Alert, Spinner } from '../components/ui/feedback.js';
 import { Button } from '../components/ui/Button.js';
+import { Card, CardHeader } from '../components/ui/Card.js';
+import { PageHeader } from '../components/ui/PageHeader.js';
+import { StatusPill } from '../components/ui/StatusPill.js';
+import { cn } from '../components/ui/utils.js';
 import { TextField } from '../components/ui/TextField.js';
 import { SelectField, TextareaField } from '../components/ui/fields.js';
 import { StatusChip } from '../components/ui/StatusChip.js';
@@ -265,17 +270,52 @@ export function ImportReportPage() {
   const lowConfidenceCount = extraction?.lowConfidenceFields.length ?? 0;
 
   return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <Link to="/reports" className="text-sm text-accent hover:underline">
-          ← {t('nav.reports')}
-        </Link>
-        <h1 className="mt-2 text-2xl font-semibold text-text">{t('photoImport.title')}</h1>
-        <p className="text-sm text-text-muted">{t('photoImport.subtitle')}</p>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        className="mb-0"
+        back={{ to: '/reports', label: t('nav.reports') }}
+        title={t('photoImport.title')}
+        description={t('photoImport.subtitle')}
+      />
+
+      <ol
+        className="flex flex-wrap gap-x-6 gap-y-2 text-sm"
+        aria-label={t('photoImport.stepsLabel')}
+      >
+        {[t('photoImport.step1'), t('photoImport.step2'), t('photoImport.step3')].map(
+          (label, i) => {
+            const step = extraction ? 1 : 0;
+            return (
+              <li
+                key={label}
+                aria-current={i === step ? 'step' : undefined}
+                className={cn(
+                  'flex items-center gap-2',
+                  i <= step ? 'font-medium text-text' : 'text-text-muted',
+                )}
+              >
+                <span
+                  aria-hidden
+                  className={cn(
+                    'inline-flex size-6 items-center justify-center rounded-full text-xs font-semibold',
+                    i < step
+                      ? 'bg-primary text-primary-contrast'
+                      : i === step
+                        ? 'bg-accent-soft text-navy-800'
+                        : 'border border-border',
+                  )}
+                >
+                  {i + 1}
+                </span>
+                {label}
+              </li>
+            );
+          },
+        )}
+      </ol>
 
       {error && <Alert tone="error">{error}</Alert>}
-      {warning && <Alert tone="info">{warning}</Alert>}
+      {warning && <Alert tone="warning">{warning}</Alert>}
 
       <Card>
         <div className="flex flex-col gap-4">
@@ -288,41 +328,57 @@ export function ImportReportPage() {
             onChange={(e) => e.target.files?.[0] && onPick(e.target.files[0])}
           />
 
+          {previewUrl ? (
+            <img
+              src={previewUrl}
+              alt={t('photoImport.previewAlt')}
+              className="max-h-72 w-full rounded-[var(--radius-md)] border border-border bg-surface-muted object-contain"
+            />
+          ) : (
+            <div className="flex flex-col items-center gap-2 rounded-[var(--radius-md)] border-2 border-dashed border-border bg-surface-muted/50 px-6 py-10 text-center">
+              <span
+                aria-hidden
+                className="inline-flex size-12 items-center justify-center rounded-full bg-accent-soft text-accent"
+              >
+                <Camera size={22} />
+              </span>
+              <p className="max-w-sm text-sm text-text-muted">{t('photoImport.uploadHint')}</p>
+            </div>
+          )}
+
           <div className="flex flex-wrap items-center gap-3">
             <Button
               variant={file ? 'secondary' : 'primary'}
               onClick={() => fileInput.current?.click()}
             >
+              <Camera aria-hidden size={16} />
               {file ? t('photoImport.changePhoto') : t('photoImport.choosePhoto')}
             </Button>
             {file && !extraction && (
               <Button onClick={analyse} loading={scanning}>
+                {!scanning && <Sparkles aria-hidden size={16} />}
                 {scanning ? t('photoImport.analysing') : t('photoImport.analyse')}
               </Button>
             )}
           </div>
-
-          {previewUrl && (
-            <img
-              src={previewUrl}
-              alt={t('photoImport.previewAlt')}
-              className="max-h-64 w-full rounded-[var(--radius-md)] border border-border object-contain"
-            />
-          )}
-          {!file && <p className="text-sm text-text-muted">{t('photoImport.uploadHint')}</p>}
         </div>
       </Card>
 
-      {scanning && <Spinner label={t('photoImport.analysing')} />}
+      {scanning && (
+        <Card>
+          <Spinner label={t('photoImport.analysing')} />
+        </Card>
+      )}
 
       {extraction && (
         <>
-          <Alert tone={extraction.extractionConfidence === 'high' ? 'success' : 'info'}>
+          <Alert tone={extraction.extractionConfidence === 'high' ? 'success' : 'warning'}>
             {t(`photoImport.confidence.${extraction.extractionConfidence}`)}{' '}
             {lowConfidenceCount > 0 && t('photoImport.verifyCount', { count: lowConfidenceCount })}
           </Alert>
 
           <Card>
+            <CardHeader title={t('reports.sectionVisit')} />
             <div className="flex flex-col gap-4">
               <SelectField
                 label={t('reports.pool')}
@@ -384,8 +440,10 @@ export function ImportReportPage() {
 
           {basinId && (
             <Card>
-              <h2 className="mb-1 text-lg font-semibold text-text">{t('reports.parameters')}</h2>
-              <p className="mb-3 text-sm text-text-muted">{t('photoImport.reviewHint')}</p>
+              <CardHeader
+                title={t('reports.parameters')}
+                description={t('photoImport.reviewHint')}
+              />
               <div className="flex flex-col divide-y divide-border">
                 {defs.map((d) => {
                   const raw = values[d.id]?.value ?? '';
@@ -393,14 +451,20 @@ export function ImportReportPage() {
                   const status: ParameterStatus = evaluate(num, toEvaluatorDef(d)).status;
                   const needsCheck = lowConfidenceDefIds.has(d.id);
                   return (
-                    <div key={d.id} className="flex flex-wrap items-center gap-3 py-2.5">
+                    <div
+                      key={d.id}
+                      className={cn(
+                        'flex flex-wrap items-center gap-3 py-2.5',
+                        needsCheck && '-mx-2 rounded-[var(--radius-md)] bg-status-amber-bg/40 px-2',
+                      )}
+                    >
                       <div className="min-w-40 flex-1">
                         <span className="text-sm font-medium text-text">{d.name_es}</span>
                         {d.unit && <span className="ml-1 text-xs text-text-muted">({d.unit})</span>}
                         {needsCheck && (
-                          <span className="ml-2 rounded-[var(--radius-full)] bg-status-amber-bg px-2 py-0.5 text-xs font-medium text-status-amber-text">
+                          <StatusPill tone="amber" className="ml-2">
                             {t('photoImport.verifyBadge')}
-                          </span>
+                          </StatusPill>
                         )}
                       </div>
                       <input
@@ -408,11 +472,11 @@ export function ImportReportPage() {
                         value={raw}
                         onChange={(e) => setValue(d.id, e.target.value, d.siloe_param_id)}
                         aria-label={`${d.name_es} ${t('reports.value')}`}
-                        className={`w-24 rounded-[var(--radius-md)] border bg-surface px-2.5 py-1.5 text-text outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-focus/40 ${
+                        className={`h-9 w-24 rounded-[var(--radius-md)] border bg-surface px-2.5 text-right text-text tabular-nums outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-focus/40 ${
                           needsCheck ? 'border-status-amber' : 'border-border'
                         }`}
                       />
-                      <div className="w-24 text-right">
+                      <div className="w-28 text-right">
                         <StatusChip status={status} />
                       </div>
                     </div>
@@ -430,12 +494,12 @@ export function ImportReportPage() {
             />
           </Card>
 
-          <div className="flex flex-wrap justify-end gap-2">
+          <div className="flex flex-col items-end gap-2">
             <Button onClick={saveDraft} loading={saving} disabled={!poolId || !basinId}>
               {t('photoImport.saveDraft')}
             </Button>
+            <p className="text-right text-xs text-text-muted">{t('photoImport.draftNote')}</p>
           </div>
-          <p className="text-right text-sm text-text-muted">{t('photoImport.draftNote')}</p>
         </>
       )}
     </div>

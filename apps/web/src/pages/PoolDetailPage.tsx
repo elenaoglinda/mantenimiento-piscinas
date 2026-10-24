@@ -255,7 +255,7 @@ export function PoolDetailPage() {
             </div>
           )}
           {basins.length === 0 ? (
-            <Card className="p-0">
+            <Card padded={false}>
               <EmptyState
                 icon={<Waves size={22} />}
                 title={t('basins.empty')}
@@ -410,11 +410,11 @@ export function PoolDetailPage() {
             </dl>
           </Card>
           {basins.length === 0 ? (
-            <Card className="p-0">
+            <Card padded={false}>
               <EmptyState compact icon={<ShieldCheck size={20} />} title={t('basins.empty')} />
             </Card>
           ) : (
-            <Card className="p-0">
+            <Card padded={false}>
               <ul>
                 {basins.map((b) => (
                   <li

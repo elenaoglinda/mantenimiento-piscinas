@@ -145,7 +145,7 @@ export function PoolsPage() {
       {error ? (
         <Alert tone="error">{error}</Alert>
       ) : !loading && needsClient ? (
-        <Card className="p-0">
+        <Card padded={false}>
           <EmptyState
             icon={<Users size={22} />}
             title={t('pools.addClientFirst')}

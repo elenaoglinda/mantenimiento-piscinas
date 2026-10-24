@@ -57,7 +57,7 @@ export function OnboardingChecklist({ checklist, onDismiss }: OnboardingChecklis
 
   return (
     <Collapsible.Root open={open} onOpenChange={setOpen} asChild>
-      <Card className="p-0">
+      <Card padded={false}>
         <div className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center">
           <div className="min-w-0 lg:w-72">
             <div className="flex items-baseline justify-between gap-3">

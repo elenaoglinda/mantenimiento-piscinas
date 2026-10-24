@@ -462,7 +462,7 @@ export function DesignPage() {
         </Section>
 
         <Section title="Estado vacío">
-          <Card className="p-0">
+          <Card padded={false}>
             <EmptyState
               icon={<ClipboardList size={22} />}
               title="Todavía no hay informes"

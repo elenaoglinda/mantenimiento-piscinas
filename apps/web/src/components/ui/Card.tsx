@@ -1,12 +1,17 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 import { cn } from './utils.js';
 
-/** White surface with the card shadow. Padded by default; pass `className="p-0"` for tables. */
-export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+/** White surface with the card shadow. Padded by default; `padded={false}` for tables and lists. */
+export function Card({
+  className,
+  padded = true,
+  ...props
+}: HTMLAttributes<HTMLDivElement> & { padded?: boolean }) {
   return (
     <div
       className={cn(
-        'rounded-[var(--radius-lg)] border border-border bg-surface p-5 shadow-card sm:p-6',
+        'rounded-[var(--radius-lg)] border border-border bg-surface shadow-card',
+        padded && 'p-5 sm:p-6',
         className,
       )}
       {...props}

@@ -364,7 +364,27 @@
     "allStatuses": "Todos",
     "viewReport": "Ver informe",
     "createdOn": "Creado el",
-    "signAction": "Firmar"
+    "signAction": "Firmar",
+    "formHint": "Completa la visita en orden: datos, parámetros, incidencias y notas.",
+    "sectionVisit": "Datos de la visita",
+    "searchPool": "Buscar piscina…",
+    "parametersHint": "Elige la piscina y el vaso para ver los parámetros que se miden.",
+    "parameter": "Parámetro",
+    "range": "Rango: {{range}}",
+    "incidentsEmpty": "Sin incidencias.",
+    "summary": "Resumen",
+    "enteredOf": "{{count}} de {{total}}",
+    "incidentsCount_one": "{{count}} incidencia",
+    "incidentsCount_other": "{{count}} incidencias",
+    "outOfRangeCount_one": "{{count}} parámetro fuera de rango.",
+    "outOfRangeCount_other": "{{count}} parámetros fuera de rango.",
+    "visitDetails": "Datos de la visita",
+    "searchPlaceholder": "Buscar por piscina o vaso",
+    "emptyTitle": "Todavía no hay informes",
+    "emptyHint": "Registra la primera visita o importa un parte desde una foto.",
+    "noMatches": "Ningún informe coincide",
+    "noMatchesHint": "Prueba con otra piscina o cambia el estado.",
+    "setupTitle": "Antes del primer informe"
   },
   "reportStatus": {
     "draft": "Borrador",
@@ -694,7 +714,11 @@
     "errorTooLarge": "La foto es demasiado grande. Prueba con una foto de menor resolución.",
     "errorUnreadable": "No se han podido leer valores del parte. Comprueba la foto o introdúcelo manualmente.",
     "errorUnauthorized": "Tu sesión ha caducado. Vuelve a iniciar sesión.",
-    "errorFailed": "No se ha podido analizar el parte. Inténtalo de nuevo."
+    "errorFailed": "No se ha podido analizar el parte. Inténtalo de nuevo.",
+    "stepsLabel": "Pasos",
+    "step1": "Foto del parte",
+    "step2": "Revisar valores",
+    "step3": "Guardar borrador"
   },
   "shell": {
     "mainNav": "Navegación principal",

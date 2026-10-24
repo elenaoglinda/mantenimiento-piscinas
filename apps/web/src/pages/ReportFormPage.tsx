@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { evaluate, type ParameterStatus } from '@piscinas/shared';
@@ -10,11 +10,20 @@ import {
   LAB_PARAM_IDS,
   type ParameterDefRow,
 } from '../lib/parameters.js';
-import { Alert, Card, Spinner } from '../components/ui/feedback.js';
+import { LocateFixed, Plus, Trash2 } from 'lucide-react';
+import { Alert } from '../components/ui/feedback.js';
 import { Button } from '../components/ui/Button.js';
+import { Card } from '../components/ui/Card.js';
+import { Combobox } from '../components/ui/Combobox.js';
+import { NativeSelect, Textarea } from '../components/ui/Input.js';
+import { PageHeader } from '../components/ui/PageHeader.js';
+import { Skeleton, SkeletonText } from '../components/ui/Skeleton.js';
+import { StatusPill } from '../components/ui/StatusPill.js';
 import { TextField } from '../components/ui/TextField.js';
-import { SelectField, TextareaField } from '../components/ui/fields.js';
+import { SelectField } from '../components/ui/fields.js';
 import { StatusChip } from '../components/ui/StatusChip.js';
+import { cn } from '../components/ui/utils.js';
+import { useRecordCrumb } from '../features/app-shell/index.js';
 import type { Enums } from '../lib/database.types.js';
 
 type Lugar = Enums<'measurement_lugar'>;
@@ -35,6 +44,17 @@ interface MeasurementInput {
 interface IncidentInput {
   description: string;
   corrective_action: string;
+}
+
+const num = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 });
+
+/** "0,5–2", "≤ 0,6" or "≥ 7,2" from a parameter's OK range; null when it has none. */
+function rangeLabel(d: ParameterDefRow): string | null {
+  if (d.min_ok != null && d.max_ok != null)
+    return `${num.format(d.min_ok)}–${num.format(d.max_ok)}`;
+  if (d.max_ok != null) return `≤ ${num.format(d.max_ok)}`;
+  if (d.min_ok != null) return `≥ ${num.format(d.min_ok)}`;
+  return null;
 }
 
 function toLocalInput(iso: string): string {
@@ -231,212 +251,437 @@ export function ReportFormPage() {
     navigate(`/reports/${rid}`);
   }
 
-  if (loading) return <Spinner />;
+  useRecordCrumb(reportId ? selectedPool?.denominacion : null);
+  const poolFieldId = useId();
+
+  // Live summary of what has been entered so far.
+  const readings = defs
+    .map((d) => {
+      const raw = values[d.id]?.value ?? '';
+      const n = raw.trim() === '' ? null : Number(raw);
+      return { d, raw, status: evaluate(n, toEvaluatorDef(d)).status as ParameterStatus };
+    })
+    .filter((r) => r.raw.trim() !== '');
+  const counts = { green: 0, amber: 0, red: 0, unknown: 0 };
+  for (const r of readings) counts[r.status] += 1;
+  const flagged = readings.filter((r) => r.status === 'red' || r.status === 'amber');
+  const selectedBasin = selectedPool?.basin.find((b) => b.id === basinId);
+  const filledIncidents = incidents.filter((i) => i.description.trim()).length;
+
+  if (loading) return <ReportFormSkeleton />;
+
+  const actions = (
+    <>
+      <Button
+        variant="secondary"
+        onClick={() => save('draft')}
+        loading={saving}
+        disabled={!basinId}
+      >
+        {t('reports.saveDraft')}
+      </Button>
+      <Button onClick={() => save('completed')} loading={saving} disabled={!basinId}>
+        {t('reports.markCompleted')}
+      </Button>
+    </>
+  );
 
   return (
-    <div className="flex flex-col gap-5">
-      <h1 className="text-2xl font-semibold text-text">
-        {reportId ? t('reports.editReport') : t('reports.newReport')}
-      </h1>
-      {error && <Alert tone="error">{error}</Alert>}
+    <div>
+      <PageHeader
+        back={
+          reportId
+            ? { to: `/reports/${reportId}`, label: t('reports.viewReport') }
+            : { to: '/reports', label: t('reports.title') }
+        }
+        title={reportId ? t('reports.editReport') : t('reports.newReport')}
+        description={t('reports.formHint')}
+      />
 
-      <Card>
-        <div className="flex flex-col gap-4">
-          <SelectField
-            label={t('reports.pool')}
-            value={poolId}
-            onChange={(e) => {
-              setPoolId(e.target.value);
-              setBasinId('');
-            }}
-            disabled={!!reportId}
-          >
-            <option value="">{t('reports.selectPool')}</option>
-            {pools.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.denominacion}
-              </option>
-            ))}
-          </SelectField>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="flex min-w-0 flex-col gap-6">
+          {error && <Alert tone="error">{error}</Alert>}
 
-          {selectedPool && selectedPool.basin.length === 0 && (
-            <Alert tone="info">{t('reports.noBasins')}</Alert>
-          )}
-
-          {selectedPool && selectedPool.basin.length > 0 && (
-            <SelectField
-              label={t('reports.basin')}
-              value={basinId}
-              onChange={(e) => setBasinId(e.target.value)}
-              disabled={!!reportId}
-            >
-              <option value="">{t('reports.selectBasin')}</option>
-              {selectedPool.basin.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.denominacion}
-                </option>
-              ))}
-            </SelectField>
-          )}
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <SelectField
-              label={t('reports.analysisType')}
-              value={analysisType}
-              onChange={(e) => setAnalysisType(e.target.value as AnalysisType)}
-            >
-              <option value="autocontrol">{t('analysisType.autocontrol')}</option>
-              <option value="vigilancia">{t('analysisType.vigilancia')}</option>
-            </SelectField>
-            <SelectField
-              label={t('reports.puntoMuestreo')}
-              value={puntoMuestreo}
-              onChange={(e) => setPuntoMuestreo(e.target.value)}
-            >
-              {[1, 2, 3, 4].map((n) => (
-                <option key={n} value={n}>
-                  {t(`puntoMuestreo.${n}`)}
-                </option>
-              ))}
-            </SelectField>
-          </div>
-
-          <TextField
-            label={t('reports.visitedAt')}
-            type="datetime-local"
-            value={visitedAt}
-            onChange={(e) => setVisitedAt(e.target.value)}
-          />
-
-          <div className="flex flex-wrap items-center gap-3">
-            <Button type="button" variant="secondary" onClick={captureLocation}>
-              {t('reports.useLocation')}
-            </Button>
-            {lat != null && lng != null && (
-              <span className="text-sm text-text-muted">
-                {lat}, {lng}
-              </span>
-            )}
-            {geoMsg && <span className="text-sm text-text-muted">{geoMsg}</span>}
-          </div>
-        </div>
-      </Card>
-
-      {basinId && (
-        <Card>
-          <h2 className="mb-3 text-lg font-semibold text-text">{t('reports.parameters')}</h2>
-          <div className="flex flex-col divide-y divide-border">
-            {defs.map((d) => {
-              const input = values[d.id];
-              const raw = input?.value ?? '';
-              const num = raw.trim() === '' ? null : Number(raw);
-              const status: ParameterStatus = evaluate(num, toEvaluatorDef(d)).status;
-              const lugar =
-                input?.lugar ?? (LAB_PARAM_IDS.has(d.siloe_param_id) ? 'lab' : 'in_situ');
-              return (
-                <div key={d.id} className="flex flex-wrap items-center gap-3 py-2.5">
-                  <div className="min-w-40 flex-1">
-                    <span className="text-sm font-medium text-text">{d.name_es}</span>
-                    {d.unit && <span className="ml-1 text-xs text-text-muted">({d.unit})</span>}
-                  </div>
-                  <input
-                    inputMode="decimal"
-                    value={raw}
-                    onChange={(e) => setValue(d.id, { value: e.target.value }, d.siloe_param_id)}
-                    className="w-24 rounded-[var(--radius-md)] border border-border bg-surface px-2.5 py-1.5 text-text outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-focus/40"
-                    aria-label={`${d.name_es} ${t('reports.value')}`}
+          <Section n={1} title={t('reports.sectionVisit')}>
+            <div className="flex flex-col gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor={poolFieldId} className="text-sm font-medium text-text">
+                    {t('reports.pool')}
+                  </label>
+                  <Combobox
+                    id={poolFieldId}
+                    value={poolId}
+                    onValueChange={(v) => {
+                      setPoolId(v);
+                      setBasinId('');
+                    }}
+                    disabled={!!reportId}
+                    options={pools.map((p) => ({ value: p.id, label: p.denominacion }))}
+                    placeholder={t('reports.selectPool')}
+                    searchPlaceholder={t('reports.searchPool')}
+                    emptyText={t('pools.noMatches')}
                   />
-                  <select
-                    value={lugar}
-                    onChange={(e) =>
-                      setValue(d.id, { lugar: e.target.value as Lugar }, d.siloe_param_id)
-                    }
-                    className="rounded-[var(--radius-md)] border border-border bg-surface px-2 py-1.5 text-sm text-text"
-                    aria-label={`${d.name_es} ${t('reports.lugar')}`}
-                  >
-                    <option value="in_situ">{t('lugar.in_situ')}</option>
-                    <option value="lab">{t('lugar.lab')}</option>
-                  </select>
-                  <div className="w-24 text-right">
-                    <StatusChip status={status} />
-                  </div>
                 </div>
-              );
-            })}
-          </div>
-        </Card>
-      )}
 
-      <Card>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-text">{t('reports.incidents')}</h2>
-          <button
-            type="button"
-            onClick={() => setIncidents((p) => [...p, { description: '', corrective_action: '' }])}
-            className="text-sm font-medium text-accent hover:underline"
-          >
-            {t('reports.addIncident')}
-          </button>
-        </div>
-        {incidents.length === 0 ? (
-          <p className="text-sm text-text-muted">{t('common.none')}</p>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {incidents.map((inc, idx) => (
-              <div key={idx} className="flex flex-col gap-2 border-l-2 border-border pl-3">
-                <TextField
-                  label={t('reports.incidentDescription')}
-                  value={inc.description}
-                  onChange={(e) =>
-                    setIncidents((p) =>
-                      p.map((x, i) => (i === idx ? { ...x, description: e.target.value } : x)),
-                    )
-                  }
-                />
-                <TextField
-                  label={t('reports.correctiveAction')}
-                  value={inc.corrective_action}
-                  onChange={(e) =>
-                    setIncidents((p) =>
-                      p.map((x, i) =>
-                        i === idx ? { ...x, corrective_action: e.target.value } : x,
-                      ),
-                    )
-                  }
-                />
-                <button
-                  type="button"
-                  onClick={() => setIncidents((p) => p.filter((_, i) => i !== idx))}
-                  className="self-start text-sm text-text-muted hover:text-text"
-                >
-                  {t('common.delete')}
-                </button>
+                {selectedPool && selectedPool.basin.length > 0 ? (
+                  <SelectField
+                    label={t('reports.basin')}
+                    value={basinId}
+                    onChange={(e) => setBasinId(e.target.value)}
+                    disabled={!!reportId}
+                  >
+                    <option value="">{t('reports.selectBasin')}</option>
+                    {selectedPool.basin.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.denominacion}
+                      </option>
+                    ))}
+                  </SelectField>
+                ) : (
+                  <SelectField label={t('reports.basin')} value="" disabled>
+                    <option value="">{t('reports.selectBasin')}</option>
+                  </SelectField>
+                )}
               </div>
-            ))}
-          </div>
-        )}
-      </Card>
 
-      <Card>
-        <TextareaField
-          label={t('reports.notes')}
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-        />
-      </Card>
+              {selectedPool && selectedPool.basin.length === 0 && (
+                <Alert tone="info">{t('reports.noBasins')}</Alert>
+              )}
 
-      <div className="flex flex-wrap justify-end gap-2">
-        <Button
-          variant="secondary"
-          onClick={() => save('draft')}
-          loading={saving}
-          disabled={!basinId}
-        >
-          {t('reports.saveDraft')}
-        </Button>
-        <Button onClick={() => save('completed')} loading={saving} disabled={!basinId}>
-          {t('reports.markCompleted')}
-        </Button>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <SelectField
+                  label={t('reports.analysisType')}
+                  value={analysisType}
+                  onChange={(e) => setAnalysisType(e.target.value as AnalysisType)}
+                >
+                  <option value="autocontrol">{t('analysisType.autocontrol')}</option>
+                  <option value="vigilancia">{t('analysisType.vigilancia')}</option>
+                </SelectField>
+                <SelectField
+                  label={t('reports.puntoMuestreo')}
+                  value={puntoMuestreo}
+                  onChange={(e) => setPuntoMuestreo(e.target.value)}
+                >
+                  {[1, 2, 3, 4].map((n) => (
+                    <option key={n} value={n}>
+                      {t(`puntoMuestreo.${n}`)}
+                    </option>
+                  ))}
+                </SelectField>
+              </div>
+
+              <div className="grid items-end gap-4 sm:grid-cols-2">
+                <TextField
+                  label={t('reports.visitedAt')}
+                  type="datetime-local"
+                  value={visitedAt}
+                  onChange={(e) => setVisitedAt(e.target.value)}
+                />
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button type="button" variant="secondary" onClick={captureLocation}>
+                    <LocateFixed aria-hidden size={16} />
+                    {t('reports.useLocation')}
+                  </Button>
+                  {lat != null && lng != null && (
+                    <span className="text-xs text-text-muted tabular-nums">
+                      {lat}, {lng}
+                    </span>
+                  )}
+                  {geoMsg && (
+                    <span role="status" className="text-xs text-text-muted">
+                      {geoMsg}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </Section>
+
+          <Section n={2} title={t('reports.parameters')}>
+            {!basinId ? (
+              <p className="text-sm text-text-muted">{t('reports.parametersHint')}</p>
+            ) : (
+              <div className="-mx-1 overflow-x-auto">
+                <table className="w-full min-w-[520px] text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-xs text-text-muted">
+                      <th scope="col" className="px-1 pb-2 font-semibold">
+                        {t('reports.parameter')}
+                      </th>
+                      <th scope="col" className="px-1 pb-2 font-semibold">
+                        {t('reports.value')}
+                      </th>
+                      <th scope="col" className="px-1 pb-2 font-semibold">
+                        {t('reports.lugar')}
+                      </th>
+                      <th scope="col" className="px-1 pb-2 text-right font-semibold">
+                        {t('reports.statusFilter')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {defs.map((d) => {
+                      const input = values[d.id];
+                      const raw = input?.value ?? '';
+                      const n = raw.trim() === '' ? null : Number(raw);
+                      const status: ParameterStatus = evaluate(n, toEvaluatorDef(d)).status;
+                      const lugar =
+                        input?.lugar ?? (LAB_PARAM_IDS.has(d.siloe_param_id) ? 'lab' : 'in_situ');
+                      const range = rangeLabel(d);
+                      return (
+                        <tr key={d.id} className="border-b border-border last:border-0">
+                          <td className="px-1 py-2">
+                            <span className="font-medium text-text">{d.name_es}</span>
+                            {d.unit && (
+                              <span className="ml-1 text-xs text-text-muted">({d.unit})</span>
+                            )}
+                            {range && (
+                              <span className="block text-xs text-text-muted">
+                                {t('reports.range', { range })}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-1 py-2">
+                            <input
+                              inputMode="decimal"
+                              value={raw}
+                              onChange={(e) =>
+                                setValue(d.id, { value: e.target.value }, d.siloe_param_id)
+                              }
+                              className={cn(
+                                'h-9 w-24 rounded-[var(--radius-md)] border bg-surface px-2.5 text-right text-text tabular-nums outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-focus/40',
+                                status === 'red' ? 'border-status-red' : 'border-border',
+                              )}
+                              aria-label={`${d.name_es} ${t('reports.value')}`}
+                            />
+                          </td>
+                          <td className="px-1 py-2">
+                            <NativeSelect
+                              value={lugar}
+                              onChange={(e) =>
+                                setValue(d.id, { lugar: e.target.value as Lugar }, d.siloe_param_id)
+                              }
+                              className="h-9 w-32"
+                              aria-label={`${d.name_es} ${t('reports.lugar')}`}
+                            >
+                              <option value="in_situ">{t('lugar.in_situ')}</option>
+                              <option value="lab">{t('lugar.lab')}</option>
+                            </NativeSelect>
+                          </td>
+                          <td className="px-1 py-2 text-right">
+                            <StatusChip status={status} />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Section>
+
+          <Section
+            n={3}
+            title={t('reports.incidents')}
+            action={
+              <Button
+                variant="ghost"
+                size="sm"
+                type="button"
+                onClick={() =>
+                  setIncidents((p) => [...p, { description: '', corrective_action: '' }])
+                }
+              >
+                <Plus aria-hidden size={16} />
+                {t('reports.addIncident')}
+              </Button>
+            }
+          >
+            {incidents.length === 0 ? (
+              <p className="text-sm text-text-muted">{t('reports.incidentsEmpty')}</p>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {incidents.map((inc, idx) => (
+                  <div
+                    key={idx}
+                    className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-border bg-surface-muted/40 p-4"
+                  >
+                    <TextField
+                      label={t('reports.incidentDescription')}
+                      value={inc.description}
+                      onChange={(e) =>
+                        setIncidents((p) =>
+                          p.map((x, i) => (i === idx ? { ...x, description: e.target.value } : x)),
+                        )
+                      }
+                    />
+                    <TextField
+                      label={t('reports.correctiveAction')}
+                      value={inc.corrective_action}
+                      onChange={(e) =>
+                        setIncidents((p) =>
+                          p.map((x, i) =>
+                            i === idx ? { ...x, corrective_action: e.target.value } : x,
+                          ),
+                        )
+                      }
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      className="self-start text-text-muted"
+                      onClick={() => setIncidents((p) => p.filter((_, i) => i !== idx))}
+                    >
+                      <Trash2 aria-hidden size={14} />
+                      {t('common.delete')}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Section>
+
+          <Section n={4} title={t('reports.notes')}>
+            <Textarea
+              aria-label={t('reports.notes')}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
+          </Section>
+        </div>
+
+        {/* Live summary: sticky beside the form on wide screens, after it on narrow ones. */}
+        <aside aria-label={t('reports.summary')} className="min-w-0">
+          <Card className="flex flex-col gap-4 xl:sticky xl:top-20">
+            <h2 className="text-base font-semibold text-text">{t('reports.summary')}</h2>
+            <dl className="flex flex-col gap-3 text-sm">
+              <SummaryRow label={t('reports.pool')}>
+                {selectedPool?.denominacion ?? t('common.none')}
+              </SummaryRow>
+              <SummaryRow label={t('reports.basin')}>
+                {selectedBasin?.denominacion ?? t('common.none')}
+              </SummaryRow>
+              <SummaryRow label={t('reports.visitedAt')}>
+                {visitedAt
+                  ? new Date(visitedAt).toLocaleString('es-ES', {
+                      dateStyle: 'short',
+                      timeStyle: 'short',
+                    })
+                  : t('common.none')}
+              </SummaryRow>
+              <SummaryRow label={t('reports.parameters')}>
+                {t('reports.enteredOf', { count: readings.length, total: defs.length })}
+              </SummaryRow>
+            </dl>
+            {readings.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {counts.green > 0 && (
+                  <StatusPill tone="green">
+                    {counts.green} · {t('status.green')}
+                  </StatusPill>
+                )}
+                {counts.amber > 0 && (
+                  <StatusPill tone="amber">
+                    {counts.amber} · {t('status.amber')}
+                  </StatusPill>
+                )}
+                {counts.red > 0 && (
+                  <StatusPill tone="red">
+                    {counts.red} · {t('status.red')}
+                  </StatusPill>
+                )}
+              </div>
+            )}
+            {flagged.length > 0 && (
+              <ul className="flex flex-col gap-1 border-t border-border pt-3 text-sm">
+                {flagged.map((r) => (
+                  <li key={r.d.id} className="flex justify-between gap-2">
+                    <span className="truncate text-text">{r.d.name_es}</span>
+                    <span
+                      className={cn(
+                        'shrink-0 font-semibold tabular-nums',
+                        r.status === 'red' ? 'text-status-red-text' : 'text-status-amber-text',
+                      )}
+                    >
+                      {r.raw} {r.d.unit ?? ''}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {filledIncidents > 0 && (
+              <p className="text-sm text-text-muted">
+                {t('reports.incidentsCount', { count: filledIncidents })}
+              </p>
+            )}
+            <div className="hidden flex-col gap-2 border-t border-border pt-4 xl:flex [&>button]:w-full">
+              {actions}
+            </div>
+          </Card>
+        </aside>
+      </div>
+
+      {/* On narrow screens the actions stay reachable at the bottom of the viewport. */}
+      <div className="sticky bottom-0 z-20 -mx-4 mt-6 flex flex-wrap justify-end gap-2 border-t border-border bg-surface/95 px-4 py-3 backdrop-blur sm:-mx-8 sm:px-8 xl:hidden">
+        {actions}
+      </div>
+    </div>
+  );
+}
+
+function Section({
+  n,
+  title,
+  action,
+  children,
+}: {
+  n: number;
+  title: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <Card>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="flex items-center gap-2.5 text-base font-semibold text-text">
+          <span
+            aria-hidden
+            className="inline-flex size-6 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold text-navy-800"
+          >
+            {n}
+          </span>
+          {title}
+        </h2>
+        {action}
+      </div>
+      {children}
+    </Card>
+  );
+}
+
+function SummaryRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex justify-between gap-3">
+      <dt className="text-text-muted">{label}</dt>
+      <dd className="min-w-0 truncate text-right font-medium text-text">{children}</dd>
+    </div>
+  );
+}
+
+function ReportFormSkeleton() {
+  return (
+    <div aria-busy="true">
+      <Skeleton className="mb-2 h-8 w-56" />
+      <Skeleton className="mb-8 h-4 w-80 max-w-full" />
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <Card>
+          <SkeletonText lines={6} />
+        </Card>
+        <Card>
+          <SkeletonText lines={4} />
+        </Card>
       </div>
     </div>
   );

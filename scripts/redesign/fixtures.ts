@@ -159,6 +159,9 @@ const reports = [
     technician_id: USER,
     visited_at: iso(1),
     status: 'signed',
+    signed_by_name: 'Juan Pérez',
+    signed_by_dni: '12345678Z',
+    signed_at: iso(1),
     analysis_type: 'autocontrol',
     notes: null,
   },
@@ -189,6 +192,87 @@ const reports = [
   pool: { denominacion: pools.find((p) => p.id === r.pool_id)!.denominacion },
   basin: { denominacion: basins.find((b) => b.id === r.basin_id)!.denominacion },
 }));
+
+const paramBase = {
+  ccaa: null,
+  active: true,
+  min_warn: null,
+  max_warn: null,
+  closure_min: null,
+  closure_max: null,
+  warn_margin_ratio: 0.1,
+};
+const parameterDefs = [
+  {
+    ...paramBase,
+    id: 'pd-1',
+    siloe_param_id: 1,
+    name_es: 'Cloro libre',
+    unit: 'mg/L',
+    min_ok: 0.5,
+    max_ok: 2,
+  },
+  {
+    ...paramBase,
+    id: 'pd-2',
+    siloe_param_id: 2,
+    name_es: 'Cloro combinado',
+    unit: 'mg/L',
+    min_ok: null,
+    max_ok: 0.6,
+  },
+  {
+    ...paramBase,
+    id: 'pd-3',
+    siloe_param_id: 3,
+    name_es: 'pH',
+    unit: null,
+    min_ok: 7.2,
+    max_ok: 8,
+  },
+  {
+    ...paramBase,
+    id: 'pd-4',
+    siloe_param_id: 4,
+    name_es: 'Turbidez',
+    unit: 'UNF',
+    min_ok: null,
+    max_ok: 5,
+  },
+  {
+    ...paramBase,
+    id: 'pd-5',
+    siloe_param_id: 5,
+    name_es: 'Temperatura',
+    unit: '°C',
+    min_ok: null,
+    max_ok: 36,
+  },
+  {
+    ...paramBase,
+    id: 'pd-6',
+    siloe_param_id: 6,
+    name_es: 'Ácido isocianúrico',
+    unit: 'mg/L',
+    min_ok: null,
+    max_ok: 75,
+  },
+];
+const reading = (id: string, report: string, def: string, value: number, status: string) => {
+  const d = parameterDefs.find((x) => x.id === def)!;
+  return {
+    id,
+    org_id: ORG,
+    report_id: report,
+    parameter_def_id: def,
+    value,
+    status,
+    compliant: status !== 'red',
+    lugar: 'in_situ',
+    metodo: null,
+    parameter_def: { name_es: d.name_es, unit: d.unit },
+  };
+};
 
 const at = (hh: number, mm: number) => {
   const d = new Date();
@@ -239,7 +323,15 @@ export const tables: Record<string, Record<string, unknown>[]> = {
     },
   ],
   // One out-of-range reading, so the dashboard's alerts have something to show.
-  measurement: [{ id: 'm-1', org_id: ORG, report_id: 'rep-2', status: 'red', value: 3.4 }],
+  parameter_def: parameterDefs,
+  measurement: [
+    reading('m-1', 'rep-1', 'pd-1', 1.2, 'green'),
+    reading('m-2', 'rep-1', 'pd-2', 0.3, 'green'),
+    reading('m-3', 'rep-1', 'pd-3', 7.6, 'green'),
+    reading('m-4', 'rep-1', 'pd-4', 0.8, 'green'),
+    reading('m-5', 'rep-2', 'pd-1', 3.4, 'red'),
+    reading('m-6', 'rep-2', 'pd-3', 7.9, 'amber'),
+  ],
   annual_result: [
     { id: 'ar-1', org_id: ORG, basin_id: 'bas-1', year: lastYear, analysis_type: 'autocontrol' },
     { id: 'ar-2', org_id: ORG, basin_id: 'bas-3', year: lastYear, analysis_type: 'autocontrol' },

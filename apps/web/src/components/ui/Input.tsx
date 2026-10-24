@@ -8,7 +8,6 @@ import {
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from 'react';
-import { ChevronDown } from 'lucide-react';
 import { cn } from './utils.js';
 
 /** Base look shared by every text-like control, so inputs, selects and textareas line up. */
@@ -101,20 +100,14 @@ export const NativeSelect = forwardRef<HTMLSelectElement, SelectHTMLAttributes<H
   function NativeSelect({ className, children, ...props }, ref) {
     const p = useFieldProps(props);
     return (
-      <div className="relative">
-        <select
-          ref={ref}
-          className={cn(controlClass, 'h-10 appearance-none pr-9', className)}
-          {...p}
-        >
-          {children}
-        </select>
-        <ChevronDown
-          aria-hidden
-          size={16}
-          className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-text-muted"
-        />
-      </div>
+      <select
+        ref={ref}
+        // `select-chevron` (styles/index.css) draws the arrow inside the control at any width.
+        className={cn(controlClass, 'select-chevron h-10 appearance-none pr-9', className)}
+        {...p}
+      >
+        {children}
+      </select>
     );
   },
 );
