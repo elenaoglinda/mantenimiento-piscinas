@@ -2,12 +2,22 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../auth/context.js';
+import { MailPlus, UserPlus } from 'lucide-react';
+import { Avatar } from '../components/ui/Avatar.js';
 import { Button } from '../components/ui/Button.js';
-import { Alert, Card, Spinner } from '../components/ui/feedback.js';
+import { Card } from '../components/ui/Card.js';
+import { DataTable, type Column } from '../components/ui/DataTable.js';
+import { EmptyState } from '../components/ui/EmptyState.js';
+import { Alert } from '../components/ui/feedback.js';
+import { PageHeader } from '../components/ui/PageHeader.js';
+import { StatusPill } from '../components/ui/StatusPill.js';
+import type { Tone } from '../components/ui/variants.js';
 import { CopyLinkField } from '../components/ui/CopyLinkField.js';
 import { InviteMemberModal } from '../components/InviteMemberModal.js';
 import { buildInviteUrl } from '../lib/invitations.js';
 import type { Tables } from '../lib/database.types.js';
+
+const ROLE_TONE: Record<string, Tone> = { admin: 'info', technician: 'green', viewer: 'neutral' };
 
 export function TeamPage() {
   const { t } = useTranslation();
@@ -59,66 +69,109 @@ export function TeamPage() {
 
   if (!profile) return null;
 
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold text-text">{t('team.title')}</h1>
-          <p className="text-sm text-text-muted">{t('team.subtitle', { org: profile.org.name })}</p>
-        </div>
-        {isAdmin && <Button onClick={() => setInviteOpen(true)}>{t('invitations.invite')}</Button>}
-      </div>
+  const columns: Column<Tables<'app_user'>>[] = [
+    {
+      id: 'name',
+      header: t('team.columnName'),
+      cell: (m) => (
+        <span className="flex items-center gap-3">
+          <Avatar name={m.full_name ?? m.email} size="sm" />
+          <span className="flex flex-col">
+            <span className="font-medium">
+              {m.full_name ?? '—'}
+              {m.id === profile.user.id && (
+                <span className="ml-2 text-xs font-normal text-text-muted">({t('team.you')})</span>
+              )}
+            </span>
+            <span className="text-xs text-text-muted md:hidden">{m.email ?? '—'}</span>
+          </span>
+        </span>
+      ),
+      sortValue: (m) => m.full_name,
+    },
+    {
+      id: 'email',
+      header: t('team.columnEmail'),
+      cell: (m) => <span className="text-text-muted">{m.email ?? '—'}</span>,
+      sortValue: (m) => m.email,
+      hideBelow: 'md',
+    },
+    {
+      id: 'role',
+      header: t('team.columnRole'),
+      cell: (m) => (
+        <StatusPill tone={ROLE_TONE[m.role] ?? 'neutral'} dot={false}>
+          {t(`roles.${m.role}`)}
+        </StatusPill>
+      ),
+      sortValue: (m) => m.role,
+    },
+  ];
 
-      {loading ? (
-        <Spinner />
-      ) : error ? (
+  return (
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        className="mb-0"
+        title={t('team.title')}
+        description={t('team.subtitle', { org: profile.org.name })}
+        actions={
+          isAdmin && (
+            <Button onClick={() => setInviteOpen(true)}>
+              <UserPlus aria-hidden size={16} />
+              {t('invitations.invite')}
+            </Button>
+          )
+        }
+      />
+
+      {error ? (
         <Alert tone="error">{error}</Alert>
       ) : (
         <>
-          <Card className="overflow-x-auto p-0">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-border bg-surface-muted text-text-muted">
-                <tr>
-                  <th className="px-4 py-3 font-medium">{t('team.columnName')}</th>
-                  <th className="px-4 py-3 font-medium">{t('team.columnEmail')}</th>
-                  <th className="px-4 py-3 font-medium">{t('team.columnRole')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((m) => (
-                  <tr key={m.id} className="border-b border-border last:border-0">
-                    <td className="px-4 py-3 text-text">
-                      {m.full_name ?? '—'}
-                      {m.id === profile.user.id && (
-                        <span className="ml-2 text-xs text-text-muted">({t('team.you')})</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-text-muted">{m.email ?? '—'}</td>
-                    <td className="px-4 py-3 text-text">{t(`roles.${m.role}`)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Card>
+          <DataTable
+            caption={t('team.title')}
+            columns={columns}
+            rows={members}
+            getRowId={(m) => m.id}
+            loading={loading}
+            empty={<EmptyState compact title={t('common.none')} />}
+          />
 
-          {isAdmin && invites.length > 0 && (
-            <div className="flex flex-col gap-2">
-              <h2 className="text-lg font-semibold text-text">{t('invitations.pendingTitle')}</h2>
-              {invites.map((inv) => (
-                <Card key={inv.id} className="flex flex-col gap-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-text">{inv.email}</p>
-                      <p className="text-sm text-text-muted">{t(`roles.${inv.role}`)}</p>
-                    </div>
-                    <Button variant="ghost" onClick={() => void revoke(inv.id)}>
-                      {t('invitations.revoke')}
-                    </Button>
-                  </div>
-                  <CopyLinkField url={buildInviteUrl(inv.token)} />
+          {isAdmin && !loading && (
+            <section className="flex flex-col gap-3">
+              <h2 className="text-base font-semibold text-text">{t('invitations.pendingTitle')}</h2>
+              {invites.length === 0 ? (
+                <Card padded={false}>
+                  <EmptyState
+                    compact
+                    icon={<MailPlus size={20} />}
+                    title={t('invitations.pendingEmpty')}
+                    description={t('invitations.pendingEmptyHint')}
+                  />
                 </Card>
-              ))}
-            </div>
+              ) : (
+                invites.map((inv) => (
+                  <Card key={inv.id} className="flex flex-col gap-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <Avatar name={inv.email} size="sm" />
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-text">{inv.email}</p>
+                          <p className="flex items-center gap-2 text-sm text-text-muted">
+                            {t(`roles.${inv.role}`)}
+                            <StatusPill tone="amber">{t('invitations.pending')}</StatusPill>
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="ghost" onClick={() => void revoke(inv.id)}>
+                        {t('invitations.revoke')}
+                      </Button>
+                    </div>
+                    <CopyLinkField url={buildInviteUrl(inv.token)} />
+                  </Card>
+                ))
+              )}
+            </section>
           )}
         </>
       )}

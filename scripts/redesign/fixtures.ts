@@ -385,6 +385,17 @@ export const tables: Record<string, Record<string, unknown>[]> = {
   invoice_series: [series],
   invoice: invoices,
   invoice_activity: [],
+  invitation: [
+    {
+      id: 'invite-1',
+      org_id: ORG,
+      email: 'marta@example.com',
+      role: 'technician',
+      status: 'pending',
+      token: 'demo-token',
+      created_at: iso(2),
+    },
+  ],
   invoice_aeat_record: [],
   org: [org],
   client: clients,
@@ -500,6 +511,20 @@ export const appUser = {
   updated_at: iso(1),
   org,
 };
+
+/** Other people in the org, for the Equipo page and the technician filter. */
+export const teamMembers = [
+  {
+    id: 'user-0002',
+    org_id: ORG,
+    role: 'technician',
+    full_name: 'Juan Pérez',
+    email: 'juan@example.com',
+    dni_nif: null,
+    created_at: iso(40),
+    updated_at: iso(40),
+  },
+];
 
 export const session = {
   access_token: 'mock-access-token',

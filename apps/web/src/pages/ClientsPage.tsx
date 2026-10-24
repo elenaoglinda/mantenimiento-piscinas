@@ -1,9 +1,15 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../auth/context.js';
-import { Alert, Card, Spinner } from '../components/ui/feedback.js';
+import { Plus, Users } from 'lucide-react';
+import { Alert } from '../components/ui/feedback.js';
 import { Button } from '../components/ui/Button.js';
+import { DataTable, TableToolbar, type Column } from '../components/ui/DataTable.js';
+import { EmptyState } from '../components/ui/EmptyState.js';
+import { PageHeader } from '../components/ui/PageHeader.js';
+import { StatusPill } from '../components/ui/StatusPill.js';
+import { fold } from '../components/ui/utils.js';
 import { TextField } from '../components/ui/TextField.js';
 import { TextareaField } from '../components/ui/fields.js';
 import { Modal } from '../components/ui/Modal.js';
@@ -22,6 +28,7 @@ export function ClientsPage() {
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Client | null>(null);
   const [creating, setCreating] = useState(false);
+  const [query, setQuery] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -41,42 +48,116 @@ export function ClientsPage() {
     void load();
   }, [load]);
 
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-text">{t('clients.title')}</h1>
-          <p className="text-sm text-text-muted">{t('clients.subtitle')}</p>
-        </div>
-        {canWrite && <Button onClick={() => setCreating(true)}>{t('clients.addClient')}</Button>}
-      </div>
+  const rows = useMemo(() => {
+    const q = fold(query.trim());
+    if (!q) return clients;
+    return clients.filter((c) =>
+      fold(
+        [c.name, c.cif_nif, c.contact_email, c.contact_phone].filter(Boolean).join(' '),
+      ).includes(q),
+    );
+  }, [clients, query]);
 
-      {loading ? (
-        <Spinner />
-      ) : error ? (
+  const columns: Column<Client>[] = [
+    {
+      id: 'name',
+      header: t('clients.name'),
+      cell: (c) => (
+        <span className="flex flex-wrap items-center gap-2">
+          {c.name}
+          {c.is_self && (
+            <StatusPill tone="info" dot={false}>
+              {t('clients.self')}
+            </StatusPill>
+          )}
+        </span>
+      ),
+      sortValue: (c) => c.name,
+    },
+    {
+      id: 'nif',
+      header: t('clients.cifNif'),
+      cell: (c) => c.cif_nif ?? t('common.none'),
+      sortValue: (c) => c.cif_nif,
+      hideBelow: 'md',
+    },
+    {
+      id: 'contact',
+      header: t('clients.contact'),
+      cell: (c) =>
+        c.contact_email || c.contact_phone ? (
+          <span className="flex flex-col text-sm">
+            {c.contact_email && <span>{c.contact_email}</span>}
+            {c.contact_phone && <span className="text-text-muted">{c.contact_phone}</span>}
+          </span>
+        ) : (
+          t('common.none')
+        ),
+      hideBelow: 'lg',
+    },
+    {
+      id: 'pools',
+      header: t('nav.pools'),
+      cell: (c) => t('clients.poolsCount', { count: counts[c.id] ?? 0 }),
+      sortValue: (c) => counts[c.id] ?? 0,
+      align: 'right',
+    },
+  ];
+
+  return (
+    <div>
+      <PageHeader
+        title={t('clients.title')}
+        description={t('clients.subtitle')}
+        actions={
+          canWrite && (
+            <Button onClick={() => setCreating(true)}>
+              <Plus aria-hidden size={16} />
+              {t('clients.addClient')}
+            </Button>
+          )
+        }
+      />
+
+      {error ? (
         <Alert tone="error">{error}</Alert>
-      ) : clients.length === 0 ? (
-        <Card>
-          <p className="text-text-muted">{t('clients.empty')}</p>
-        </Card>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {clients.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => canWrite && setEditing(c)}
-              className="flex flex-col items-start gap-1 rounded-[var(--radius-lg)] border border-border bg-surface p-4 text-left shadow-sm transition-colors hover:bg-surface-muted"
-            >
-              <span className="font-medium text-text">{c.name}</span>
-              {c.is_self && <span className="text-xs text-accent">{t('clients.self')}</span>}
-              {c.cif_nif && <span className="text-sm text-text-muted">{c.cif_nif}</span>}
-              <span className="text-sm text-text-muted">
-                {t('clients.poolsCount', { count: counts[c.id] ?? 0 })}
-              </span>
-            </button>
-          ))}
-        </div>
+        <>
+          {(loading || clients.length > 0) && (
+            <TableToolbar
+              search={query}
+              onSearch={setQuery}
+              searchPlaceholder={t('clients.searchPlaceholder')}
+            />
+          )}
+          <DataTable
+            caption={t('clients.title')}
+            columns={columns}
+            rows={rows}
+            getRowId={(c) => c.id}
+            onRowClick={canWrite ? (c) => setEditing(c) : undefined}
+            loading={loading}
+            empty={
+              clients.length === 0 ? (
+                <EmptyState
+                  icon={<Users size={22} />}
+                  title={t('clients.emptyTitle')}
+                  description={t('clients.emptyHint')}
+                  action={
+                    canWrite && (
+                      <Button onClick={() => setCreating(true)}>
+                        <Plus aria-hidden size={16} />
+                        {t('clients.addClient')}
+                      </Button>
+                    )
+                  }
+                />
+              ) : (
+                <EmptyState compact icon={<Users size={20} />} title={t('clients.noMatches')} />
+              )
+            }
+          />
+        </>
       )}
 
       {(creating || editing) && (
@@ -141,7 +222,12 @@ function ClientFormModal({
   }
 
   return (
-    <Modal open onClose={onClose} title={client ? t('clients.editClient') : t('clients.addClient')}>
+    <Modal
+      open
+      variant="sheet"
+      onClose={onClose}
+      title={client ? t('clients.editClient') : t('clients.addClient')}
+    >
       <form className="flex flex-col gap-4" onSubmit={onSubmit}>
         {error && <Alert tone="error">{error}</Alert>}
         <TextField

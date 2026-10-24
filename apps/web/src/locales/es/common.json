@@ -202,7 +202,10 @@
     "notAvailable": "Esta invitación ya no está disponible.",
     "emailMismatch": "El correo de tu cuenta no coincide con el de la invitación.",
     "alreadyMember": "Ya perteneces a una organización.",
-    "goHome": "Ir al inicio"
+    "goHome": "Ir al inicio",
+    "pending": "Pendiente",
+    "pendingEmpty": "No hay invitaciones pendientes",
+    "pendingEmptyHint": "Invita a tus técnicos para que registren visitas desde su móvil."
   },
   "roles": {
     "admin": "Administrador",
@@ -226,7 +229,12 @@
     "empty": "Aún no hay clientes. Añade el primero.",
     "poolsCount": "{{count}} piscina",
     "poolsCount_other": "{{count}} piscinas",
-    "self": "Tu instalación"
+    "self": "Tu instalación",
+    "contact": "Contacto",
+    "searchPlaceholder": "Buscar cliente, NIF o contacto",
+    "emptyTitle": "Todavía no hay clientes",
+    "emptyHint": "Añade el primero para asignarle piscinas y facturarle.",
+    "noMatches": "Ningún cliente coincide"
   },
   "pools": {
     "title": "Piscinas",

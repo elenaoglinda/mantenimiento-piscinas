@@ -1,5 +1,5 @@
 import type { Page, Route } from '@playwright/test';
-import { appUser, session, tables } from './fixtures';
+import { appUser, session, tables, teamMembers } from './fixtures';
 
 /** Fake Supabase backend shared by the capture specs. See AUDIT.md for why each rule exists. */
 export type AuthMode = 'none' | 'no-profile' | 'full';
@@ -43,7 +43,11 @@ export async function mockSupabase(page: Page, auth: AuthMode) {
     if (path.startsWith('/rest/v1/')) {
       const table = path.slice('/rest/v1/'.length);
       let rows: Record<string, unknown>[] =
-        table === 'app_user' ? (auth === 'full' ? [appUser] : []) : (tables[table] ?? []);
+        table === 'app_user'
+          ? auth === 'full'
+            ? [appUser, ...teamMembers]
+            : []
+          : (tables[table] ?? []);
 
       // Honour simple equality filters (id=eq.x, archived=eq.false) so detail pages resolve.
       for (const [k, v] of url.searchParams) {

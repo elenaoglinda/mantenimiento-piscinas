@@ -33,6 +33,7 @@ export function DataTable<T>({
   rows,
   getRowId,
   rowHref,
+  onRowClick,
   loading = false,
   empty,
   caption,
@@ -43,6 +44,8 @@ export function DataTable<T>({
   rows: T[];
   getRowId: (row: T) => string;
   rowHref?: (row: T) => string;
+  /** Instead of a link, the row opens something (e.g. an edit sheet). First cell is a button. */
+  onRowClick?: (row: T) => void;
   loading?: boolean;
   /** Shown instead of rows when `rows` is empty — usually an `EmptyState`. */
   empty?: ReactNode;
@@ -152,11 +155,12 @@ export function DataTable<T>({
             ) : (
               sorted.map((row) => {
                 const href = rowHref?.(row);
+                const interactive = Boolean(href || onRowClick);
                 return (
                   <tr
                     key={getRowId(row)}
                     onClick={
-                      href
+                      interactive
                         ? (e) => {
                             // Let real links, buttons and inputs inside the row do their own thing.
                             if (
@@ -165,13 +169,14 @@ export function DataTable<T>({
                               )
                             )
                               return;
-                            navigate(href);
+                            if (href) navigate(href);
+                            else onRowClick?.(row);
                           }
                         : undefined
                     }
                     className={cn(
                       'border-b border-border last:border-0',
-                      href && 'cursor-pointer transition-colors hover:bg-surface-muted/60',
+                      interactive && 'cursor-pointer transition-colors hover:bg-surface-muted/60',
                     )}
                   >
                     {columns.map((col, ci) => (
@@ -195,6 +200,17 @@ export function DataTable<T>({
                           >
                             {col.cell(row)}
                           </Link>
+                        ) : ci === 0 && onRowClick ? (
+                          <button
+                            type="button"
+                            onClick={() => onRowClick(row)}
+                            className={cn(
+                              'rounded-[var(--radius-sm)] text-left font-medium text-text hover:text-accent',
+                              focusRing,
+                            )}
+                          >
+                            {col.cell(row)}
+                          </button>
                         ) : (
                           col.cell(row)
                         )}
