@@ -50,7 +50,13 @@
     "signOut": "Cerrar sesión",
     "passwordHint": "Mínimo 8 caracteres",
     "invalidCredentials": "Correo o contraseña incorrectos.",
-    "googleNotConfigured": "El acceso con Google aún no está configurado."
+    "googleNotConfigured": "El acceso con Google aún no está configurado.",
+    "panel": {
+      "point1": "Informes de visita en minutos, también desde la foto del parte.",
+      "point2": "Avisos cuando un parámetro sale de rango.",
+      "point3": "Exportación a SILOÉ y facturas Veri*Factu en el mismo sitio.",
+      "footer": "Cloro · panel de gestión"
+    }
   },
   "onboarding": {
     "title": "Configura tu cuenta",

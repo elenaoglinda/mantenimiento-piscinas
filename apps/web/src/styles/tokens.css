@@ -49,6 +49,11 @@
   --text-muted: #506169; /* website slate */
   --border: #dce6ea;
 
+  /* cloro.app hero gradient: light aqua into warm white (auth screens' brand panel). */
+  --hero-from: var(--brand-100);
+  --hero-via: var(--brand-50);
+  --hero-to: #fbf7f1;
+
   /*
    * Status (traffic-light) — kept apart from brand so "OK" never looks like brand.
    *
