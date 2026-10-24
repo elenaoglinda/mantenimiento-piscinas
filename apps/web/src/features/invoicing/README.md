@@ -5,7 +5,8 @@ The UI for issuing invoices and filing them with the AEAT through Verifacti (Ver
 ## Layout
 
 ```
-index.ts                     the feature's public surface — import from here, not from inside
+index.ts                     the feature's public surface (pages) — import from here, not from inside
+data.ts                      public data helpers without the pages (used by the shell's alerts)
 pages/InvoicesPage.tsx       history table + filters, setup checklist, draft creation
 pages/InvoiceDetailPage.tsx  line editor, totals, Emitir / Enviar / Actualizar estado
 pages/BillingSettingsPage.tsx the org's fiscal identity (the emisor)

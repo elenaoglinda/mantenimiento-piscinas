@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { formatInvoiceNumber } from '@piscinas/shared';
 import { supabase } from '../../lib/supabase.js';
 import { ACTIVITY_WINDOW_DAYS } from '../../lib/dashboard.js';
-import { needingAttention } from '../invoicing/index.js';
+import { needingAttention } from '../invoicing/data.js';
 import {
   EMPTY_SHELL_DATA,
   ShellDataContext,

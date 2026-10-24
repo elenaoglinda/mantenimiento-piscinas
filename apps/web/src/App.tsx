@@ -6,29 +6,38 @@ import { AppShell } from './features/app-shell/index.js';
 import { LoginPage } from './pages/LoginPage.js';
 import { SignupPage } from './pages/SignupPage.js';
 import { OnboardingPage } from './pages/OnboardingPage.js';
-import { DashboardPage } from './pages/DashboardPage.js';
-import { TeamPage } from './pages/TeamPage.js';
-import { ClientsPage } from './pages/ClientsPage.js';
-import { PoolsPage } from './pages/PoolsPage.js';
-import { PoolDetailPage } from './pages/PoolDetailPage.js';
-import { ReportsPage } from './pages/ReportsPage.js';
-import { ReportFormPage } from './pages/ReportFormPage.js';
-import { ImportReportPage } from './pages/ImportReportPage.js';
-import { ReportDetailPage } from './pages/ReportDetailPage.js';
-import { SiloeExportPage } from './pages/SiloeExportPage.js';
-import {
-  BillingSettingsPage,
-  InvoiceDetailPage,
-  InvoicesPage,
-  ResumenPage,
-} from './features/invoicing/index.js';
-import { RoutesPage } from './pages/RoutesPage.js';
 import { InvitePage } from './pages/InvitePage.js';
-import { SettingsPage } from './pages/SettingsPage.js';
-import { HelpPage } from './pages/HelpPage.js';
 import { Toaster } from './components/ui/Toast.js';
 import { TooltipProvider } from './components/ui/Tooltip.js';
 import { showDesignPage } from './features/design/visibility.js';
+
+/**
+ * Pages behind the login load on demand, each in its own chunk, so the first screen (login)
+ * doesn't download the whole app. The shell shows a skeleton while a page's chunk arrives.
+ */
+const page = <K extends string>(load: () => Promise<Record<K, React.ComponentType>>, name: K) =>
+  lazy(() => load().then((m) => ({ default: m[name] })));
+
+const DashboardPage = page(() => import('./pages/DashboardPage.js'), 'DashboardPage');
+const TeamPage = page(() => import('./pages/TeamPage.js'), 'TeamPage');
+const ClientsPage = page(() => import('./pages/ClientsPage.js'), 'ClientsPage');
+const PoolsPage = page(() => import('./pages/PoolsPage.js'), 'PoolsPage');
+const PoolDetailPage = page(() => import('./pages/PoolDetailPage.js'), 'PoolDetailPage');
+const ReportsPage = page(() => import('./pages/ReportsPage.js'), 'ReportsPage');
+const ReportFormPage = page(() => import('./pages/ReportFormPage.js'), 'ReportFormPage');
+const ImportReportPage = page(() => import('./pages/ImportReportPage.js'), 'ImportReportPage');
+const ReportDetailPage = page(() => import('./pages/ReportDetailPage.js'), 'ReportDetailPage');
+const SiloeExportPage = page(() => import('./pages/SiloeExportPage.js'), 'SiloeExportPage');
+const RoutesPage = page(() => import('./pages/RoutesPage.js'), 'RoutesPage');
+const SettingsPage = page(() => import('./pages/SettingsPage.js'), 'SettingsPage');
+const HelpPage = page(() => import('./pages/HelpPage.js'), 'HelpPage');
+const InvoicesPage = page(() => import('./features/invoicing/index.js'), 'InvoicesPage');
+const ResumenPage = page(() => import('./features/invoicing/index.js'), 'ResumenPage');
+const InvoiceDetailPage = page(() => import('./features/invoicing/index.js'), 'InvoiceDetailPage');
+const BillingSettingsPage = page(
+  () => import('./features/invoicing/index.js'),
+  'BillingSettingsPage',
+);
 
 // Internal component gallery: dev and Vercel previews only, and never in the main bundle.
 const DesignPage = lazy(() =>

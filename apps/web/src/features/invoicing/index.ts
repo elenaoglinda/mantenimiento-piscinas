@@ -9,5 +9,3 @@ export { InvoicesPage } from './pages/InvoicesPage.js';
 export { ResumenPage } from './pages/ResumenPage.js';
 export { InvoiceDetailPage } from './pages/InvoiceDetailPage.js';
 export { BillingSettingsPage } from './pages/BillingSettingsPage.js';
-/** Invoices the AEAT rejected or that couldn't be sent — used by the shell's alerts. */
-export { needingAttention } from './lib/data.js';

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { CommandMenu } from './CommandMenu.js';
@@ -7,6 +7,7 @@ import { Sidebar } from './Sidebar.js';
 import { Topbar } from './Topbar.js';
 import { resolveRoute } from './nav.js';
 import { useSidebarCollapsed } from './useSidebarCollapsed.js';
+import { PageSkeleton } from './PageSkeleton.js';
 import { RecordCrumbProvider } from './RecordCrumbProvider.js';
 import { ShellDataProvider } from './ShellDataProvider.js';
 import { useCurrentRecordLabel } from './recordCrumb.js';
@@ -89,7 +90,9 @@ function ShellLayout() {
           tabIndex={-1}
           className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-6 focus:outline-none sm:px-8 sm:py-8"
         >
-          <Outlet />
+          <Suspense fallback={<PageSkeleton />}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
 
