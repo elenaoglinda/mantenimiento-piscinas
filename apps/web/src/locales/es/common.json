@@ -651,5 +651,41 @@
     "errorUnreadable": "No se han podido leer valores del parte. Comprueba la foto o introdúcelo manualmente.",
     "errorUnauthorized": "Tu sesión ha caducado. Vuelve a iniciar sesión.",
     "errorFailed": "No se ha podido analizar el parte. Inténtalo de nuevo."
+  },
+  "shell": {
+    "mainNav": "Navegación principal",
+    "skipToContent": "Saltar al contenido",
+    "groups": {
+      "operacion": "Operación",
+      "cumplimiento": "Cumplimiento",
+      "gestion": "Gestión"
+    },
+    "collapse": "Contraer menú",
+    "expand": "Expandir menú",
+    "closeMenu": "Cerrar menú",
+    "search": "Buscar piscinas, clientes o informes",
+    "newReport": "Nuevo informe",
+    "help": "Ayuda",
+    "notifications": "Notificaciones",
+    "comingSoon": "Próximamente",
+    "userMenu": "Menú de usuario",
+    "settings": "Ajustes",
+    "breadcrumb": "Ruta de navegación",
+    "crumbs": {
+      "newReport": "Nuevo informe",
+      "import": "Importar parte",
+      "edit": "Editar",
+      "detail": "Detalle",
+      "summary": "Resumen",
+      "settings": "Ajustes"
+    },
+    "commands": {
+      "title": "Ir a una página",
+      "placeholder": "Escribe para buscar una página…",
+      "empty": "Sin resultados",
+      "hint": "↑ ↓ para moverte · Intro para abrir · Esc para cerrar",
+      "recordsSoon": "Buscar piscinas, clientes e informes: próximamente",
+      "importReport": "Importar parte (foto)"
+    }
   }
 }

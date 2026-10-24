@@ -1,7 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider.js';
 import { PublicOnly, RequireAuth, RequireOnboarded } from './auth/guards.js';
-import { AppShell } from './components/AppShell.js';
+import { AppShell } from './features/app-shell/index.js';
 import { LoginPage } from './pages/LoginPage.js';
 import { SignupPage } from './pages/SignupPage.js';
 import { OnboardingPage } from './pages/OnboardingPage.js';
