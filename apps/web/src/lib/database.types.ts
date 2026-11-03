@@ -176,6 +176,50 @@ export type Database = {
           },
         ];
       };
+      chemical_product: {
+        Row: {
+          activo: boolean;
+          cantidad_habitual: number | null;
+          created_at: string;
+          id: string;
+          nombre: string;
+          orden: number;
+          org_id: string;
+          unidad: Database['public']['Enums']['chemical_unit'];
+          updated_at: string;
+        };
+        Insert: {
+          activo?: boolean;
+          cantidad_habitual?: number | null;
+          created_at?: string;
+          id?: string;
+          nombre: string;
+          orden?: number;
+          org_id: string;
+          unidad: Database['public']['Enums']['chemical_unit'];
+          updated_at?: string;
+        };
+        Update: {
+          activo?: boolean;
+          cantidad_habitual?: number | null;
+          created_at?: string;
+          id?: string;
+          nombre?: string;
+          orden?: number;
+          org_id?: string;
+          unidad?: Database['public']['Enums']['chemical_unit'];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'chemical_product_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'org';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       client: {
         Row: {
           archived: boolean;
@@ -479,6 +523,61 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'org';
             referencedColumns: ['id'];
+          },
+        ];
+      };
+      report_chemical: {
+        Row: {
+          cantidad: number;
+          created_at: string;
+          id: string;
+          org_id: string;
+          product_id: string;
+          report_id: string;
+          unidad: Database['public']['Enums']['chemical_unit'];
+          updated_at: string;
+        };
+        Insert: {
+          cantidad: number;
+          created_at?: string;
+          id?: string;
+          org_id: string;
+          product_id: string;
+          report_id: string;
+          unidad: Database['public']['Enums']['chemical_unit'];
+          updated_at?: string;
+        };
+        Update: {
+          cantidad?: number;
+          created_at?: string;
+          id?: string;
+          org_id?: string;
+          product_id?: string;
+          report_id?: string;
+          unidad?: Database['public']['Enums']['chemical_unit'];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'report_chemical_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'org';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'report_chemical_product_id_org_id_fkey';
+            columns: ['product_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'chemical_product';
+            referencedColumns: ['id', 'org_id'];
+          },
+          {
+            foreignKeyName: 'report_chemical_report_id_org_id_fkey';
+            columns: ['report_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'report';
+            referencedColumns: ['id', 'org_id'];
           },
         ];
       };
@@ -1506,8 +1605,13 @@ export type Database = {
           updated_at: string;
         };
       };
+      seed_org_catalogues: {
+        Args: { p_org_id: string };
+        Returns: undefined;
+      };
     };
     Enums: {
+      chemical_unit: 'kg' | 'g' | 'L' | 'ml' | 'pastillas' | 'uds';
       analysis_type: 'autocontrol' | 'vigilancia';
       attachment_kind: 'photo' | 'lab_pdf';
       basin_class: 'cubierto' | 'descubierto' | 'mixto';

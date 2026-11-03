@@ -487,6 +487,56 @@ export const tables: Record<string, Record<string, unknown>[]> = {
     reading('m-6', 'rep-2', 'pd-3', 7.9, 'amber'),
     ...historyReadings(),
   ],
+  chemical_product: [
+    ['Cloro granulado', 'kg', 0.5],
+    ['Cloro en pastillas', 'pastillas', 2],
+    ['Minorador de pH', 'kg', null],
+    ['Incrementador de pH', 'kg', null],
+    ['Floculante', 'L', 0.25],
+    ['Alguicida', 'L', null],
+    ['Clarificante', 'L', null],
+    ['Sal', 'kg', null],
+  ].map(([nombre, unidad, cantidad], i) => ({
+    id: `chem-${i + 1}`,
+    org_id: ORG,
+    nombre,
+    unidad,
+    cantidad_habitual: cantidad,
+    activo: true,
+    orden: i + 1,
+    created_at: iso(90),
+    updated_at: iso(90),
+  })),
+  // What was added at the two latest visits to Villa Mar.
+  report_chemical: [
+    {
+      id: 'rc-1',
+      org_id: ORG,
+      report_id: 'hist-1',
+      product_id: 'chem-1',
+      cantidad: 0.5,
+      unidad: 'kg',
+      created_at: iso(4),
+    },
+    {
+      id: 'rc-2',
+      org_id: ORG,
+      report_id: 'hist-1',
+      product_id: 'chem-5',
+      cantidad: 0.25,
+      unidad: 'L',
+      created_at: iso(4),
+    },
+    {
+      id: 'rc-3',
+      org_id: ORG,
+      report_id: 'hist-2',
+      product_id: 'chem-3',
+      cantidad: 1,
+      unidad: 'kg',
+      created_at: iso(9),
+    },
+  ],
   incident: [
     {
       id: 'inc-1',
@@ -635,4 +685,9 @@ for (const m of tables.measurement) {
       status: r.status,
     },
   });
+}
+
+for (const rc of tables.report_chemical) {
+  const p = tables.chemical_product.find((x) => x.id === rc.product_id)!;
+  Object.assign(rc, { chemical_product: { nombre: p.nombre } });
 }

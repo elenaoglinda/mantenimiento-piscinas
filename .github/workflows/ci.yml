@@ -52,7 +52,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       # Against the harness's fake Supabase backend (scripts/redesign): no secrets needed.
-      - run: npx playwright test -c scripts/redesign/playwright.config.ts a11y overflow keyboard flow history
+      - run: npx playwright test -c scripts/redesign/playwright.config.ts a11y overflow keyboard flow history service-log
         env:
           SHOT_DIR: ci
       - if: failure()
@@ -98,3 +98,5 @@ jobs:
             echo "::error::rollback succeeded despite issued invoices"; exit 1
           fi
           echo "rollback correctly refused"
+      - name: Service-log tests (other orgs locked out, signed reports immutable)
+        run: psql -v ON_ERROR_STOP=1 -d app -f supabase/tests/service_log.test.sql

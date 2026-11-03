@@ -25,6 +25,7 @@ const DEFAULTS: Record<string, Row> = {
   basin: { tipo_vaso: [] },
   treatment: { details: {} },
   report: { status: 'draft' },
+  chemical_product: { activo: true, orden: 0, cantidad_habitual: null },
   annual_result: { n_iniciales: 0, n_rutina: 0, n_periodicos: 0, punto_muestreo: 2 },
 };
 

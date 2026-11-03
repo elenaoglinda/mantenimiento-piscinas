@@ -24,6 +24,7 @@ import { SelectField } from '../components/ui/fields.js';
 import { StatusChip } from '../components/ui/StatusChip.js';
 import { cn } from '../components/ui/utils.js';
 import { useRecordCrumb } from '../features/app-shell/index.js';
+import { ProductsSection, useServiceLogForm } from '../features/service-log/index.js';
 import type { Enums } from '../lib/database.types.js';
 import { HScroll } from '../components/ui/HScroll.js';
 
@@ -81,12 +82,18 @@ export function ReportFormPage() {
   const [lng, setLng] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
 
+  // Products (and, below, tasks) of this visit: the service log.
+  const log = useServiceLogForm(reportId);
+
   const [defs, setDefs] = useState<ParameterDefRow[]>([]);
   const [values, setValues] = useState<Record<string, MeasurementInput>>({});
   const [incidents, setIncidents] = useState<IncidentInput[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  // Set once a new report's row exists, so a retry after a partial failure updates it
+  // instead of creating a second report.
+  const [savedId, setSavedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [geoMsg, setGeoMsg] = useState<string | null>(null);
 
@@ -187,6 +194,10 @@ export function ReportFormPage() {
       setError(t('reports.completedRequiresValues'));
       return;
     }
+    if (!log.validate()) {
+      setError(t('serviceLog.products.fixQuantities'));
+      return;
+    }
 
     setSaving(true);
     setError(null);
@@ -203,8 +214,14 @@ export function ReportFormPage() {
       status,
     };
 
-    const { data: saved, error: repErr } = reportId
-      ? await supabase.from('report').update(reportPayload).eq('id', reportId).select('id').single()
+    const existingId = reportId ?? savedId;
+    const { data: saved, error: repErr } = existingId
+      ? await supabase
+          .from('report')
+          .update(reportPayload)
+          .eq('id', existingId)
+          .select('id')
+          .single()
       : await supabase
           .from('report')
           .insert({ ...reportPayload, org_id: profile.org.id, technician_id: profile.user.id })
@@ -217,6 +234,7 @@ export function ReportFormPage() {
       return;
     }
     const rid = saved.id;
+    setSavedId(rid);
 
     // Replace children (simple + correct for online v1).
     await supabase.from('measurement').delete().eq('report_id', rid);
@@ -248,7 +266,13 @@ export function ReportFormPage() {
       }));
     if (incRows.length) await supabase.from('incident').insert(incRows);
 
+    const logFailure = await log.save(rid, profile.org.id);
     setSaving(false);
+    if (logFailure) {
+      // The report is saved; say exactly what wasn't, and stay so it can be retried.
+      setError(t(`serviceLog.db.${logFailure.code}`, { defaultValue: t('serviceLog.db.unknown') }));
+      return;
+    }
     navigate(`/reports/${rid}`);
   }
 
@@ -482,8 +506,18 @@ export function ReportFormPage() {
             )}
           </Section>
 
+          <Section n={3} title={t('serviceLog.products.title')}>
+            <ProductsSection
+              products={log.products}
+              failure={log.productsFailure}
+              value={log.chemicals}
+              onChange={log.setChemicals}
+              invalid={log.invalidChemicals}
+            />
+          </Section>
+
           <Section
-            n={3}
+            n={4}
             title={t('reports.incidents')}
             action={
               <Button
@@ -544,7 +578,7 @@ export function ReportFormPage() {
             )}
           </Section>
 
-          <Section n={4} title={t('reports.notes')}>
+          <Section n={5} title={t('reports.notes')}>
             <Textarea
               aria-label={t('reports.notes')}
               value={notes}
@@ -611,6 +645,11 @@ export function ReportFormPage() {
                   </li>
                 ))}
               </ul>
+            )}
+            {log.chemicals.length > 0 && (
+              <p className="text-sm text-text-muted">
+                {t('serviceLog.products.count', { count: log.chemicals.length })}
+              </p>
             )}
             {filledIncidents > 0 && (
               <p className="text-sm text-text-muted">

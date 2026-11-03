@@ -1063,5 +1063,40 @@
       "done_other": "CSV descargado con {{count}} visitas.",
       "failed": "No se ha podido exportar."
     }
+  },
+  "serviceLog": {
+    "title": "Trabajo realizado",
+    "name": "Nombre",
+    "inactive": "Inactivo",
+    "activate": "Activar",
+    "deactivate": "Desactivar",
+    "products": {
+      "title": "Productos añadidos",
+      "pick": "Productos",
+      "none": "Toca un producto para añadirlo con su cantidad.",
+      "emptyCatalogue": "No hay productos en el catálogo. Un administrador puede añadirlos en Ajustes.",
+      "quantityOf": "Cantidad de {{name}}",
+      "remove": "Quitar {{name}}",
+      "quantityRequired": "Indica una cantidad mayor que 0.",
+      "fixQuantities": "Revisa las cantidades de los productos añadidos.",
+      "count_one": "{{count}} producto añadido",
+      "count_other": "{{count}} productos añadidos",
+      "catalogueTitle": "Productos",
+      "catalogueHint": "Los productos que el técnico puede elegir en cada visita.",
+      "add": "Añadir producto",
+      "edit": "Editar producto",
+      "unit": "Unidad",
+      "usualQuantity": "Cantidad habitual",
+      "usualHint": "Opcional. Se rellena al elegir el producto.",
+      "usual": "Habitual: {{amount}}"
+    },
+    "db": {
+      "missing_schema": "Esta parte aún no está disponible: falta aplicar las migraciones del registro de trabajo en la base de datos (se aplican al publicar esta versión).",
+      "missing_function": "Falta una función de la base de datos del registro de trabajo.",
+      "forbidden": "Tu rol no permite esta acción.",
+      "duplicate": "Ya existe uno con ese nombre.",
+      "rule": "La base de datos ha rechazado la operación.",
+      "unknown": "No se ha podido guardar o cargar el registro de trabajo. Inténtalo de nuevo."
+    }
   }
 }

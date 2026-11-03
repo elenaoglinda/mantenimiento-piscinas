@@ -10,6 +10,7 @@ import { Card, CardHeader } from '../components/ui/Card.js';
 import { PageHeader } from '../components/ui/PageHeader.js';
 import { Skeleton, SkeletonText } from '../components/ui/Skeleton.js';
 import { useRecordCrumb } from '../features/app-shell/index.js';
+import { ReportServiceLogCard } from '../features/service-log/index.js';
 import { StatusChip } from '../components/ui/StatusChip.js';
 import { ReportStatusBadge } from '../components/ReportStatusBadge.js';
 import { SignModal } from '../components/SignModal.js';
@@ -184,6 +185,8 @@ export function ReportDetailPage() {
               </HScroll>
             )}
           </Card>
+
+          <ReportServiceLogCard reportId={report.id} />
 
           {incidents.length > 0 && (
             <Card>

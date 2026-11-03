@@ -12,6 +12,7 @@ import { PageHeader } from '../components/ui/PageHeader.js';
 import { StatusPill } from '../components/ui/StatusPill.js';
 import { toast } from '../components/ui/toast.js';
 import { cn, focusRing } from '../components/ui/utils.js';
+import { ProductCatalogueSettings } from '../features/service-log/index.js';
 
 /**
  * Ajustes: your own profile, the organisation's name, and shortcuts to the other settings that
@@ -152,6 +153,13 @@ export function SettingsPage() {
           </form>
         </Card>
       </div>
+
+      {/* What technicians pick from at each visit: admins keep the lists. */}
+      {isAdmin && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <ProductCatalogueSettings orgId={profile.org.id} />
+        </div>
+      )}
 
       <Card padded={false}>
         <ul>

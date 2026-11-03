@@ -1,0 +1,141 @@
+import type { ChemicalProduct, ChemicalUnit } from '@piscinas/shared';
+import { supabase } from '../../../lib/supabase.js';
+import { toDbFailure, type DbFailure } from '../../../lib/dbError.js';
+
+/**
+ * Data access for the service log. Every call returns its failure (lib/dbError.ts); a missing
+ * table (`missing_schema`) means the app is deployed ahead of its migration, and the screens
+ * say so instead of showing an empty list.
+ */
+export interface LoadResult<T> {
+  data: T;
+  failure: DbFailure | null;
+}
+
+// ---------------------------------------------------------------------------
+// Products
+// ---------------------------------------------------------------------------
+
+export async function fetchProducts(): Promise<LoadResult<ChemicalProduct[]>> {
+  const { data, error } = await supabase
+    .from('chemical_product')
+    .select('id, nombre, unidad, cantidad_habitual, activo')
+    .order('orden')
+    .order('nombre');
+  return {
+    data: (data ?? []).map((p) => ({
+      id: p.id,
+      nombre: p.nombre,
+      unidad: p.unidad,
+      cantidadHabitual: p.cantidad_habitual,
+      activo: p.activo,
+    })),
+    failure: toDbFailure(error),
+  };
+}
+
+export interface ChemicalRow {
+  product_id: string;
+  cantidad: number;
+  unidad: ChemicalUnit;
+}
+
+export async function fetchReportChemicals(reportId: string): Promise<LoadResult<ChemicalRow[]>> {
+  const { data, error } = await supabase
+    .from('report_chemical')
+    .select('product_id, cantidad, unidad')
+    .eq('report_id', reportId)
+    .order('created_at');
+  return { data: data ?? [], failure: toDbFailure(error) };
+}
+
+/** Replace a report's products with `rows` (like measurements: simple and correct). */
+export async function replaceReportChemicals(
+  reportId: string,
+  orgId: string,
+  rows: ChemicalRow[],
+): Promise<DbFailure | null> {
+  const del = await supabase.from('report_chemical').delete().eq('report_id', reportId);
+  if (del.error) return toDbFailure(del.error);
+  if (rows.length === 0) return null;
+  const { error } = await supabase
+    .from('report_chemical')
+    .insert(rows.map((r) => ({ ...r, report_id: reportId, org_id: orgId })));
+  return toDbFailure(error);
+}
+
+export interface ProductUse {
+  nombre: string;
+  cantidad: number;
+  unidad: ChemicalUnit;
+}
+
+/** Products added at each of these visits, for the history and detail screens. */
+export async function fetchChemicalsForReports(
+  reportIds: string[],
+): Promise<LoadResult<Map<string, ProductUse[]>>> {
+  const out = new Map<string, ProductUse[]>();
+  if (reportIds.length === 0) return { data: out, failure: null };
+  const { data, error } = await supabase
+    .from('report_chemical')
+    .select(
+      'report_id, cantidad, unidad, chemical_product!report_chemical_product_id_org_id_fkey(nombre)',
+    )
+    .in('report_id', reportIds)
+    .order('created_at');
+  type Row = {
+    report_id: string;
+    cantidad: number;
+    unidad: ChemicalUnit;
+    chemical_product: { nombre: string } | null;
+  };
+  for (const r of (data ?? []) as unknown as Row[]) {
+    const list = out.get(r.report_id) ?? [];
+    list.push({
+      nombre: r.chemical_product?.nombre ?? '—',
+      cantidad: r.cantidad,
+      unidad: r.unidad,
+    });
+    out.set(r.report_id, list);
+  }
+  return { data: out, failure: toDbFailure(error) };
+}
+
+// Catalogue edits (admins; RLS refuses anyone else).
+
+export async function createProduct(
+  orgId: string,
+  p: { nombre: string; unidad: ChemicalUnit; cantidadHabitual: number | null; orden: number },
+): Promise<DbFailure | null> {
+  const { error } = await supabase.from('chemical_product').insert({
+    org_id: orgId,
+    nombre: p.nombre.trim(),
+    unidad: p.unidad,
+    cantidad_habitual: p.cantidadHabitual,
+    orden: p.orden,
+  });
+  return toDbFailure(error);
+}
+
+export async function updateProduct(
+  id: string,
+  patch: Partial<{
+    nombre: string;
+    unidad: ChemicalUnit;
+    cantidadHabitual: number | null;
+    activo: boolean;
+  }>,
+): Promise<DbFailure | null> {
+  const { error } = await supabase
+    .from('chemical_product')
+    .update({
+      ...(patch.nombre !== undefined ? { nombre: patch.nombre.trim() } : {}),
+      ...(patch.unidad !== undefined ? { unidad: patch.unidad } : {}),
+      ...(patch.cantidadHabitual !== undefined
+        ? { cantidad_habitual: patch.cantidadHabitual }
+        : {}),
+      ...(patch.activo !== undefined ? { activo: patch.activo } : {}),
+    })
+    .eq('id', id);
+  return toDbFailure(error);
+}
