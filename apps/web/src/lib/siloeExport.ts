@@ -1,8 +1,7 @@
 import {
-  aggregateParameter,
-  PARAMETROS_BY_ID,
   formatSpanishDate,
-  type DailyMeasurement,
+  summarizeSeason,
+  type SeasonMeasurement,
   type XmlMuestreo,
   type XmlMvaso,
 } from '@piscinas/shared';
@@ -10,13 +9,6 @@ import { supabase } from './supabase.js';
 import type { Enums } from './database.types.js';
 
 type AnalysisType = Enums<'analysis_type'>;
-
-function mode(nums: number[], fallback: number): number {
-  if (nums.length === 0) return fallback;
-  const counts = new Map<number, number>();
-  for (const n of nums) counts.set(n, (counts.get(n) ?? 0) + 1);
-  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
-}
 
 /**
  * Aggregate the season's measurements into annual_result(+param) rows for every basin that has
@@ -38,49 +30,21 @@ export async function generateAnnualResults(
 
   if (!reports || reports.length === 0) return { basins: 0 };
 
-  const reportMap = new Map(reports.map((r) => [r.id, r]));
   const { data: meas } = await supabase
     .from('measurement')
-    .select('report_id, value, compliant, lugar, parameter_def(siloe_param_id)')
+    // parameter_def(*) rather than naming in_siloe: works before and after the migration that
+    // adds it (rows without the flag count as SILOE, as they always did).
+    .select('report_id, value, compliant, lugar, parameter_def(*)')
     .in(
       'report_id',
       reports.map((r) => r.id),
     );
 
-  interface ParamAcc {
-    lugars: number[];
-    days: DailyMeasurement[];
-  }
-  interface BasinAcc {
-    puntos: number[];
-    dates: string[];
-    params: Map<number, ParamAcc>;
-  }
-  const byBasin = new Map<string, BasinAcc>();
+  // Grouping and aggregation live in @piscinas/shared (siloe/season.ts), pinned by a
+  // byte-for-byte XML test; readings of parameters outside SILOE are dropped there.
+  const season = summarizeSeason(reports, (meas ?? []) as unknown as SeasonMeasurement[]);
 
-  for (const m of meas ?? []) {
-    const rep = reportMap.get(m.report_id);
-    const siloeParam = (m.parameter_def as { siloe_param_id: number } | null)?.siloe_param_id;
-    if (!rep || siloeParam == null || m.value == null) continue;
-    const day = rep.visited_at.slice(0, 10);
-    const acc: BasinAcc = byBasin.get(rep.basin_id) ?? { puntos: [], dates: [], params: new Map() };
-    acc.puntos.push(rep.punto_muestreo ?? 2);
-    acc.dates.push(day);
-    const pacc: ParamAcc = acc.params.get(siloeParam) ?? { lugars: [], days: [] };
-    pacc.lugars.push(m.lugar === 'lab' ? 2 : 1);
-    pacc.days.push({ day, value: Number(m.value), compliant: !!m.compliant });
-    acc.params.set(siloeParam, pacc);
-    byBasin.set(rep.basin_id, acc);
-  }
-
-  for (const [basinId, acc] of byBasin) {
-    const sortedDates = [...new Set(acc.dates)].sort();
-    const fechaApertura = sortedDates[0];
-    const fechaCierre = sortedDates[sortedDates.length - 1];
-    const dias =
-      Math.round((new Date(fechaCierre).getTime() - new Date(fechaApertura).getTime()) / 86400000) +
-      1;
-
+  for (const [basinId, s] of season) {
     const { data: ar } = await supabase
       .from('annual_result')
       .upsert(
@@ -89,11 +53,11 @@ export async function generateAnnualResults(
           basin_id: basinId,
           year,
           analysis_type: analysisType,
-          fecha_apertura: fechaApertura,
-          fecha_cierre: fechaCierre,
-          dias_apertura: dias,
-          n_rutina: sortedDates.length,
-          punto_muestreo: mode(acc.puntos, 2),
+          fecha_apertura: s.fecha_apertura,
+          fecha_cierre: s.fecha_cierre,
+          dias_apertura: s.dias_apertura,
+          n_rutina: s.n_rutina,
+          punto_muestreo: s.punto_muestreo,
         },
         { onConflict: 'basin_id,year,analysis_type' },
       )
@@ -102,27 +66,11 @@ export async function generateAnnualResults(
     if (!ar) continue;
 
     await supabase.from('annual_result_param').delete().eq('annual_result_id', ar.id);
-    const paramRows = [...acc.params.entries()].map(([siloeParam, pacc]) => {
-      const agg = aggregateParameter(pacc.days);
-      const def = PARAMETROS_BY_ID.get(siloeParam);
-      return {
-        org_id: orgId,
-        annual_result_id: ar.id,
-        siloe_param_id: siloeParam,
-        id_lugar: mode(pacc.lugars, 1),
-        id_metodo: def?.allowedMetodo[0] ?? 14,
-        deter: agg.deter,
-        deter_c: agg.deterC,
-        dias_nc: agg.diasNc,
-        vc_med: agg.vcMed,
-        vc_min: agg.vcMin,
-        vc_max: agg.vcMax,
-      };
-    });
+    const paramRows = s.params.map((p) => ({ org_id: orgId, annual_result_id: ar.id, ...p }));
     if (paramRows.length) await supabase.from('annual_result_param').insert(paramRows);
   }
 
-  return { basins: byBasin.size };
+  return { basins: season.size };
 }
 
 export interface ExportBuild {
