@@ -408,4 +408,98 @@ begin
 end $$;
 reset role;
 
+-- ===========================================================================
+-- 4. Route stops: estado / motivo / report_id + the report trigger
+-- ===========================================================================
+do $$
+declare a_route uuid; b_route uuid; a_old uuid;
+begin
+  -- Today's route in Madrid for each org, and an older one for A.
+  insert into public.route (org_id, route_date)
+    values (pg_temp.id('a_org'), (now() at time zone 'Europe/Madrid')::date) returning id into a_route;
+  insert into public.route (org_id, route_date)
+    values (pg_temp.id('b_org'), (now() at time zone 'Europe/Madrid')::date) returning id into b_route;
+  insert into public.route (org_id, route_date)
+    values (pg_temp.id('a_org'), (now() at time zone 'Europe/Madrid')::date - 3) returning id into a_old;
+  insert into public.route_stop (org_id, route_id, pool_id, seq) values
+    (pg_temp.id('a_org'), a_route, pg_temp.id('a_pool'), 1),
+    (pg_temp.id('a_org'), a_old, pg_temp.id('a_pool'), 1),
+    (pg_temp.id('b_org'), b_route, pg_temp.id('b_pool'), 1);
+  insert into ids values ('a_route', a_route), ('b_route', b_route), ('a_old', a_old);
+  perform pg_temp.check(
+    (select bool_and(estado = 'pendiente') from public.route_stop), 'new stops are pendiente');
+end $$;
+
+-- A technician saves today's report for the pool: the stop becomes hecha and links it.
+select set_config('request.jwt.claim.sub', pg_temp.id('a_tech')::text, false);
+set role authenticated;
+do $$
+declare v_rep uuid; s public.route_stop;
+begin
+  insert into public.report (org_id, pool_id, basin_id, technician_id)
+    values (pg_temp.id('a_org'), pg_temp.id('a_pool'), pg_temp.id('a_basin'), pg_temp.id('a_tech'))
+    returning id into v_rep;
+  select * into s from public.route_stop where route_id = pg_temp.id('a_route');
+  perform pg_temp.check(s.estado = 'hecha' and s.report_id = v_rep,
+    'saving a report marks today''s stop for that pool as hecha, linked');
+  perform pg_temp.check(
+    (select estado from public.route_stop where route_id = pg_temp.id('a_old')) = 'pendiente',
+    'a stop on another day is untouched');
+
+  -- Skipping needs a reason.
+  perform pg_temp.check_fails(
+    format('update public.route_stop set estado = %L where route_id = %L', 'saltada', pg_temp.id('a_old')),
+    'check constraint', 'a skipped stop needs a reason');
+  update public.route_stop set estado = 'saltada', motivo = 'Cliente ausente'
+    where route_id = pg_temp.id('a_old');
+  perform pg_temp.check(
+    (select motivo from public.route_stop where route_id = pg_temp.id('a_old')) = 'Cliente ausente',
+    'a technician marks a stop saltada with its reason');
+
+  -- A report for that old day doesn't overwrite a skipped stop.
+  insert into public.report (org_id, pool_id, basin_id, visited_at)
+    values (pg_temp.id('a_org'), pg_temp.id('a_pool'), pg_temp.id('a_basin'), now() - interval '3 days');
+  perform pg_temp.check(
+    (select estado from public.route_stop where route_id = pg_temp.id('a_old')) = 'saltada',
+    'only pending stops are marked done');
+end $$;
+reset role;
+
+-- Org B: its own stop untouched by A's report; can't see or change A's stops.
+select set_config('request.jwt.claim.sub', pg_temp.id('b_admin')::text, false);
+set role authenticated;
+do $$
+begin
+  perform pg_temp.check((select count(*) from public.route_stop) = 1
+    and (select estado from public.route_stop) = 'pendiente',
+    'org B sees only its stop, still pendiente');
+  perform pg_temp.check(pg_temp.affected(format(
+    'update public.route_stop set estado = ''hecha'' where route_id = %L', pg_temp.id('a_route'))) = 0,
+    'org B cannot change org A''s stops');
+  perform pg_temp.check_fails(
+    format('update public.route_stop set report_id = %L where route_id = %L',
+           pg_temp.id('a_draft'), pg_temp.id('b_route')),
+    'foreign key', 'org B cannot link its stop to org A''s report');
+end $$;
+reset role;
+
+-- A viewer can't change stops.
+select set_config('request.jwt.claim.sub', pg_temp.id('a_view')::text, false);
+set role authenticated;
+do $$
+begin
+  perform pg_temp.check(pg_temp.affected('update public.route_stop set estado = ''pendiente''') = 0,
+    'a viewer cannot change stops');
+end $$;
+reset role;
+
+-- Deleting the linked report frees the link, keeps the stop.
+do $$
+begin
+  delete from public.report where id = (select report_id from public.route_stop where route_id = pg_temp.id('a_route'));
+  perform pg_temp.check(
+    (select report_id is null and estado = 'hecha' from public.route_stop where route_id = pg_temp.id('a_route')),
+    'deleting the report unlinks it and keeps the stop');
+end $$;
+
 -- SERVICE_LOG_NEXT

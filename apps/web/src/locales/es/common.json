@@ -1141,6 +1141,25 @@
       "skipped_one": "{{count}} elemento ya no está activo y no se ha copiado.",
       "skipped_other": "{{count}} elementos ya no están activos y no se han copiado.",
       "noReadings": "Las lecturas no se copian: mídelas."
+    },
+    "stops": {
+      "estado": {
+        "pendiente": "Pendiente",
+        "hecha": "Hecha",
+        "saltada": "Saltada"
+      },
+      "viewReport": "Ver informe",
+      "skip": "Saltar",
+      "undo": "Deshacer",
+      "skipTitle": "Saltar parada: {{name}}",
+      "quickReasons": "Motivos habituales",
+      "reasons": ["Cliente ausente", "Acceso cerrado", "Lluvia", "Sin tiempo", "Piscina cerrada"],
+      "reason": "Motivo",
+      "reasonHint": "Obligatorio. Elige uno de arriba o escríbelo.",
+      "confirmSkip": "Marcar como saltada",
+      "progress": "{{done}} de {{total}} hechas",
+      "progressSkipped_one": "{{count}} saltada",
+      "progressSkipped_other": "{{count}} saltadas"
     }
   }
 }

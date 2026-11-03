@@ -86,6 +86,7 @@ function seed(): Db {
         ccaa: null,
         agua_alimentacion: [],
         siloe_cod_p: null,
+        created_at: new Date(Date.now() - 60 * 86_400_000).toISOString(),
       },
     ],
     basin: [{ id: 'b1', org_id: ORG, pool_id: 'p1', denominacion: 'Vaso grande', num_orden: 1 }],
@@ -427,5 +428,81 @@ test('"Repetir última visita" copies technician, products and tasks — never r
   expect((backend.db.measurement as Row[]).filter((m) => m.report_id === created.id)).toEqual([
     expect.objectContaining({ parameter_def_id: 'pd-ph', value: 7.5 }),
   ]);
+  expect(errors).toEqual([]);
+});
+
+test('route stops: a saved report marks the stop done; skip with a reason; undo', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  const db = seed();
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid' }).format(new Date());
+  db.pool.push({ ...(db.pool[0] as Row), id: 'p2', denominacion: 'Hotel Sol · Piscina' });
+  db.basin.push({ id: 'b2', org_id: ORG, pool_id: 'p2', denominacion: 'Vaso único', num_orden: 1 });
+  db.route = [{ id: 'r1', org_id: ORG, technician_id: appUser.id, route_date: today }];
+  db.route_stop = [
+    {
+      id: 's1',
+      org_id: ORG,
+      route_id: 'r1',
+      pool_id: 'p1',
+      seq: 1,
+      eta: null,
+      estado: 'pendiente',
+      motivo: null,
+      report_id: null,
+    },
+    {
+      id: 's2',
+      org_id: ORG,
+      route_id: 'r1',
+      pool_id: 'p2',
+      seq: 2,
+      eta: null,
+      estado: 'pendiente',
+      motivo: null,
+      report_id: null,
+    },
+  ];
+  const backend = await serveBackend(page, db, session);
+
+  await page.goto('/routes');
+  await expect(page.getByText('0 de 2 hechas')).toBeVisible();
+
+  // Saving a report for the first pool marks its stop done.
+  await startVisit(page);
+  await complete(page);
+  await page.goto('/routes');
+  const stops = page.getByRole('listitem').filter({ hasText: 'Las Dunas · Piscina' });
+  await expect(stops.first()).toContainText('Hecha');
+  await expect(page.getByRole('link', { name: 'Ver informe: Las Dunas · Piscina' })).toBeVisible();
+  await expect(page.getByText('1 de 2 hechas')).toBeVisible();
+
+  // Skipping needs a reason; one tap on a usual reason is enough.
+  await page.getByRole('button', { name: 'Saltar: Hotel Sol · Piscina' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Saltar parada: Hotel Sol · Piscina' });
+  await expect(dialog.getByRole('button', { name: 'Marcar como saltada' })).toBeDisabled();
+  await dialog.getByRole('button', { name: 'Lluvia' }).click();
+  await dialog.getByRole('button', { name: 'Marcar como saltada' }).click();
+  const hotel = page.getByRole('listitem').filter({ hasText: 'Hotel Sol · Piscina' }).first();
+  await expect(hotel).toContainText('Saltada');
+  await expect(hotel).toContainText('Lluvia');
+  expect((backend.db.route_stop as Row[]).find((s) => s.id === 's2')).toMatchObject({
+    estado: 'saltada',
+    motivo: 'Lluvia',
+  });
+
+  // The dashboard's today card shows the same.
+  await page.goto('/');
+  await expect(page.getByText(/1 de 2 hechas/)).toBeVisible();
+  await expect(page.getByText('Saltada')).toBeVisible();
+
+  // Undo.
+  await page.goto('/routes');
+  await page.getByRole('button', { name: 'Deshacer: Hotel Sol · Piscina' }).click();
+  await expect(
+    page.getByRole('listitem').filter({ hasText: 'Hotel Sol · Piscina' }).first(),
+  ).toContainText('Pendiente');
   expect(errors).toEqual([]);
 });

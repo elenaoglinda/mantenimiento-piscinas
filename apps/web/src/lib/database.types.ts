@@ -1542,33 +1542,45 @@ export type Database = {
       route_stop: {
         Row: {
           created_at: string;
+          estado: Database['public']['Enums']['route_stop_estado'];
           eta: string | null;
           id: string;
           leg_s: number | null;
+          motivo: string | null;
           org_id: string;
           pool_id: string;
+          report_id: string | null;
           route_id: string;
           seq: number;
+          updated_at: string;
         };
         Insert: {
           created_at?: string;
+          estado?: Database['public']['Enums']['route_stop_estado'];
           eta?: string | null;
           id?: string;
           leg_s?: number | null;
+          motivo?: string | null;
           org_id: string;
           pool_id: string;
+          report_id?: string | null;
           route_id: string;
           seq: number;
+          updated_at?: string;
         };
         Update: {
           created_at?: string;
+          estado?: Database['public']['Enums']['route_stop_estado'];
           eta?: string | null;
           id?: string;
           leg_s?: number | null;
+          motivo?: string | null;
           org_id?: string;
           pool_id?: string;
+          report_id?: string | null;
           route_id?: string;
           seq?: number;
+          updated_at?: string;
         };
         Relationships: [
           {
@@ -1576,6 +1588,13 @@ export type Database = {
             columns: ['route_id', 'org_id'];
             isOneToOne: false;
             referencedRelation: 'route';
+            referencedColumns: ['id', 'org_id'];
+          },
+          {
+            foreignKeyName: 'route_stop_report_id_org_id_fkey';
+            columns: ['report_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'report';
             referencedColumns: ['id', 'org_id'];
           },
         ];
@@ -1710,6 +1729,7 @@ export type Database = {
       };
     };
     Enums: {
+      route_stop_estado: 'pendiente' | 'hecha' | 'saltada';
       chemical_unit: 'kg' | 'g' | 'L' | 'ml' | 'pastillas' | 'uds';
       analysis_type: 'autocontrol' | 'vigilancia';
       attachment_kind: 'photo' | 'lab_pdf';

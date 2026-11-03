@@ -14,3 +14,4 @@ export { ReportServiceLogCard } from './components/ReportServiceLogCard.js';
 export { RecommendedChip } from './components/RecommendedChip.js';
 export { RepeatLastVisit } from './components/RepeatLastVisit.js';
 export { fetchTechnicians, type Technician } from './lib/data.js';
+export { StopActions, StopStatusPill, type StopState } from './components/StopStatus.js';

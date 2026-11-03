@@ -287,3 +287,24 @@ export async function fetchTechnicians(): Promise<LoadResult<Technician[]>> {
     failure: toDbFailure(error),
   };
 }
+
+// ---------------------------------------------------------------------------
+// Route stops
+// ---------------------------------------------------------------------------
+
+export async function skipStop(stopId: string, motivo: string): Promise<DbFailure | null> {
+  const { error } = await supabase
+    .from('route_stop')
+    .update({ estado: 'saltada', motivo })
+    .eq('id', stopId);
+  return toDbFailure(error);
+}
+
+/** Back to pending (undo a skip). A stop marked done by its report keeps its link. */
+export async function reopenStop(stopId: string): Promise<DbFailure | null> {
+  const { error } = await supabase
+    .from('route_stop')
+    .update({ estado: 'pendiente', motivo: null })
+    .eq('id', stopId);
+  return toDbFailure(error);
+}

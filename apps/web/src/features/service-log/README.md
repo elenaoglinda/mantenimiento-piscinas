@@ -11,7 +11,7 @@ incidents only.
 | Tasks done     | `task_def` (org list, ordered), `report_task` (per visit: hecho, nota) | Report form "Tareas" · report detail · Historial · Ajustes → Tareas de la visita   |
 
 Migrations: `supabase/migrations/20261103130000_chemical_products.sql`,
-`20261103130100_visit_tasks.sql`, `20261103130200_parameters_outside_siloe.sql` (each with its
+`20261103130100_visit_tasks.sql`, `20261103130200_parameters_outside_siloe.sql`, `20261103130300_route_stop_status.sql` (each with its
 `supabase/rollback/*.down.sql`). Database tests: `supabase/tests/service_log.test.sql`.
 Pure logic and its tests: `packages/shared/src/service-log/`.
 
@@ -61,6 +61,13 @@ Pure logic and its tests: `packages/shared/src/service-log/`.
 - **The form now sets `report.technician_id`** from a "Técnico" select (default: you). Before,
   it was always the person typing; an office user filling in a technician's paper now records
   the right person.
+- **A saved report marks its route stop done in the database**, not in the form. The
+  `report_marks_route_stop` trigger marks the pool's _pending_ stop on a route of the visit's
+  Madrid day as `hecha` and links the report — so the report form, edits and photo-import
+  drafts all count. It runs with the inserter's rights (not SECURITY DEFINER): anyone who can
+  write a report can already update stops. It never overwrites a stop someone skipped.
+- **A skip needs a reason** (check constraint `route_stop_saltada_needs_motivo`); the skip
+  dialog offers one-tap usual reasons. "Deshacer" sends it back to pending.
 - **An untouched checklist saves nothing.** Only tasks marked done or given a note become
   `report_task` rows (`taskRows`), so "0 of 8" is never stored for visits where nobody used
   the checklist, and history shows what was actually done.

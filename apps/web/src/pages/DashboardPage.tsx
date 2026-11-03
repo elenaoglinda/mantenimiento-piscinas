@@ -40,6 +40,8 @@ import {
 import type { Enums } from '../lib/database.types.js';
 import { historyLink } from '../features/history/index.js';
 import { fetchLegalRedReadings } from '../lib/legalAlerts.js';
+import { StopStatusPill } from '../features/service-log/index.js';
+import { stopCounts } from '@piscinas/shared';
 
 interface RecentReport {
   id: string;
@@ -282,14 +284,25 @@ export function DashboardPage() {
       }
       const { data: stopData } = await supabase
         .from('route_stop')
-        .select('pool_id, seq, eta')
+        // select('*'): includes estado/motivo once the service-log migration adds them.
+        .select('*')
         .in('route_id', ids);
-      const stops = ((stopData ?? []) as { pool_id: string; seq: number; eta: string | null }[])
+      const stops = (
+        (stopData ?? []) as {
+          pool_id: string;
+          seq: number;
+          eta: string | null;
+          estado?: RouteStopLite['estado'];
+          motivo?: string | null;
+        }[]
+      )
         .map((st) => ({
           seq: st.seq,
           eta: st.eta,
           poolName: poolMap.get(st.pool_id)?.denominacion ?? '—',
           clientName: poolMap.get(st.pool_id)?.clientName ?? null,
+          estado: st.estado,
+          motivo: st.motivo,
         }))
         .sort((a, b) => a.seq - b.seq);
       if (active) setTodayStops(stops);
@@ -426,7 +439,10 @@ export function DashboardPage() {
             title={t('dashboard.todayRoute')}
             description={
               todayStops && todayStops.length > 0
-                ? t('dashboard.stops', { count: todayStops.length })
+                ? `${t('dashboard.stops', { count: todayStops.length })} · ${t(
+                    'serviceLog.stops.progress',
+                    { done: stopCounts(todayStops).hecha, total: todayStops.length },
+                  )}`
                 : undefined
             }
             actions={
@@ -479,6 +495,7 @@ export function DashboardPage() {
                       {madridTime(stop.eta)}
                     </time>
                   )}
+                  <StopStatusPill stop={stop} />
                 </li>
               ))}
             </ol>
