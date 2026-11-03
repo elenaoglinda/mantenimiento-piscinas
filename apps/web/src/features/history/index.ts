@@ -3,6 +3,11 @@
  *
  * Everything outside this folder imports from here, never from a file inside it (see
  * docs/ONBOARDING.md §7.1). README.md explains what each piece shows and why.
+ *
+ * The app shell imports `historyLink` from here, so this barrel is in the main bundle's import
+ * graph. Module-level calls in the feature are marked `/* @__PURE__ *\/` so the bundler can
+ * still drop the screens the shell doesn't use; removing those marks adds ~23 kB to the first
+ * download (README → "Bundle").
  */
 export { historyLink, VISIT_PARAM } from './lib/links.js';
 export { WaterStateCards } from './components/WaterStateCards.js';

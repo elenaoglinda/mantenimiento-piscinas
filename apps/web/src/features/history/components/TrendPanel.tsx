@@ -22,7 +22,7 @@ import type { ChartSeries } from './TrendChart.js';
 import { FailureAlert } from './FailureAlert.js';
 
 // The SVG chart is its own chunk: nobody downloads it until this panel is on screen.
-const TrendChart = lazy(() => import('./TrendChart.js'));
+const TrendChart = /* @__PURE__ */ lazy(() => import('./TrendChart.js'));
 
 /** Fixed series order (styles/tokens.css → Charts). At most three lines at once. */
 const SERIES_COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)'];

@@ -73,6 +73,14 @@ Build that URL with `historyLink()` rather than by hand.
   dates as DD/MM/AAAA. Cells starting with `= + - @` are quoted with a leading `'` so a pool
   name can never run as a formula.
 
+## Bundle
+
+The bell and the dashboard import `historyLink` from the barrel, and the bell lives in the app
+shell, i.e. the first download. Rollup only drops the rest of the feature if nothing in it looks
+like it runs code on import, so module-level `new Intl…`, `new Map` and `lazy()` calls carry a
+`/* @__PURE__ */` mark. Without them the entry chunk grows from ~126 kB to ~149 kB. Check
+`npm run build` output (`index-*.js`) after adding module-level code here.
+
 ## Files
 
 ```

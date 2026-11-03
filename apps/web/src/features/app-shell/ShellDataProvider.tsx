@@ -5,6 +5,7 @@ import { formatInvoiceNumber } from '@piscinas/shared';
 import { supabase } from '../../lib/supabase.js';
 import { ACTIVITY_WINDOW_DAYS } from '../../lib/dashboard.js';
 import { needingAttention } from '../invoicing/data.js';
+import { historyLink } from '../history/index.js';
 import {
   EMPTY_SHELL_DATA,
   ShellDataContext,
@@ -42,7 +43,7 @@ export function ShellDataProvider({ children }: { children: ReactNode }) {
           ? supabase
               .from('report')
               .select(
-                'id, visited_at, pool!report_pool_id_org_id_fkey(denominacion), basin!report_basin_id_org_id_fkey(denominacion)',
+                'id, pool_id, visited_at, pool!report_pool_id_org_id_fkey(denominacion), basin!report_basin_id_org_id_fkey(denominacion)',
               )
               .in('id', redIds)
               .gte('visited_at', cutoff)
@@ -65,6 +66,7 @@ export function ShellDataProvider({ children }: { children: ReactNode }) {
 
       type R = {
         id: string;
+        pool_id: string;
         visited_at: string;
         pool: { denominacion: string } | null;
         basin: { denominacion: string } | null;
@@ -82,7 +84,7 @@ export function ShellDataProvider({ children }: { children: ReactNode }) {
           kind: 'reading' as const,
           title: [r.pool?.denominacion, r.basin?.denominacion].filter(Boolean).join(' · '),
           detail: `${t('dashboard.outOfRangeReading')} · ${new Date(r.visited_at).toLocaleDateString('es-ES')}`,
-          to: `/reports/${r.id}`,
+          to: historyLink(r.pool_id, r.id),
         })),
         ...attentionRows.map((a) => {
           const inv = invoiceById.get(a.invoice_id);

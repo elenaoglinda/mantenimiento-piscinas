@@ -239,7 +239,7 @@ export async function fetchVisitPage(
  * fields the filters need), filter and order them here, then fetch full rows for one page.
  * The id list is cached per scope so "Cargar más" doesn't repeat the first query.
  */
-const outOfRangeIds = new Map<string, Promise<LoadResult<string[]>>>();
+const outOfRangeIds = /* @__PURE__ */ new Map<string, Promise<LoadResult<string[]>>>();
 
 async function listOutOfRangeIds(scope: VisitScope): Promise<LoadResult<string[]>> {
   const key = JSON.stringify(scope);

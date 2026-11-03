@@ -1,26 +1,26 @@
 import type { TFunction } from 'i18next';
 
 /** Readings as Spanish users write them: decimal comma, at most two decimals. */
-const number = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 });
+const number = /* @__PURE__ */ new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 });
 export function formatValue(value: number | null | undefined): string {
   return value == null || !Number.isFinite(value) ? '—' : number.format(value);
 }
 
 // Visits happen in Spain: always show Madrid time, whatever the device's timezone.
 const TZ = 'Europe/Madrid';
-const dateFmt = new Intl.DateTimeFormat('es-ES', {
+const dateFmt = /* @__PURE__ */ new Intl.DateTimeFormat('es-ES', {
   timeZone: TZ,
   day: 'numeric',
   month: 'short',
   year: 'numeric',
 });
-const shortDateFmt = new Intl.DateTimeFormat('es-ES', {
+const shortDateFmt = /* @__PURE__ */ new Intl.DateTimeFormat('es-ES', {
   timeZone: TZ,
   day: '2-digit',
   month: '2-digit',
   year: '2-digit',
 });
-const timeFmt = new Intl.DateTimeFormat('es-ES', {
+const timeFmt = /* @__PURE__ */ new Intl.DateTimeFormat('es-ES', {
   timeZone: TZ,
   hour: '2-digit',
   minute: '2-digit',
