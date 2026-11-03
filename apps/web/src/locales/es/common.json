@@ -397,7 +397,7 @@
     "outOfRangeCount_one": "{{count}} parámetro fuera de rango.",
     "outOfRangeCount_other": "{{count}} parámetros fuera de rango.",
     "visitDetails": "Datos de la visita",
-    "searchPlaceholder": "Buscar por piscina o vaso",
+    "searchPlaceholder": "Buscar por piscina o cliente",
     "emptyTitle": "Todavía no hay informes",
     "emptyHint": "Registra la primera visita o importa un parte desde una foto.",
     "noMatches": "Ningún informe coincide",
@@ -982,7 +982,13 @@
       "allPools": "Todas las piscinas",
       "from": "Desde",
       "to": "Hasta",
-      "clear": "Quitar filtros"
+      "clear": "Quitar filtros",
+      "technician": "Técnico",
+      "allClients": "Todos los clientes",
+      "allTechnicians": "Todos los técnicos",
+      "outOfRange": "Solo fuera de rango",
+      "clearCount_one": "Quitar {{count}} filtro",
+      "clearCount_other": "Quitar {{count}} filtros"
     },
     "icons": {
       "incidents_one": "{{count}} incidencia",
@@ -1046,6 +1052,16 @@
       "noOpenIncidents": "No hay incidencias abiertas",
       "timeline": "Todas las visitas",
       "notFound": "No se encuentra este cliente."
+    },
+    "readings": "Lecturas",
+    "readingsInRange": "En rango",
+    "export": {
+      "action": "Exportar CSV",
+      "date": "Fecha",
+      "time": "Hora",
+      "done_one": "CSV descargado con {{count}} visita.",
+      "done_other": "CSV descargado con {{count}} visitas.",
+      "failed": "No se ha podido exportar."
     }
   }
 }
