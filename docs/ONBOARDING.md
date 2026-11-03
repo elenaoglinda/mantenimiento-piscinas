@@ -10,6 +10,9 @@ Companion docs (in this folder):
   A before touching anything SILOE-related.
 - [`implementation-plan.md`](./implementation-plan.md) — the phased build plan with per-task
   status (what's done, skipped, or pending external input).
+- [`INVOICING.md`](./INVOICING.md) — invoicing and Veri\*Factu (read before touching invoices).
+- [`DEMO.md`](./DEMO.md) — the 10-minute sales demo (in Spanish), on the demo org that
+  [`scripts/demo-seed.ts`](../scripts/demo/README.md) creates.
 
 ---
 
@@ -28,15 +31,15 @@ clients' pools). Everything is **multi-tenant** and **Spanish-only** (i18n-ready
 
 ## 2. Tech stack & why
 
-| Layer         | Choice                                                        | Why                                                                                                                                    |
-| ------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Frontend      | **React 19 + TypeScript + Vite**                              | Fast, standard SPA tooling.                                                                                                            |
-| Styling       | **Tailwind v4** with a **design-token** layer                 | Palette is swappable from one file (client asked for this).                                                                            |
-| i18n          | **react-i18next**, `es-ES` only                               | All UI strings externalized so languages can be added with no component changes.                                                       |
-| Backend data  | **Supabase** (Postgres + RLS + Auth + Storage), **eu-west-1** | Managed Postgres with row-level security does the multi-tenant heavy lifting; EU region for GDPR.                                      |
-| Serverless    | **Vercel functions** in `/api` (Node)                         | Only for tasks needing a **server-side secret** (Mapbox token) — geocoding, routing, static maps.                                      |
-| Hosting/CI/CD | **Vercel** (Git integration)                                  | `git push` → auto build + deploy.                                                                                                      |
-| Shared logic  | **`packages/shared`** (pure TS, unit-tested)                  | Domain logic reused by the app (and testable in isolation): traffic-light engine, SILOE aggregation + XML builder/validator, catalogs. |
+| Layer         | Choice                                                        | Why                                                                                                                                     |
+| ------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend      | **React 19 + TypeScript + Vite**                              | Fast, standard SPA tooling.                                                                                                             |
+| Styling       | **Tailwind v4** with a **design-token** layer                 | Palette is swappable from one file (client asked for this).                                                                             |
+| i18n          | **react-i18next**, `es-ES` only                               | All UI strings externalized so languages can be added with no component changes.                                                        |
+| Backend data  | **Supabase** (Postgres + RLS + Auth + Storage), **eu-west-1** | Managed Postgres with row-level security does the multi-tenant heavy lifting; EU region for GDPR.                                       |
+| Serverless    | **Vercel functions** in `/api` (Node)                         | Only for work that needs a **server-side secret or library**: Mapbox, Claude (photo import), Veri\*Factu, the client PDFs (§6).         |
+| Hosting/CI/CD | **Vercel** (Git integration)                                  | `git push` → auto build + deploy.                                                                                                       |
+| Shared logic  | **`packages/shared`** (pure TS, unit-tested)                  | Domain logic reused by the app and `/api`: traffic lights, SILOE aggregation + XML, history, service log, invoicing, client-PDF layout. |
 
 **No native app.** It's a plain web app. (A PWA/offline phase was planned but **skipped** — see §11.)
 
@@ -45,20 +48,39 @@ clients' pools). Everything is **multi-tenant** and **Spanish-only** (i18n-ready
 ## 3. Repository layout (npm workspaces monorepo)
 
 ```
-apps/web/            The React PWA (Vite). This is the deployed frontend.
+apps/web/              The React app (Vite). This is the deployed frontend.
   src/
-    pages/           One component per route (see §7 for the route map).
-    components/      Shared components; components/ui/ = the token-based UI kit.
-    auth/            AuthProvider + context + route guards.
-    lib/             supabase client, generated DB types, and data/service helpers.
-    locales/es/      i18n strings (common.json) — the ONLY place for user-facing text.
-    styles/          tokens.css (the design tokens) + index.css (Tailwind + @theme mapping).
-api/                 Vercel serverless functions (health, geocoding, routing, static map).
-packages/shared/     Framework-agnostic domain logic + unit tests (Vitest).
-supabase/            config.toml + migrations/ (SQL, timestamp-prefixed, applied in order).
-e2e/                 Playwright smoke test.
-docs/                This file + technical-spec.md + implementation-plan.md.
-.github/workflows/   CI (lint + typecheck + unit tests + e2e).
+    features/          One folder per feature (§7.1) — anything new goes here:
+      app-shell/       sidebar, top bar, ⌘K palette, bell, nav table (nav.ts)
+      history/         Historial, Evolución, client page, CSV, water-state cards
+      service-log/     products, tasks, readings outside SILOÉ, route-stop states
+      invoicing/       invoices, Veri*Factu (docs/INVOICING.md)
+      client-reports/  visit PDF + monthly summary buttons, logo, photo thumbnails
+      design/          internal /design gallery (previews only)
+    pages/             Older route components (left in place until they are changed).
+    components/        Older shared components; components/ui/ = the token-based UI kit.
+    auth/              AuthProvider + context + route guards.
+    lib/               supabase client, generated DB types, dbError.ts, cross-cutting helpers.
+    locales/es/        i18n strings (common.json) — the ONLY place for user-facing text
+                       (including the PDFs' text, under clientReports.pdf).
+    styles/            tokens.css (the design tokens) + index.css (Tailwind + @theme mapping).
+api/                   Vercel functions (§6). api/_lib/ = their helpers, api/_tests/ = their tests
+                       (underscore folders are not deployed as functions).
+packages/shared/       Framework-free domain logic + unit tests (Vitest). One folder per feature.
+supabase/
+  migrations/          SQL, timestamp-prefixed, applied in filename order.
+  rollback/            <same name>.down.sql for each migration since team invitations.
+  tests/               SQL tests run by CI's "database lifecycle" job (+ local stubs).
+  seed.sql             small local demo org for `supabase db reset` (§4).
+scripts/
+  demo-seed.ts, demo/  the sales demo org (scripts/demo/README.md).
+  check-api.cjs        builds every /api function the way Vercel does and loads it (CI).
+  redesign/            Playwright UI checks against a fake backend: axe, keyboard, phone
+                       width, flows (CI "ui checks" job). See its README.
+e2e/                   Playwright smoke test (CI "e2e" job).
+docs/                  This file, the spec, the plan, INVOICING.md, DEMO.md, redesign/.
+.github/workflows/     CI: verify (format, lint, typecheck, unit tests, /api load check), e2e,
+                       ui checks, database lifecycle.
 ```
 
 Package names: `@piscinas/web`, `@piscinas/shared`. The web app imports shared code as
@@ -98,9 +120,15 @@ VITE_SUPABASE_ANON_KEY=<publishable/anon key from Supabase → Settings → API>
 green. CI runs all of these on push, and Prettier is enforced (`format:check` fails CI otherwise).
 
 **Note on the `/api` functions locally:** `npm run dev` runs Vite only, so the `/api/*` endpoints
-(geocoding, routing) are NOT available locally — the address autocomplete and route optimizer will
-report "not configured" and you fall back to manual entry. To exercise them locally, use
-`vercel dev` (needs `MAPBOX_TOKEN` in a root `.env`). They always work in deployed environments.
+(geocoding, routing, photo import, client PDFs) are NOT available locally — the address
+autocomplete and route optimizer report "not configured", and the PDF buttons say they can't reach
+the PDF server. To exercise them locally, use `vercel dev` (with the variables of §6 in a root
+`.env`). They always work in deployed environments.
+
+**Local database with data:** `supabase start` then `supabase db reset` applies the migrations and
+`supabase/seed.sql`: a small "Piscinas Mediterráneo (demo)" org. Sign in with
+`demo@cloro.local` / `demo-local` (local only; the seed refuses to run on a database that already
+has an org). The full 90-day demo is `scripts/demo-seed.ts` (scripts/demo/README.md).
 
 ---
 
@@ -111,14 +139,19 @@ report "not configured" and you fall back to manual entry. To exercise them loca
 ### 5.1 Migrations
 
 SQL migrations live in `supabase/migrations/`, timestamp-prefixed and applied in filename order.
-They were applied to the remote DB via the **Supabase MCP** during development (the CLI was never
-`supabase link`-ed). Two ways to apply a new migration:
+The early ones were applied by hand during development. Now the **Supabase GitHub integration
+applies new migration files to production when a PR is merged into `main`** — so a migration is
+reviewed like code, and **never applied to production by hand** from a branch.
 
-- **Preferred, reproducible:** add a new `supabase/migrations/<timestamp>_name.sql` file AND apply
-  it to the project. If you have the CLI linked (`supabase login` + `supabase link --project-ref
-ekbzksquvduudpoeuxkz`), use `supabase db push`. Otherwise apply the same SQL through the Supabase
-  dashboard SQL editor or the MCP.
-- **Always keep the migration file in git** so the schema history is the source of truth.
+For every new migration:
+
+- A new timestamped file, later than every existing one (including open PRs').
+- A matching `supabase/rollback/<same name>.down.sql`.
+- SQL tests in `supabase/tests/` for RLS across two orgs and anything immutable, wired into CI's
+  "database lifecycle" job (which applies every migration to Postgres 16, runs the tests and
+  checks rollbacks).
+- A warning at the top of the PR listing the tables and columns it adds, because merging is what
+  changes production.
 
 After any schema change, **regenerate the TS types**: `apps/web/src/lib/database.types.ts` is the
 generated Supabase types file. Regenerate with `supabase gen types typescript --linked` (or the MCP
@@ -169,9 +202,19 @@ generates the policies in a `do` loop).
 
 ### 5.4 Storage
 
-One **private** bucket, `reports`, holds signatures, report photos/lab-PDFs, and generated XML
-copies. Objects are keyed by `"<org_id>/..."` and storage RLS scopes access to the caller's org by
-the first path segment. Files are read via short-lived signed URLs.
+One **private** bucket, `reports`, holds signatures, report photos/lab-PDFs, generated XML
+copies, the client PDFs and the org's logo. Objects are keyed by `"<org_id>/..."` and storage RLS
+scopes access to the caller's org by the first path segment; writing needs the admin or
+technician role. Files are read via signed URLs (short-lived in the app; 30 days for the client
+PDF links). Paths in use:
+
+- `<org>/<report>/photo-…`, `…/signature.png`, lab PDFs — attachments; a photo's PDF thumbnail is
+  `<photo path>.thumb.jpg`.
+- `<org>/client-reports/visits/<report>/<hash>.pdf`, `<org>/client-reports/monthly/<pool>/<YYYY-MM>/<hash>.pdf`.
+- `<org>/branding/logo` — the logo on the PDFs (Ajustes).
+
+The bucket has **no update policy**: files are write-once. Replace by delete + upload, or name a
+file after its content (the client PDFs use the hash of their bytes).
 
 ---
 
@@ -194,29 +237,44 @@ the first path segment. Files are read via short-lived signed URLs.
     See `docs/INVOICING.md`.
     Without it that endpoint returns 503 and the UI tells the technician to enter the parte by
     hand, so the rest of the app is unaffected if it is missing.
+  - `api/report-pdf.ts` needs no secret of its own: it uses `VITE_SUPABASE_URL` and
+    `VITE_SUPABASE_ANON_KEY` (also read server-side) plus the caller's token.
   - Known quirk: the Vercel CLI won't add **Preview**-scoped vars without a branch; Production +
     Development are set. Add Preview vars in the dashboard if you start using PR previews.
 - **Custom domain:** `panel.cloro.app` is attached to the project; DNS is configured host-side.
 
 ### `/api` functions (why they exist)
 
-Only for work that needs a **server-side secret kept off the client**:
+Only for work that needs a **server-side secret or a heavy library** kept off the client:
 
-- `api/geocode`… (removed) → replaced by `api/address-suggest.ts` (address autocomplete).
-- `api/route-optimize.ts` — Mapbox Optimization (optimal visit order + ETAs).
-- `api/route-map.ts` — Mapbox Static Images proxy (returns a PNG so the token never reaches the browser).
-- `api/extract-reading.ts` — Claude vision proxy for photo import (see §14). Unlike the Mapbox
-  proxies it **requires a valid Supabase session**, because each call costs money; it also refuses
-  a caller-supplied prompt so it can't be used as a general-purpose LLM proxy.
-- `api/health.ts` — trivial health check.
+| Function                 | What                                                                                                | Auth                                                      |
+| ------------------------ | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `api/address-suggest.ts` | Mapbox address autocomplete                                                                         | none (proxy only)                                         |
+| `api/route-optimize.ts`  | Mapbox Optimization: visit order + ETAs                                                             | none (proxy only)                                         |
+| `api/route-map.ts`       | Mapbox Static Images proxy (PNG, so the token never reaches the browser)                            | none (proxy only)                                         |
+| `api/extract-reading.ts` | Claude vision proxy for photo import (§14); refuses caller-supplied prompts                         | **Supabase session** (costs money)                        |
+| `api/verifacti.ts`       | Veri\*Factu invoicing calls (docs/INVOICING.md)                                                     | **Supabase session**                                      |
+| `api/report-pdf.ts`      | Client PDFs: the visit report and the monthly summary; stores them and returns a 30-day signed link | **Supabase session**, queries **with the caller's token** |
+| `api/health.ts`          | Trivial health check                                                                                | none                                                      |
 
-`api/extract-reading.ts` is the first `/api` file to import from `@piscinas/shared` (for the
-extraction prompt, so prompt and parameter catalogue can't drift apart). Worth a smoke test on
-the first deploy that includes it.
+Rules for a new function:
+
+- **Anything that costs money or reads client data requires a valid Supabase session** and does
+  its queries **as the caller** (anon key + their JWT, see `api/_lib/caller.ts`), so RLS applies.
+  **Never the service-role key in a request path.**
+- **Import shared code by relative path** (`../packages/shared/src/x.js`), not
+  `@piscinas/shared`: that package's entry points at TypeScript source, which Vercel compiles to
+  `.js` while Node keeps resolving the `.ts` entry, so the function crashes on load
+  (`FUNCTION_INVOCATION_FAILED`). This is what broke photo import in production until PR #15.
+  `scripts/check-api.cjs` (run in CI) builds every function with Vercel's own builder, loads it
+  and reports its size against the 250 MB limit. A type-only import is fine (erased at build).
+- Helpers go in `api/_lib/`, tests in `api/_tests/` (run by `npm test`); underscore folders are not
+  deployed as functions. A `*.test.ts` directly in `api/` would become a function.
 
 Everything else (including **SILOE XML generation**) runs **client-side** — XML has no secrets, so
-it's a pure `packages/shared` function invoked in the browser and downloaded. A server endpoint
-could wrap the same builder later for direct SILOE upload.
+it's a pure `packages/shared` function invoked in the browser and downloaded. The client PDFs are
+server-side because pdf-lib would add hundreds of KB to the app and the signed link needs the file
+in storage anyway.
 
 ---
 
@@ -224,26 +282,36 @@ could wrap the same builder later for direct SILOE upload.
 
 Routing is in `apps/web/src/App.tsx`. Guards live in `apps/web/src/auth/guards.tsx`:
 
+- `/invite/:token` `InvitePage` (public), `/design` (internal gallery, previews only)
 - `PublicOnly` (login/signup, redirects if already authed) → `LoginPage`, `SignupPage`
 - `RequireAuth` → `OnboardingPage`, then `RequireOnboarded` →
-  - `AppShell` (nav + layout) wraps the authed pages:
-    - `/` `DashboardPage` · `/pools` `PoolsPage` · `/pools/:poolId` `PoolDetailPage`
-    - `/reports` `ReportsPage` · `/reports/new` & `/reports/:id/edit` `ReportFormPage` · `/reports/:id` `ReportDetailPage`
-    - `/routes` `RoutesPage` · `/siloe` `SiloeExportPage` · `/clients` `ClientsPage` (company-only nav) · `/team` `TeamPage`
-    - `/clients/:clientId` `ClientDetailPage` (service history: contact, pools, every visit) — from
-      `features/history`, which also supplies the pool page's Resumen state cards, Historial and
-      Evolución tabs and the Informes filters/CSV. See `apps/web/src/features/history/README.md`.
+  - `AppShell` (`features/app-shell`: sidebar, top bar, ⌘K, bell) wraps the authed pages:
+    - `/` `DashboardPage` · `/pools` `PoolsPage` · `/pools/:poolId` `PoolDetailPage` (tabs
+      Resumen, Vasos, Historial, Evolución, SILOÉ; the monthly summary card is on Resumen)
+    - `/reports` `ReportsPage` · `/reports/new` & `/reports/:id/edit` `ReportFormPage` ·
+      `/reports/import` `ImportReportPage` (photo import) · `/reports/:id` `ReportDetailPage`
+      (with "Enviar al cliente")
+    - `/routes` `RoutesPage` · `/siloe` `SiloeExportPage` · `/clients` `ClientsPage` ·
+      `/clients/:clientId` `ClientDetailPage` (from `features/history`)
+    - `/invoices`, `/invoices/resumen`, `/invoices/settings`, `/invoices/:invoiceId` (from
+      `features/invoicing`)
+    - `/team` `TeamPage` · `/settings` `SettingsPage` (org, logo, products, tasks) · `/ayuda`
+      `HelpPage`
 
 **Auth state:** `AuthProvider` (`src/auth/AuthProvider.tsx`) exposes `{ session, profile, loading,
 reloadProfile, signOut }` via `useAuth()`. `profile` is `{ user: app_user, org }` and is `null`
 when authed-but-not-onboarded (guards send those users to `/onboarding`).
 
-**UI kit** (`components/ui/`): `Button`, `TextField`, `SelectField`/`TextareaField` (`fields.tsx`),
-`Modal`, `Card`/`Alert`/`Spinner` (`feedback.tsx`), `StatusChip`, `GoogleButton`. Use these instead
-of raw elements so styling stays consistent.
+**UI kit** (`components/ui/`, see its README and the `/design` gallery on previews): `Button`,
+`Card`/`CardHeader`, `Alert`/`Spinner` (`feedback.tsx`), `TextField`, `Input`,
+`SelectField`/`TextareaField` (`fields.tsx`), `Select`, `Combobox`, `DatePicker`, `Dialog`/`Modal`,
+`Tabs`, `DataTable`, `HScroll`, `EmptyState`, `PageHeader`, `Breadcrumb`, `StatCard`, `StatusChip`,
+`StatusPill`, `ParamChip`, `ProgressBar`, `Skeleton`, `Toast`, `Tooltip`, `Popover`, `Avatar`,
+`CopyLinkField`, `GoogleButton`. Use these instead of raw elements; **no new UI library**.
 
-**Data access:** most pages call `supabase` (`src/lib/supabase.ts`) directly with typed queries; RLS
-does authorization. Cross-cutting/service logic sits in `src/lib/` (`parameters.ts` = threshold
+**Data access:** pages and feature `lib/` files call `supabase` (`src/lib/supabase.ts`) with typed
+queries; RLS does authorization. **Every Supabase call's error goes through `src/lib/dbError.ts`**
+(no silent failures; `missing_schema` explains a migration not applied yet). Cross-cutting/service logic sits in `src/lib/` (`parameters.ts` = threshold
 resolver + `evaluate()` adapter, `siloeExport.ts` = aggregation + XML assembly, `routing.ts` =
 optimizer client).
 
@@ -289,7 +357,8 @@ Rules:
 Existing non-feature code (`pages/`, `components/`) is left alone. Move it only when you are
 already changing it — a migration for its own sake buys nothing and makes review harder.
 
----
+Feature folders today: `app-shell`, `history`, `service-log`, `invoicing`, `client-reports`,
+`design`; shared counterparts in `packages/shared/src/{history,service-log,invoicing,client-reports,siloe}`.
 
 ---
 
@@ -308,6 +377,12 @@ already changing it — a migration for its own sake buys nothing and makes revi
   `formatSpanishDate()`. Validation is **rule-based**, not native XSD-binary, to keep the build
   robust — the builder still follows the XSD structure.
 
+- `siloe/season.ts` — groups a season's readings per vaso for the XML; a golden test pins the
+  XML **byte for byte** (`season.test.ts`).
+- `history/`, `service-log/`, `invoicing/`, `client-reports/` — each feature's pure logic, with a
+  README. `client-reports` is imported by `/api` by relative path (§6); only its `share.ts` is
+  in the package barrel, so pdf-lib never reaches the browser.
+
 If you change SILOE behavior, update the tests next to these files (`*.test.ts`) — they encode the
 manual's expectations.
 
@@ -315,17 +390,32 @@ manual's expectations.
 
 ## 9. Data model (tables at a glance)
 
-Tenant tables (all `org_id` + RLS): `org`, `app_user`; `client` → `pool` → `basin` → `treatment`;
-`report` → (`measurement`, `incident`, `attachment`, `report_chemical`, `report_task`);
-org catalogues `chemical_product` and `task_def` (service log, see
-`apps/web/src/features/service-log/README.md`); `annual_result` → (`annual_result_param`,
-`annual_result_period`); `route` → `route_stop`; `xml_export`. Reference tables (read-only to
-clients): `siloe_catalog`, `parameter_def`. Full column detail is in the migration files and the
-generated `database.types.ts`.
+Tenant tables (all `org_id` + RLS, composite `(id, org_id)` foreign keys):
+
+- **Tenancy:** `org`, `app_user`, `invitation`.
+- **Installations:** `client` → `pool` → `basin` (vaso) → `treatment`.
+- **Visits:** `report` (one visit to one vaso) → `measurement`, `incident`, `attachment`,
+  `report_chemical` (products added), `report_task` (tasks done). Children of a report follow
+  `report_is_editable()`: once signed, nothing about the visit can change.
+- **Org catalogues (service log):** `chemical_product`, `task_def` (8 defaults each, seeded by
+  `seed_org_catalogues()` from `provision_account()`). See `features/service-log/README.md`.
+- **Routes:** `route` → `route_stop` (`estado` pendiente/hecha/saltada, `motivo`, `report_id`;
+  the `report_marks_route_stop` trigger marks a stop hecha when that pool's report is saved).
+- **SILOÉ:** `annual_result` → (`annual_result_param`, `annual_result_period`); `xml_export`.
+- **Invoicing:** `billing_profile`, `invoice_series`, `invoice` → `invoice_line`,
+  `invoice_aeat_record`, `invoice_activity` (docs/INVOICING.md).
+
+Reference tables (read-only to clients): `siloe_catalog`, `parameter_def` (national RD 742/2013
+rows + CCAA overrides; `in_siloe` false + `clave` for the four readings outside SILOÉ:
+alcalinidad total, dureza cálcica, sal, fosfatos, which have recommended ranges, not legal ones).
+
+Files are in storage, not tables (§5.4): client PDFs, logo, photo thumbnails.
+
+Full column detail is in the migration files and the generated `database.types.ts`.
 
 Key relationships: a **report** is one visit to one **basin** (pool→basin). Measurements attach to a
 report and reference a `parameter_def`. **annual_result** is the SILOE per-basin/season aggregate
-(one per basin+year+analysis_type) built from completed/signed reports.
+(one per basin+year+analysis_type) built from completed/signed reports, SILOÉ parameters only.
 
 ---
 
@@ -340,13 +430,19 @@ report and reference a `parameter_def`. **annual_result** is the SILOE per-basin
   `punto_muestreo`, `cod_v`); TS/React code is English. This is intentional so the SILOE mapping
   stays obvious.
 - **Adding a feature end-to-end (typical recipe):**
-  1. Migration: new table(s) with `org_id` + RLS + composite FKs (copy an existing migration).
-     Apply it and keep the file in git.
-  2. Regenerate `database.types.ts`; `npm run format`.
-  3. Page in `src/pages/` + route in `App.tsx` + nav entry in `components/AppShell.tsx`.
-  4. i18n strings in `common.json`.
-  5. Pure/reusable logic → `packages/shared` (with a test) or `src/lib/`.
-  6. `npm run typecheck && lint && test`, commit, push (auto-deploys).
+  1. If it needs data: a migration with `org_id` + RLS + composite FKs + `updated_at` trigger
+     (copy an existing one), its rollback file and SQL tests (§5.1). Don't apply it by hand;
+     merging applies it.
+  2. Regenerate `database.types.ts` (keep the `Relationships` arrays); `npm run format`.
+  3. A feature folder `apps/web/src/features/<name>/` with README + `index.ts` (§7.1): pages,
+     components, `lib/` data access through `dbError`.
+  4. Route in `App.tsx`; sidebar entry in **`features/app-shell/nav.ts`** (`NAV_GROUPS`, plus
+     `SUB_PAGES` for sub-routes) — sidebar, breadcrumb, ⌘K and page titles all read it.
+  5. i18n strings in `common.json`; colours only through tokens; components from `components/ui`.
+  6. Pure logic → `packages/shared/src/<name>/` with tests.
+  7. UI checks: a spec in `scripts/redesign/` for new screens or buttons (and add it to the CI
+     `ui` job); axe must stay at 0.
+  8. `npm run format && npm run typecheck && npm run lint && npm test`, commit, push, PR.
 - **Everything is SILOE- or RD 742/2013-driven.** `piscina`, `vaso`, `tratamiento`,
   `punto de muestreo` are SILOE requirements; `incidencia` is required by the RD autocontrol
   logbook. Don't remove these. GPS, the owner signature, and free-text notes are the app's own
@@ -357,13 +453,20 @@ report and reference a `parameter_def`. **annual_result** is the SILOE per-basin
 ## 11. Current status & what's pending
 
 Built and live: **Phases 0–3, 5, 6** (foundations, auth/tenancy, core domain, reporting, SILOE
-export, routing). See `implementation-plan.md` for the per-task table.
+export, routing) and invoicing (docs/INVOICING.md). See `implementation-plan.md` for the
+per-task table.
+
+In review (PRs into each other, merge in order): the panel redesign (#11), the role fix (#12),
+service history (#13: Historial, Evolución, client page, CSV, dashboard alerts), the service log
+(#14: products, tasks, readings outside SILOÉ, route-stop states; **adds tables**), and client
+reports + demo data (#15: visit PDF, monthly summary, send by e-mail/WhatsApp, demo org).
 
 **Skipped:** Phase 4 (offline/PWA + sync). The "route available offline" and "report offline" bits
 depend on it.
 
-**Not yet built:** Phase 7 (in-app + email notifications, dashboards, accessibility pass, broader
-E2E, user docs).
+**Partly done from Phase 7:** dashboard alerts and the in-app bell, the accessibility pass (axe at
+0 in CI), broader UI tests, the demo guide. **Not yet:** e-mail notifications; sending the client
+PDF from the server (today the technician's own mail app / WhatsApp sends the link).
 
 **Pending external inputs** (flagged in `technical-spec.md` §13):
 
@@ -394,6 +497,16 @@ E2E, user docs).
 - **Commit email must be GitHub-recognized** or Vercel refuses the deploy.
 - **SECURITY DEFINER functions** must pin `search_path` and revoke `anon` EXECUTE (run
   `get_advisors(security)` after DB changes).
+- **`/api` must not import `@piscinas/shared`** at runtime — relative paths only (§6);
+  `scripts/check-api.cjs` catches it.
+- **The `reports` bucket is write-once** (no update policy): `upload(..., { upsert: true })`
+  fails when the file exists. Delete first or use content-named paths (§5.4).
+- **Previews use the production database.** A preview of a PR with a migration runs against a
+  schema without it: new features must degrade (`missing_schema` → a notice) rather than crash.
+- **Root-level tests** (`api/_tests`, `scripts/demo`) use `vitest.root.config.ts`, deliberately not
+  named `vitest.config.ts` (the workspaces would pick it up by searching upwards).
+- **Demo data** only ever goes into an org whose name ends in "(demo)"; the seed script refuses
+  anything else (scripts/demo/README.md).
 
 ---
 

@@ -6,8 +6,9 @@ buttons live in `apps/web/src/features/client-reports/`.
 
 ## Two entry points, on purpose
 
-- `@piscinas/shared/client-reports` (`index.ts`): everything, including `render.ts`, which uses
-  **pdf-lib**. Only the API imports it.
+- `client-reports/index.ts`: everything, including `render.ts`, which uses **pdf-lib**. Only
+  the API imports it, by relative path (`../packages/shared/src/client-reports/index.js`; see
+  docs/ONBOARDING.md §6 for why `/api` never imports the package by name).
 - `@piscinas/shared` (the package barrel) exports **only `share.ts`**: the e-mail and WhatsApp
   links and the month helpers. Exporting the rest from the barrel would put pdf-lib (and its
   fonts) in the browser bundle, even though the browser never draws a PDF.

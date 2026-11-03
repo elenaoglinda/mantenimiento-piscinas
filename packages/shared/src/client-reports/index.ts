@@ -1,8 +1,8 @@
 /**
  * Client reports: the visit PDF and the monthly summary a pool company sends its own client.
- * Imported as `@piscinas/shared/client-reports` (by api/report-pdf.ts), NOT from the package
- * barrel: it pulls in pdf-lib, which must never reach the browser bundle. The browser-safe part
- * (share links, months) is `share.ts`, which the barrel does export. See README.md.
+ * Imported by api/report-pdf.ts by relative path (see scripts/check-api.cjs), NOT through the
+ * package barrel: it pulls in pdf-lib, which must never reach the browser bundle. The
+ * browser-safe part (share links, months) is `share.ts`, which the barrel does export.
  */
 export * from './text.js';
 export * from './format.js';
