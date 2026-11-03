@@ -1162,5 +1162,96 @@
       "progressSkipped_other": "{{count}} saltadas"
     },
     "openDraft": "Abrir el borrador"
+  },
+  "clientReports": {
+    "pdf": {
+      "visit": {
+        "title": "Informe de visita"
+      },
+      "client": "Cliente",
+      "pool": "Piscina",
+      "basin": "Vaso",
+      "dateTime": "Fecha y hora",
+      "technician": "Técnico",
+      "noTechnician": "Sin técnico asignado",
+      "address": "Dirección",
+      "readings": "Lecturas del agua",
+      "readingsNone": "En esta visita no se registraron lecturas.",
+      "outOfRange_one": "{{count}} lectura fuera del rango legal",
+      "outOfRange_other": "{{count}} lecturas fuera del rango legal",
+      "allInRange": "Todas las lecturas legales dentro de rango",
+      "parameter": "Parámetro",
+      "value": "Valor",
+      "range": "Rango",
+      "state": "Estado",
+      "rangeBetween": "{{min}} – {{max}}",
+      "rangeMin": "mín. {{min}}",
+      "rangeMax": "máx. {{max}}",
+      "noRange": "—",
+      "rangeLegal": "legal (RD 742/2013)",
+      "rangeRecommended": "recomendado",
+      "status": {
+        "green": "Correcto",
+        "amber": "Atención",
+        "red": "Fuera de rango",
+        "unknown": "Sin dato"
+      },
+      "recommended": {
+        "green": "Recomendado",
+        "amber": "Cerca del límite",
+        "red": "Fuera de lo recomendado",
+        "unknown": "Sin dato"
+      },
+      "otherParams": "Otros parámetros (no SILOÉ, rango recomendado)",
+      "products": "Productos añadidos",
+      "productsNone": "No se añadieron productos.",
+      "product": "Producto",
+      "quantity": "Cantidad",
+      "unavailable": "No disponible en este momento.",
+      "tasks": "Tareas realizadas",
+      "tasksNone": "No se registraron tareas.",
+      "task": "Tarea",
+      "taskDone": "Hecha",
+      "taskNotDone": "No hecha",
+      "incidents": "Incidencias y acciones correctoras",
+      "incidentsNone": "Sin incidencias.",
+      "correctiveAction": "Acción correctora",
+      "noCorrectiveAction": "sin acción correctora registrada",
+      "notes": "Observaciones",
+      "photos": "Fotos",
+      "photosLeftOut_one": "{{count}} foto más disponible en la aplicación.",
+      "photosLeftOut_other": "{{count}} fotos más disponibles en la aplicación.",
+      "signature": "Firma",
+      "signedBy": "Firmado por {{name}}",
+      "signedAt": "el {{date}} a las {{time}}.",
+      "notSigned": "Informe completado, pendiente de firma.",
+      "legend": "Correcto: dentro del rango legal del RD 742/2013. Atención: dentro del rango pero cerca del límite. Fuera de rango: no cumple el valor legal. Los parámetros que no se comunican a SILOÉ se comparan con un rango recomendado, no legal.",
+      "footer": "{{company}} · Generado con Cloro",
+      "page": "Página {{page}} de {{pages}}",
+      "monthly": {
+        "title": "Resumen mensual",
+        "period": "Periodo",
+        "periodRange": "del {{from}} al {{to}}",
+        "visits": "Visitas",
+        "outOfRange": "Lecturas fuera del rango legal",
+        "basin": "Vaso: {{name}}",
+        "noVisits": "Sin visitas en este mes.",
+        "visitsCount_one": "{{count}} visita",
+        "visitsCount_other": "{{count}} visitas",
+        "outOfRecommended_one": "{{count}} fuera de lo recomendado",
+        "outOfRecommended_other": "{{count}} fuera de lo recomendado",
+        "incidentsCount_one": "{{count}} incidencia",
+        "incidentsCount_other": "{{count}} incidencias",
+        "date": "Fecha",
+        "short": {
+          "1": "pH",
+          "10": "Cl libre",
+          "9": "Cl comb.",
+          "3": "Temp. °C"
+        },
+        "productsTotal": "Productos usados en el mes",
+        "total": "Total"
+      }
+    }
   }
 }
