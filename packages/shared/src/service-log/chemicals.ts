@@ -35,9 +35,9 @@ export function parseQuantity(text: string): number | null {
   return Number.isFinite(n) && n > 0 ? Math.round(n * 1000) / 1000 : null;
 }
 
-/** 0.5, 'kg' → "0,5 kg"; 2, 'pastillas' → "2 pastillas". */
+/** 0.5, 'kg' → "0,5 kg"; 2, 'pastillas' → "2 pastillas"; 1, 'pastillas' → "1 pastilla". */
 export function formatQuantity(n: number, unit: ChemicalUnit): string {
-  return `${decimal.format(n)} ${unit}`;
+  return `${decimal.format(n)} ${n === 1 && unit === 'pastillas' ? 'pastilla' : unit}`;
 }
 
 /** Tap a quick-pick chip: adds the product (with its usual quantity), or does nothing if present. */

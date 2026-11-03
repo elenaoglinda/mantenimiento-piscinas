@@ -17,7 +17,7 @@ import {
   monthBounds,
   monthLabelEs,
 } from './format.js';
-import { formatUnitValue, type PdfChemical, type PdfIncident } from './visit.js';
+import { formatChemical, type PdfChemical, type PdfIncident } from './visit.js';
 import { label, plural, type PdfLabels } from './text.js';
 
 export interface MonthlyParam {
@@ -312,7 +312,7 @@ export function layoutMonthlySummary(
           { label: label(labels, 'monthly.total'), width: 0.3, align: 'right' },
         ],
         totals.map((c) => ({
-          cells: [{ text: c.name }, { text: formatUnitValue(c.cantidad, c.unidad), bold: true }],
+          cells: [{ text: c.name }, { text: formatChemical(c), bold: true }],
         })),
       );
     }

@@ -8,6 +8,7 @@ import { statusColors, token } from './palette.js';
 import { formatDateEs, formatNumberEs, formatTimeEs, rangeText } from './format.js';
 import { label, pdfSafe, plural, type PdfLabels } from './text.js';
 import type { ParameterStatus } from '../evaluate.js';
+import { CHEMICAL_UNITS, formatQuantity, type ChemicalUnit } from '../service-log/chemicals.js';
 
 export interface PdfReading {
   name: string;
@@ -58,6 +59,13 @@ export interface VisitReportData {
   signature: { ref: string | null; name: string | null; signedAt: string | null } | null;
   /** Sections whose data couldn't be read (shown as such, never as "none"). */
   unavailable: ('chemicals' | 'tasks')[];
+}
+
+/** A product amount exactly as the app writes it ("1 pastilla", "0,5 kg"). */
+export function formatChemical(c: PdfChemical): string {
+  return (CHEMICAL_UNITS as readonly string[]).includes(c.unidad)
+    ? formatQuantity(c.cantidad, c.unidad as ChemicalUnit)
+    : formatUnitValue(c.cantidad, c.unidad);
 }
 
 export function formatUnitValue(value: number | null, unit: string | null): string {
@@ -194,7 +202,7 @@ export function layoutVisitReport(
         { label: label(labels, 'quantity'), width: 0.3, align: 'right' },
       ],
       data.chemicals.map((c) => ({
-        cells: [{ text: c.name }, { text: formatUnitValue(c.cantidad, c.unidad), bold: true }],
+        cells: [{ text: c.name }, { text: formatChemical(c), bold: true }],
       })),
     );
   }

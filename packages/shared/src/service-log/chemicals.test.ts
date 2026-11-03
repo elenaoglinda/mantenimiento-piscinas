@@ -40,6 +40,7 @@ describe('quantities typed on a phone', () => {
   it('formats in Spanish with the unit', () => {
     expect(formatQuantity(0.5, 'kg')).toBe('0,5 kg');
     expect(formatQuantity(2, 'pastillas')).toBe('2 pastillas');
+    expect(formatQuantity(1, 'pastillas')).toBe('1 pastilla');
     expect(formatQuantity(1250, 'ml')).toBe('1250 ml');
   });
 });
