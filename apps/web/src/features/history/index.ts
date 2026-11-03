@@ -5,3 +5,4 @@
  * docs/ONBOARDING.md §7.1). README.md explains what each piece shows and why.
  */
 export { historyLink, VISIT_PARAM } from './lib/links.js';
+export { WaterStateCards } from './components/WaterStateCards.js';

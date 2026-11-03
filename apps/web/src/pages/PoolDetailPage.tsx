@@ -15,6 +15,7 @@ import { StatusPill } from '../components/ui/StatusPill.js';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs.js';
 import { ReportStatusBadge } from '../components/ReportStatusBadge.js';
 import { useRecordCrumb } from '../features/app-shell/index.js';
+import { WaterStateCards } from '../features/history/index.js';
 import { PoolFormModal } from '../components/PoolFormModal.js';
 import { BasinFormModal } from '../components/BasinFormModal.js';
 import { TreatmentFormModal } from '../components/TreatmentFormModal.js';
@@ -123,6 +124,7 @@ export function PoolDetailPage() {
   if (!pool || !profile) return <Alert tone="error">{t('common.genericError')}</Alert>;
 
   const lastVisit = reports?.[0]?.visited_at ?? null;
+  const basinRefs = basins.map((b) => ({ id: b.id, denominacion: b.denominacion }));
   const reportColumns: Column<PoolReport>[] = [
     {
       id: 'date',
@@ -214,6 +216,12 @@ export function PoolDetailPage() {
               {reports === null ? <Skeleton className="h-6 w-10" /> : reports.length}
             </Fact>
           </div>
+          <WaterStateCards
+            poolId={pool.id}
+            ccaa={pool.ccaa}
+            basins={basinRefs}
+            canWrite={canWrite}
+          />
           <Card>
             <CardHeader title={t('pools.details')} />
             <dl className="grid gap-x-6 gap-y-4 text-sm sm:grid-cols-2">
