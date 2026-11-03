@@ -23,6 +23,10 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      # Build every /api function with Vercel's builder and load it: catches functions that
+      # compile but crash on Vercel (and checks the 250 MB size limit).
+      - name: /api functions build and load like on Vercel
+        run: node scripts/check-api.cjs
 
   e2e:
     runs-on: ubuntu-latest
