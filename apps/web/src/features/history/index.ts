@@ -7,3 +7,4 @@
 export { historyLink, VISIT_PARAM } from './lib/links.js';
 export { WaterStateCards } from './components/WaterStateCards.js';
 export { VisitHistory } from './components/VisitHistory.js';
+export { TrendPanel } from './components/TrendPanel.js';

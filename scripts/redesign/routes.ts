@@ -37,6 +37,7 @@ if (process.env.SHOT_DIR !== 'before') {
   ROUTES.push(
     { slug: 'pool-history', path: '/pools/pool-1?tab=historial', auth: 'full' },
     { slug: 'pool-history-visit', path: '/pools/pool-1?tab=historial&visita=hist-1', auth: 'full' },
+    { slug: 'pool-trend', path: '/pools/pool-1?tab=evolucion', auth: 'full' },
   );
 }
 

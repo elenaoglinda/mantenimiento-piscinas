@@ -13,7 +13,7 @@ import { Skeleton, SkeletonText } from '../components/ui/Skeleton.js';
 import { StatusPill } from '../components/ui/StatusPill.js';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs.js';
 import { useRecordCrumb } from '../features/app-shell/index.js';
-import { VisitHistory, WaterStateCards } from '../features/history/index.js';
+import { TrendPanel, VisitHistory, WaterStateCards } from '../features/history/index.js';
 import { PoolFormModal } from '../components/PoolFormModal.js';
 import { BasinFormModal } from '../components/BasinFormModal.js';
 import { TreatmentFormModal } from '../components/TreatmentFormModal.js';
@@ -23,7 +23,7 @@ type Pool = Tables<'pool'> & { client: { name: string; is_self: boolean } | null
 type Treatment = Tables<'treatment'>;
 type BasinWithTreatments = Tables<'basin'> & { treatment: Treatment[] };
 
-const TABS = ['resumen', 'historial', 'vasos', 'siloe'] as const;
+const TABS = ['resumen', 'historial', 'evolucion', 'vasos', 'siloe'] as const;
 type Tab = (typeof TABS)[number];
 /** Old links to the tab Historial replaced still land on it. */
 const TAB_ALIASES: Record<string, Tab> = { informes: 'historial' };
@@ -170,6 +170,7 @@ export function PoolDetailPage() {
             {t('history.tab')}
             {visits && <Count n={visits.count} />}
           </TabsTrigger>
+          <TabsTrigger value="evolucion">{t('history.trend.tab')}</TabsTrigger>
           <TabsTrigger value="siloe">SILOÉ</TabsTrigger>
         </TabsList>
 
@@ -361,6 +362,17 @@ export function PoolDetailPage() {
               title={t('history.tab')}
             />
           )}
+        </TabsContent>
+
+        <TabsContent value="evolucion">
+          {tab === 'evolucion' &&
+            (basins.length === 0 ? (
+              <Card padded={false}>
+                <EmptyState compact icon={<Waves size={20} />} title={t('basins.empty')} />
+              </Card>
+            ) : (
+              <TrendPanel poolId={pool.id} ccaa={pool.ccaa} basins={basinRefs} />
+            ))}
         </TabsContent>
 
         <TabsContent value="siloe" className="flex flex-col gap-4">
