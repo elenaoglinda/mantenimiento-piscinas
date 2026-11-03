@@ -34,6 +34,7 @@ import { TextField } from '../components/ui/TextField.js';
 import { SelectField, TextareaField } from '../components/ui/fields.js';
 import { StatusChip } from '../components/ui/StatusChip.js';
 import type { Enums } from '../lib/database.types.js';
+import { savePhotoThumbnail } from '../features/client-reports/index.js';
 
 type AnalysisType = Enums<'analysis_type'>;
 
@@ -272,6 +273,8 @@ export function ImportReportPage() {
       if (upErr) {
         photoFailed = true;
       } else {
+        // Small copy for the client PDFs; the photo itself is the evidence and is saved anyway.
+        await savePhotoThumbnail(path, file);
         const { error: attErr } = await supabase.from('attachment').insert({
           org_id: profile.org.id,
           report_id: rid,

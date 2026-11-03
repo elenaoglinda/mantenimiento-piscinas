@@ -1,7 +1,8 @@
 /**
  * Test-only in-memory stand-in for the supabase-js client the API uses: tables with the
  * query-builder methods report-pdf calls, and a storage bucket. Not a Vercel function
- * (underscore folder), never imported outside tests.
+ * (underscore folder). Used by api/_tests and by the UI harness (scripts/redesign), which runs
+ * the real PDF builder against its in-memory database.
  */
 type Row = Record<string, unknown>;
 
@@ -114,7 +115,8 @@ class Query implements PromiseLike<{ data: unknown; error: unknown }> {
   }
 }
 
-export function fakeClient(db: FakeDb) {
+export function fakeClient(db: FakeDb, opts: { storageBase?: string } = {}) {
+  const base = opts.storageBase ?? 'https://db.example/storage/v1';
   const bucket = {
     async download(path: string, opts?: { transform?: unknown }) {
       if (opts?.transform) return { data: null, error: { message: 'transformations not enabled' } };
@@ -141,7 +143,7 @@ export function fakeClient(db: FakeDb) {
       if (!db.storage.has(path)) return { data: null, error: { message: 'Object not found' } };
       return {
         data: {
-          signedUrl: `https://db.example/storage/v1/object/sign/reports/${path}?token=t&exp=${seconds}`,
+          signedUrl: `${base}/object/sign/reports/${path}?token=t&exp=${seconds}`,
         },
         error: null,
       };

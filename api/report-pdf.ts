@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { SupabaseClient } from '@supabase/supabase-js';
 // Relative imports, not `@piscinas/shared`: see scripts/check-api.cjs for why.
 import {
   SIGNED_LINK_SECONDS,
@@ -41,7 +42,7 @@ const LABELS: PdfLabels = flattenLabels(
   (es as unknown as { clientReports: { pdf: unknown } }).clientReports.pdf,
 );
 
-type Body =
+export type Body =
   | { kind: 'visit'; reportId: string }
   | { kind: 'monthly'; poolId: string; month: string };
 
@@ -80,8 +81,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(400).json({ error: 'invalid_request' });
     return;
   }
-  const { client } = caller;
+  const out = await buildPdf(caller.client, body);
+  res.status(out.status).json(out.json);
+}
 
+type Out = { status: number; json: Record<string, unknown> };
+const out = (status: number, json: Record<string, unknown>): Out => ({ status, json });
+
+/**
+ * Builds, stores and signs the PDF with an already-authenticated caller client. Split from the
+ * handler so the UI tests can run the real thing against their in-memory database.
+ */
+export async function buildPdf(client: SupabaseClient, body: Body): Promise<Out> {
   try {
     let loaded: Loaded<unknown>;
     let title: string;
@@ -132,21 +143,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const forbidden =
             status === 403 || /row-level security|unauthori[sz]ed/i.test(up.error.message);
           console.error('report-pdf upload failed', status, up.error.message);
-          res
-            .status(forbidden ? 403 : 502)
-            .json({ error: forbidden ? 'cannot_store' : 'storage_failed' });
-          return;
+          return out(forbidden ? 403 : 502, {
+            error: forbidden ? 'cannot_store' : 'storage_failed',
+          });
         }
       }
       signed = await bucket.createSignedUrl(path, SIGNED_LINK_SECONDS);
       if (signed.error || !signed.data) {
         console.error('report-pdf sign failed', signed.error?.message);
-        res.status(502).json({ error: 'storage_failed' });
-        return;
+        return out(502, { error: 'storage_failed' });
       }
     }
 
-    res.status(200).json({
+    return out(200, {
       url: signed.data.signedUrl,
       fileName: loaded.fileName,
       expiresAt: new Date(Date.now() + SIGNED_LINK_SECONDS * 1000).toISOString(),
@@ -155,15 +164,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   } catch (err) {
     if (err instanceof LoadError) {
-      if (err.code === 'not_found') res.status(404).json({ error: 'not_found' });
-      else if (err.code === 'not_ready') res.status(409).json({ error: 'not_ready' });
+      if (err.code === 'not_found') return out(404, { error: 'not_found' });
+      else if (err.code === 'not_ready') return out(409, { error: 'not_ready' });
       else {
         console.error('report-pdf data failed', err.message);
-        res.status(502).json({ error: 'data_failed' });
+        return out(502, { error: 'data_failed' });
       }
-      return;
     }
     console.error('report-pdf failed', err);
-    res.status(500).json({ error: 'pdf_failed' });
+    return out(500, { error: 'pdf_failed' });
   }
 }

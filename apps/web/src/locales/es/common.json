@@ -1252,6 +1252,74 @@
         "productsTotal": "Productos usados en el mes",
         "total": "Total"
       }
+    },
+    "share": {
+      "title": "Enviar al cliente",
+      "visitHint": "PDF del informe para el cliente: lecturas con su semáforo, productos, tareas, incidencias, fotos y firma.",
+      "download": "Descargar PDF",
+      "email": "Enviar por email",
+      "whatsapp": "Enviar por WhatsApp",
+      "preparing": "Preparando el PDF…",
+      "ready_one": "PDF listo ({{count}} página). El enlace caduca el {{date}}.",
+      "ready_other": "PDF listo ({{count}} páginas). El enlace caduca el {{date}}.",
+      "openPdf": "Abrir el PDF",
+      "copy": "Copiar enlace",
+      "copied": "Enlace copiado",
+      "openEmail": "Abrir el correo",
+      "openWhatsapp": "Abrir WhatsApp",
+      "noEmail": "Este cliente no tiene correo de contacto: elige el destinatario en tu correo.",
+      "noPhone": "Este cliente no tiene teléfono: WhatsApp te preguntará a quién enviarlo.",
+      "unsigned": "Este informe aún no está firmado; el PDF lo indicará."
+    },
+    "email": {
+      "visitSubject": "Informe de la visita a {{pool}} del {{date}}",
+      "visitBody": "Hola:\n\nTe enviamos el informe de la visita a {{pool}} ({{basin}}) del {{date}}.\n\nPuedes verlo y descargarlo aquí (el enlace caduca el {{expires}}):\n{{url}}\n\nUn saludo,\n{{company}}",
+      "monthlySubject": "Resumen de {{month}} · {{pool}}",
+      "monthlyBody": "Hola:\n\nTe enviamos el resumen de {{month}} de {{pool}}: evolución del agua, visitas, incidencias y productos usados.\n\nPuedes verlo y descargarlo aquí (el enlace caduca el {{expires}}):\n{{url}}\n\nUn saludo,\n{{company}}"
+    },
+    "whatsapp": {
+      "visit": "Hola, te enviamos el informe de la visita a {{pool}} del {{date}}: {{url}} (el enlace caduca el {{expires}}).",
+      "monthly": "Hola, te enviamos el resumen de {{month}} de {{pool}}: {{url}} (el enlace caduca el {{expires}})."
+    },
+    "monthly": {
+      "title": "Resumen mensual para el cliente",
+      "hint": "Un PDF por mes con la evolución de cada vaso, las visitas, las lecturas fuera de rango, las incidencias y los productos usados.",
+      "month": "Mes"
+    },
+    "errors": {
+      "unauthorized": "Tu sesión ha caducado. Vuelve a entrar e inténtalo de nuevo.",
+      "invalid_request": "No se ha podido pedir el PDF. Recarga la página e inténtalo de nuevo.",
+      "not_found": "No se encuentra este informe o no tienes acceso a él.",
+      "not_ready": "Un borrador no se envía al cliente: márcalo como completo primero.",
+      "cannot_store": "Tu rol no permite generar el PDF. Pide a un técnico o a un administrador que lo genere; después podrás enviarlo.",
+      "storage_failed": "No se ha podido guardar el PDF. Inténtalo de nuevo en unos minutos.",
+      "data_failed": "No se han podido leer los datos del informe. Inténtalo de nuevo en unos minutos.",
+      "not_configured": "El servidor de PDF no está configurado (faltan las variables de Supabase en Vercel).",
+      "pdf_failed": "No se ha podido crear el PDF. Inténtalo de nuevo.",
+      "network": "No se ha podido contactar con el servidor de PDF. Comprueba la conexión. (En desarrollo local, usa «vercel dev».)",
+      "contact": "No se ha podido cargar el contacto del cliente; puedes enviar igualmente eligiendo el destinatario."
+    },
+    "warnings": {
+      "photos_left_out": "Algunas fotos no caben en el PDF (demasiado grandes o en un formato no admitido); el PDF indica cuántas.",
+      "service_log_unavailable": "Productos o tareas aparecen como «no disponible»: falta aplicar las migraciones del registro de trabajo.",
+      "logo_unreadable": "El logotipo no se ha podido leer; el PDF sale sin él.",
+      "logo_too_large": "El logotipo pesa más de 1 MB; el PDF sale sin él.",
+      "signature_unreadable": "La imagen de la firma no se ha podido leer; el PDF muestra el nombre del firmante."
+    },
+    "logo": {
+      "title": "Logotipo para los PDF",
+      "hint": "Aparece arriba en los informes y resúmenes que envías a tus clientes. PNG o JPG, máximo 1 MB.",
+      "current": "Logotipo actual",
+      "none": "Sin logotipo",
+      "upload": "Subir logotipo",
+      "replace": "Cambiar logotipo",
+      "remove": "Quitar",
+      "errors": {
+        "too_large": "El archivo pesa más de 1 MB.",
+        "wrong_type": "Usa un PNG o un JPG.",
+        "failed": "No se ha podido guardar el logotipo. Inténtalo de nuevo.",
+        "load": "No se ha podido cargar el logotipo actual."
+      }
     }
   }
 }

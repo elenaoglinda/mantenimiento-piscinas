@@ -11,6 +11,7 @@ import { PageHeader } from '../components/ui/PageHeader.js';
 import { Skeleton, SkeletonText } from '../components/ui/Skeleton.js';
 import { useRecordCrumb } from '../features/app-shell/index.js';
 import { RecommendedChip, ReportServiceLogCard } from '../features/service-log/index.js';
+import { SendVisitReportCard } from '../features/client-reports/index.js';
 import { isSiloeParameter } from '@piscinas/shared';
 import { StatusChip } from '../components/ui/StatusChip.js';
 import { ReportStatusBadge } from '../components/ReportStatusBadge.js';
@@ -279,6 +280,17 @@ export function ReportDetailPage() {
               )}
             </dl>
           </Card>
+
+          <SendVisitReportCard
+            report={{
+              id: report.id,
+              pool_id: report.pool_id,
+              status: report.status,
+              visited_at: report.visited_at,
+              poolName: report.pool?.denominacion ?? '—',
+              basinName: report.basin?.denominacion ?? '—',
+            }}
+          />
 
           {isSigned && (
             <Card>
