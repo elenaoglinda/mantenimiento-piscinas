@@ -4,6 +4,8 @@
  */
 export { ProductsSection } from './components/ProductsSection.js';
 export { ProductCatalogueSettings } from './components/ProductCatalogueSettings.js';
+export { TasksSection } from './components/TasksSection.js';
+export { TaskListSettings } from './components/TaskListSettings.js';
 export { VisitLogDetails, VisitLogIcons } from './components/VisitLogDetails.js';
 export { ServiceLogAlert } from './components/ServiceLogAlert.js';
 export { useServiceLogForm } from './lib/useServiceLogForm.js';

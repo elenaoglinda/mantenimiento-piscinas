@@ -1,15 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { DbFailure } from '../../../lib/dbError.js';
-import { fetchChemicalsForReports, type ProductUse } from './data.js';
+import {
+  fetchChemicalsForReports,
+  fetchTasksForReports,
+  type ProductUse,
+  type TaskDone,
+} from './data.js';
 
 export interface VisitLog {
   products: ProductUse[];
+  /** Tasks recorded for the visit (done, or with a note), in list order. */
+  tasks: TaskDone[];
 }
 
-const EMPTY: VisitLog = { products: [] };
+const EMPTY: VisitLog = { products: [], tasks: [] };
 
 /**
- * What was done at each of these visits (products…), for lists that show many visits at once.
+ * What was done at each of these visits (products, tasks), for lists that show many visits at once.
  * Fetched separately from the visits themselves, so a database without the service-log tables
  * yet still shows the history, with a notice instead of the log.
  */
@@ -25,13 +32,16 @@ export function useVisitLogs(reportIds: string[]): {
   useEffect(() => {
     const ids = key ? key.split(',') : [];
     let active = true;
-    void fetchChemicalsForReports(ids).then((r) => {
-      if (!active) return;
-      const map = new Map<string, VisitLog>();
-      for (const id of ids) map.set(id, { products: r.data.get(id) ?? [] });
-      setLogs(map);
-      setFailure(r.failure);
-    });
+    void Promise.all([fetchChemicalsForReports(ids), fetchTasksForReports(ids)]).then(
+      ([chem, tasks]) => {
+        if (!active) return;
+        const map = new Map<string, VisitLog>();
+        for (const id of ids)
+          map.set(id, { products: chem.data.get(id) ?? [], tasks: tasks.data.get(id) ?? [] });
+        setLogs(map);
+        setFailure(chem.failure ?? tasks.failure);
+      },
+    );
     return () => {
       active = false;
     };

@@ -507,6 +507,36 @@ export const tables: Record<string, Record<string, unknown>[]> = {
     created_at: iso(90),
     updated_at: iso(90),
   })),
+  task_def: [
+    'Barrido / limpieza de fondo',
+    'Limpieza de paredes y línea de flotación',
+    'Vaciado de skimmers y prefiltro',
+    'Contralavado del filtro',
+    'Limpieza del filtro',
+    'Revisión de bomba y equipos',
+    'Revisión del clorador salino',
+    'Retirada de hojas',
+  ].map((nombre, i) => ({
+    id: `task-${i + 1}`,
+    org_id: ORG,
+    nombre,
+    orden: i + 1,
+    activo: true,
+    created_at: iso(90),
+    updated_at: iso(90),
+  })),
+  report_task: [
+    { id: 'rt-1', org_id: ORG, report_id: 'hist-1', task_id: 'task-1', hecho: true, nota: null },
+    {
+      id: 'rt-2',
+      org_id: ORG,
+      report_id: 'hist-1',
+      task_id: 'task-3',
+      hecho: true,
+      nota: 'Mucha hoja',
+    },
+    { id: 'rt-3', org_id: ORG, report_id: 'hist-1', task_id: 'task-4', hecho: true, nota: null },
+  ],
   // What was added at the two latest visits to Villa Mar.
   report_chemical: [
     {
@@ -690,4 +720,9 @@ for (const m of tables.measurement) {
 for (const rc of tables.report_chemical) {
   const p = tables.chemical_product.find((x) => x.id === rc.product_id)!;
   Object.assign(rc, { chemical_product: { nombre: p.nombre } });
+}
+
+for (const rt of tables.report_task) {
+  const d = tables.task_def.find((x) => x.id === rt.task_id)!;
+  Object.assign(rt, { task_def: { nombre: d.nombre, orden: d.orden } });
 }

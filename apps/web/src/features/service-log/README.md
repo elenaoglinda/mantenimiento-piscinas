@@ -5,11 +5,13 @@ What a technician does at a visit beyond the SILOÉ readings: the **products add
 phosphates), and whether each **route stop** was done. Before this, Cloro stored readings and
 incidents only.
 
-| Piece          | Tables                                                            | Where it shows                                                                     |
-| -------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Products added | `chemical_product` (org catalogue), `report_chemical` (per visit) | Report form "Productos añadidos" · report detail · Historial · Ajustes → Productos |
+| Piece          | Tables                                                                 | Where it shows                                                                     |
+| -------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Products added | `chemical_product` (org catalogue), `report_chemical` (per visit)      | Report form "Productos añadidos" · report detail · Historial · Ajustes → Productos |
+| Tasks done     | `task_def` (org list, ordered), `report_task` (per visit: hecho, nota) | Report form "Tareas" · report detail · Historial · Ajustes → Tareas de la visita   |
 
-Migrations: `supabase/migrations/20261103130000_chemical_products.sql` (each with its
+Migrations: `supabase/migrations/20261103130000_chemical_products.sql`,
+`20261103130100_visit_tasks.sql` (each with its
 `supabase/rollback/*.down.sql`). Database tests: `supabase/tests/service_log.test.sql`.
 Pure logic and its tests: `packages/shared/src/service-log/`.
 
@@ -41,6 +43,9 @@ Pure logic and its tests: `packages/shared/src/service-log/`.
   exactly like `measurement`.
 - **Quantities are typed, never guessed.** A product on the form without a valid amount
   blocks saving with a message on that row (`chemicalRows`); "0,5" and "0.5" both work.
+- **An untouched checklist saves nothing.** Only tasks marked done or given a note become
+  `report_task` rows (`taskRows`), so "0 of 8" is never stored for visits where nobody used
+  the checklist, and history shows what was actually done.
 - **Catalogues are seeded by `seed_org_catalogues()`**, called by the migration for existing
   orgs and by `provision_account()` for new ones. It is not callable by app users, so nobody
   can seed into another org; it is idempotent.

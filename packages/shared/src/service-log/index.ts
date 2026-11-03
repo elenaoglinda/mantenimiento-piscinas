@@ -3,3 +3,4 @@
  * tasks done, readings outside SILOE, route stops. Framework-free; see README.md.
  */
 export * from './chemicals.js';
+export * from './tasks.js';

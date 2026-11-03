@@ -234,4 +234,122 @@ begin
 end $$;
 reset role;
 
+-- ===========================================================================
+-- 2. Tasks: task_def + report_task
+-- ===========================================================================
+do $$
+begin
+  perform pg_temp.check(
+    (select count(*) from public.task_def where org_id = pg_temp.id('a_org')) = 8
+    and (select count(*) from public.task_def where org_id = pg_temp.id('b_org')) = 8,
+    'every org has the 8 default tasks');
+  perform pg_temp.check(
+    (select string_agg(nombre, '|' order by orden) from public.task_def
+      where org_id = pg_temp.id('a_org')) like 'Barrido / limpieza de fondo|%|Retirada de hojas',
+    'tasks keep their order');
+end $$;
+
+-- A new account gets the task list too.
+do $$
+declare v_new uuid := gen_random_uuid(); v_org public.org;
+begin
+  insert into auth.users (id) values (v_new);
+  perform set_config('request.jwt.claim.sub', v_new::text, true);
+  v_org := public.provision_account('company', 'Otra SL', 'Otra');
+  perform pg_temp.check(
+    (select count(*) from public.task_def where org_id = v_org.id) = 8,
+    'provision_account preloads the tasks of a new org');
+end $$;
+
+-- Reopen the signed report so the technician can log tasks on both, then sign it again.
+update public.report set status = 'completed', signed_at = null where id = pg_temp.id('a_signed');
+select set_config('request.jwt.claim.sub', pg_temp.id('a_tech')::text, false);
+set role authenticated;
+do $$
+declare v_task uuid; v_task2 uuid;
+begin
+  select id into v_task from public.task_def where orden = 1;
+  select id into v_task2 from public.task_def where orden = 4;
+  insert into public.report_task (org_id, report_id, task_id, hecho)
+    values (pg_temp.id('a_org'), pg_temp.id('a_draft'), v_task, true),
+           (pg_temp.id('a_org'), pg_temp.id('a_draft'), v_task2, false);
+  insert into public.report_task (org_id, report_id, task_id, hecho, nota)
+    values (pg_temp.id('a_org'), pg_temp.id('a_signed'), v_task, true, 'Mucha hoja');
+  perform pg_temp.check((select count(*) from public.report_task) = 3,
+    'a technician records tasks on editable reports');
+  perform pg_temp.check_fails(
+    format('insert into public.report_task (org_id, report_id, task_id) values (%L, %L, %L)',
+           pg_temp.id('a_org'), pg_temp.id('a_draft'), v_task),
+    'duplicate key', 'a task is recorded once per visit');
+  perform pg_temp.check_fails(
+    format('insert into public.task_def (org_id, nombre) values (%L, %L)',
+           pg_temp.id('a_org'), 'Tarea nueva'),
+    'row-level security', 'a technician cannot add to the task list');
+  perform pg_temp.check(pg_temp.affected('update public.task_def set activo = false') = 0,
+    'a technician cannot change the task list');
+end $$;
+reset role;
+
+update public.report set status = 'signed', signed_at = now() where id = pg_temp.id('a_signed');
+
+select set_config('request.jwt.claim.sub', pg_temp.id('a_admin')::text, false);
+set role authenticated;
+do $$
+begin
+  perform pg_temp.check(pg_temp.affected(format(
+    'update public.report_task set hecho = false, nota = null where report_id = %L',
+    pg_temp.id('a_signed'))) = 0, 'tasks of a signed report cannot be changed');
+  perform pg_temp.check(pg_temp.affected(format(
+    'delete from public.report_task where report_id = %L', pg_temp.id('a_signed'))) = 0,
+    'tasks of a signed report cannot be deleted');
+  perform pg_temp.check_fails(
+    format('insert into public.report_task (org_id, report_id, task_id) values (%L, %L, %L)',
+           pg_temp.id('a_org'), pg_temp.id('a_signed'),
+           (select id from public.task_def where orden = 2)),
+    'row-level security', 'no tasks can be added to a signed report');
+  insert into public.task_def (org_id, nombre, orden) values (pg_temp.id('a_org'), 'Limpieza de duchas', 9);
+  perform pg_temp.check(pg_temp.affected(
+    'update public.task_def set orden = 0 where nombre = ''Limpieza de duchas''') = 1,
+    'an admin edits the task list');
+  perform pg_temp.check_fails(
+    format('delete from public.task_def where id = %L', (select id from public.task_def where orden = 1)),
+    'foreign key', 'a task logged at a visit cannot be deleted, only deactivated');
+end $$;
+reset role;
+
+select set_config('request.jwt.claim.sub', pg_temp.id('b_admin')::text, false);
+set role authenticated;
+do $$
+declare v_b_task uuid;
+begin
+  perform pg_temp.check((select count(*) from public.task_def) = 8,
+    'org B sees only its own task list');
+  perform pg_temp.check((select count(*) from public.report_task) = 0,
+    'org B sees none of org A''s tasks');
+  perform pg_temp.check(pg_temp.affected('update public.report_task set nota = ''x''') = 0
+    and pg_temp.affected('delete from public.report_task') = 0
+    and pg_temp.affected(format('delete from public.task_def where org_id = %L', pg_temp.id('a_org'))) = 0,
+    'org B cannot change or delete org A''s tasks');
+  select id into v_b_task from public.task_def where orden = 1;
+  perform pg_temp.check_fails(
+    format('insert into public.report_task (org_id, report_id, task_id) values (%L, %L, %L)',
+           pg_temp.id('a_org'), pg_temp.id('a_draft'), v_b_task),
+    'row-level security', 'org B cannot log tasks on org A''s report');
+  perform pg_temp.check_fails(
+    format('insert into public.report_task (org_id, report_id, task_id) values (%L, %L, %L)',
+           pg_temp.id('b_org'), pg_temp.id('a_draft'), v_b_task),
+    'violates', 'org B cannot point its own row at org A''s report');
+end $$;
+reset role;
+
+select set_config('request.jwt.claim.sub', pg_temp.id('a_view')::text, false);
+set role authenticated;
+do $$
+begin
+  perform pg_temp.check((select count(*) from public.report_task) = 3, 'a viewer reads the tasks');
+  perform pg_temp.check(pg_temp.affected('update public.report_task set nota = ''x''') = 0,
+    'a viewer cannot change tasks');
+end $$;
+reset role;
+
 -- SERVICE_LOG_NEXT

@@ -581,6 +581,61 @@ export type Database = {
           },
         ];
       };
+      report_task: {
+        Row: {
+          created_at: string;
+          hecho: boolean;
+          id: string;
+          nota: string | null;
+          org_id: string;
+          report_id: string;
+          task_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          hecho?: boolean;
+          id?: string;
+          nota?: string | null;
+          org_id: string;
+          report_id: string;
+          task_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          hecho?: boolean;
+          id?: string;
+          nota?: string | null;
+          org_id?: string;
+          report_id?: string;
+          task_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'report_task_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'org';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'report_task_report_id_org_id_fkey';
+            columns: ['report_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'report';
+            referencedColumns: ['id', 'org_id'];
+          },
+          {
+            foreignKeyName: 'report_task_task_id_org_id_fkey';
+            columns: ['task_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'task_def';
+            referencedColumns: ['id', 'org_id'];
+          },
+        ];
+      };
       siloe_catalog: {
         Row: {
           extra: Json;
@@ -604,6 +659,44 @@ export type Database = {
           siloe_id?: number;
         };
         Relationships: [];
+      };
+      task_def: {
+        Row: {
+          activo: boolean;
+          created_at: string;
+          id: string;
+          nombre: string;
+          orden: number;
+          org_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          activo?: boolean;
+          created_at?: string;
+          id?: string;
+          nombre: string;
+          orden?: number;
+          org_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          activo?: boolean;
+          created_at?: string;
+          id?: string;
+          nombre?: string;
+          orden?: number;
+          org_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'task_def_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'org';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       treatment: {
         Row: {

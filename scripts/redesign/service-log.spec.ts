@@ -82,6 +82,19 @@ function seed(): Db {
     report: [],
     measurement: [],
     report_chemical: [],
+    task_def: [
+      'Barrido / limpieza de fondo',
+      'Vaciado de skimmers y prefiltro',
+      'Contralavado del filtro',
+      'Retirada de hojas',
+    ].map((nombre, i) => ({
+      id: `task-${i + 1}`,
+      org_id: ORG,
+      nombre,
+      orden: i + 1,
+      activo: true,
+    })),
+    report_task: [],
   };
 }
 
@@ -175,4 +188,74 @@ test('Ajustes: admins add products and deactivate them', async ({ page }) => {
   const chips = page.getByRole('group', { name: 'Productos' });
   await expect(chips.getByRole('button', { name: 'Bromo' })).toBeVisible();
   await expect(chips.getByRole('button', { name: 'Sal' })).toHaveCount(0);
+});
+
+test('tasks: checklist with notes, report detail and Historial', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  const backend = await serveBackend(page, seed(), session);
+
+  await startVisit(page);
+  const list = page.getByRole('list', { name: 'Tareas' });
+  await expect(list.locator(':scope > li')).toHaveCount(4);
+  await expect(page.getByText('0 de 4 hechas')).toBeVisible();
+  await page.getByLabel('Barrido / limpieza de fondo', { exact: true }).check();
+  await page.getByLabel('Contralavado del filtro', { exact: true }).check();
+  await page.getByRole('button', { name: 'Añadir nota a Retirada de hojas' }).click();
+  await page.getByLabel('Nota de Retirada de hojas').fill('Sin hojas hoy');
+  await expect(page.getByText('2 de 4 hechas')).toBeVisible();
+  await complete(page);
+
+  // Done tasks and the noted one are saved; untouched ones are not.
+  expect((backend.db.report_task as Row[]).map((r) => [r.task_id, r.hecho, r.nota]).sort()).toEqual(
+    [
+      ['task-1', true, null],
+      ['task-3', true, null],
+      ['task-4', false, 'Sin hojas hoy'],
+    ],
+  );
+  await expect(page.getByRole('main')).toContainText('Contralavado del filtro');
+  await expect(page.getByRole('main')).toContainText('Sin hojas hoy');
+
+  await page.goto('/pools/p1?tab=historial');
+  const row = page.getByRole('list', { name: 'Historial' }).locator(':scope > li').first();
+  await expect(row).toContainText('2 tareas hechas');
+  await row.getByRole('button', { expanded: false }).click();
+  await expect(row).toContainText('Barrido / limpieza de fondo, hecha');
+  await expect(row).toContainText('Retirada de hojas, no hecha');
+
+  // Editing the visit shows what was saved.
+  await page.goto(`/reports/${(backend.db.report as Row[])[0].id}/edit`);
+  await expect(page.getByLabel('Contralavado del filtro', { exact: true })).toBeChecked();
+  await expect(
+    page.getByLabel('Vaciado de skimmers y prefiltro', { exact: true }),
+  ).not.toBeChecked();
+  await expect(page.getByLabel('Nota de Retirada de hojas')).toHaveValue('Sin hojas hoy');
+
+  expect(errors).toEqual([]);
+});
+
+test('Ajustes: admins add, reorder and deactivate tasks', async ({ page }) => {
+  const backend = await serveBackend(page, seed(), session);
+  await page.goto('/settings');
+  const list = page.getByRole('list', { name: 'Tareas de la visita' });
+  await expect(list.locator(':scope > li')).toHaveCount(4);
+
+  await page.getByRole('button', { name: 'Añadir tarea' }).click();
+  const sheet = page.getByRole('dialog', { name: 'Añadir tarea' });
+  await sheet.getByLabel('Nombre').fill('Limpieza de duchas');
+  await sheet.getByRole('button', { name: 'Guardar' }).click();
+  await expect(list.locator(':scope > li')).toHaveCount(5);
+
+  await page.getByRole('button', { name: 'Subir Limpieza de duchas' }).click();
+  await expect(list.locator(':scope > li').nth(3)).toContainText('Limpieza de duchas');
+  await page.getByRole('button', { name: 'Desactivar: Retirada de hojas' }).click();
+  await expect(page.getByRole('button', { name: 'Activar: Retirada de hojas' })).toBeVisible();
+  expect((backend.db.task_def as Row[]).find((t) => t.nombre === 'Retirada de hojas')?.activo).toBe(
+    false,
+  );
+
+  await startVisit(page);
+  await expect(page.getByLabel('Limpieza de duchas', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('Retirada de hojas', { exact: true })).toHaveCount(0);
 });

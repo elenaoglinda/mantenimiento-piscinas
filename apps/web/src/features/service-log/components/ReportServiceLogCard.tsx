@@ -16,7 +16,7 @@ export function ReportServiceLogCard({ reportId }: { reportId: string }) {
       </Card>
     );
   const log = logOf(reportId);
-  if (!logs || log.products.length === 0) return null;
+  if (!logs || (log.products.length === 0 && log.tasks.length === 0)) return null;
   return (
     <Card>
       <CardHeader title={t('serviceLog.title')} />

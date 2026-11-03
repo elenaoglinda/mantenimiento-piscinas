@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { evaluate, type ParameterStatus } from '@piscinas/shared';
+import { doneCount, evaluate, type ParameterStatus } from '@piscinas/shared';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../auth/context.js';
 import {
@@ -24,7 +24,7 @@ import { SelectField } from '../components/ui/fields.js';
 import { StatusChip } from '../components/ui/StatusChip.js';
 import { cn } from '../components/ui/utils.js';
 import { useRecordCrumb } from '../features/app-shell/index.js';
-import { ProductsSection, useServiceLogForm } from '../features/service-log/index.js';
+import { ProductsSection, TasksSection, useServiceLogForm } from '../features/service-log/index.js';
 import type { Enums } from '../lib/database.types.js';
 import { HScroll } from '../components/ui/HScroll.js';
 
@@ -516,8 +516,17 @@ export function ReportFormPage() {
             />
           </Section>
 
+          <Section n={4} title={t('serviceLog.tasks.title')}>
+            <TasksSection
+              defs={log.taskDefs}
+              failure={log.tasksFailure}
+              value={log.tasks}
+              onChange={log.setTasks}
+            />
+          </Section>
+
           <Section
-            n={4}
+            n={5}
             title={t('reports.incidents')}
             action={
               <Button
@@ -578,7 +587,7 @@ export function ReportFormPage() {
             )}
           </Section>
 
-          <Section n={5} title={t('reports.notes')}>
+          <Section n={6} title={t('reports.notes')}>
             <Textarea
               aria-label={t('reports.notes')}
               value={notes}
@@ -645,6 +654,11 @@ export function ReportFormPage() {
                   </li>
                 ))}
               </ul>
+            )}
+            {log.tasks && doneCount(log.tasks) > 0 && (
+              <p className="text-sm text-text-muted">
+                {t('serviceLog.tasks.count', { count: doneCount(log.tasks) })}
+              </p>
             )}
             {log.chemicals.length > 0 && (
               <p className="text-sm text-text-muted">

@@ -1097,6 +1097,24 @@
       "duplicate": "Ya existe uno con ese nombre.",
       "rule": "La base de datos ha rechazado la operación.",
       "unknown": "No se ha podido guardar o cargar el registro de trabajo. Inténtalo de nuevo."
+    },
+    "tasks": {
+      "title": "Tareas",
+      "done": "hecha",
+      "notDone": "no hecha",
+      "doneOf": "{{count}} de {{total}} hechas",
+      "count_one": "{{count}} tarea hecha",
+      "count_other": "{{count}} tareas hechas",
+      "emptyList": "No hay tareas en la lista. Un administrador puede añadirlas en Ajustes.",
+      "addNote": "Añadir nota a {{name}}",
+      "noteOf": "Nota de {{name}}",
+      "notePlaceholder": "Nota (opcional)",
+      "listTitle": "Tareas de la visita",
+      "listHint": "La lista que el técnico marca en cada visita, en este orden.",
+      "add": "Añadir tarea",
+      "edit": "Editar tarea",
+      "moveUp": "Subir {{name}}",
+      "moveDown": "Bajar {{name}}"
     }
   }
 }

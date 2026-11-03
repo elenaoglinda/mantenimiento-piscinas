@@ -26,6 +26,8 @@ const DEFAULTS: Record<string, Row> = {
   treatment: { details: {} },
   report: { status: 'draft' },
   chemical_product: { activo: true, orden: 0, cantidad_habitual: null },
+  task_def: { activo: true, orden: 0 },
+  report_task: { hecho: true, nota: null },
   annual_result: { n_iniciales: 0, n_rutina: 0, n_periodicos: 0, punto_muestreo: 2 },
 };
 

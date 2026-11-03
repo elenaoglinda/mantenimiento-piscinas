@@ -1,4 +1,4 @@
-import type { ChemicalProduct, ChemicalUnit } from '@piscinas/shared';
+import type { ChemicalProduct, ChemicalUnit, TaskDef, TaskRow } from '@piscinas/shared';
 import { supabase } from '../../../lib/supabase.js';
 import { toDbFailure, type DbFailure } from '../../../lib/dbError.js';
 
@@ -136,6 +136,99 @@ export async function updateProduct(
         : {}),
       ...(patch.activo !== undefined ? { activo: patch.activo } : {}),
     })
+    .eq('id', id);
+  return toDbFailure(error);
+}
+
+// ---------------------------------------------------------------------------
+// Tasks
+// ---------------------------------------------------------------------------
+
+export async function fetchTaskDefs(): Promise<LoadResult<TaskDef[]>> {
+  const { data, error } = await supabase
+    .from('task_def')
+    .select('id, nombre, orden, activo')
+    .order('orden')
+    .order('nombre');
+  return { data: data ?? [], failure: toDbFailure(error) };
+}
+
+export async function fetchReportTasks(reportId: string): Promise<LoadResult<TaskRow[]>> {
+  const { data, error } = await supabase
+    .from('report_task')
+    .select('task_id, hecho, nota')
+    .eq('report_id', reportId);
+  return { data: data ?? [], failure: toDbFailure(error) };
+}
+
+export async function replaceReportTasks(
+  reportId: string,
+  orgId: string,
+  rows: TaskRow[],
+): Promise<DbFailure | null> {
+  const del = await supabase.from('report_task').delete().eq('report_id', reportId);
+  if (del.error) return toDbFailure(del.error);
+  if (rows.length === 0) return null;
+  const { error } = await supabase
+    .from('report_task')
+    .insert(rows.map((r) => ({ ...r, report_id: reportId, org_id: orgId })));
+  return toDbFailure(error);
+}
+
+export interface TaskDone {
+  nombre: string;
+  orden: number;
+  hecho: boolean;
+  nota: string | null;
+}
+
+export async function fetchTasksForReports(
+  reportIds: string[],
+): Promise<LoadResult<Map<string, TaskDone[]>>> {
+  const out = new Map<string, TaskDone[]>();
+  if (reportIds.length === 0) return { data: out, failure: null };
+  const { data, error } = await supabase
+    .from('report_task')
+    .select('report_id, hecho, nota, task_def!report_task_task_id_org_id_fkey(nombre, orden)')
+    .in('report_id', reportIds);
+  type Row = {
+    report_id: string;
+    hecho: boolean;
+    nota: string | null;
+    task_def: { nombre: string; orden: number } | null;
+  };
+  for (const r of (data ?? []) as unknown as Row[]) {
+    const list = out.get(r.report_id) ?? [];
+    list.push({
+      nombre: r.task_def?.nombre ?? '—',
+      orden: r.task_def?.orden ?? 0,
+      hecho: r.hecho,
+      nota: r.nota,
+    });
+    out.set(r.report_id, list);
+  }
+  for (const list of out.values()) list.sort((a, b) => a.orden - b.orden);
+  return { data: out, failure: toDbFailure(error) };
+}
+
+export async function createTask(
+  orgId: string,
+  nombre: string,
+  orden: number,
+): Promise<DbFailure | null> {
+  const { error } = await supabase
+    .from('task_def')
+    .insert({ org_id: orgId, nombre: nombre.trim(), orden });
+  return toDbFailure(error);
+}
+
+export async function updateTask(
+  id: string,
+  patch: Partial<{ nombre: string; orden: number; activo: boolean }>,
+): Promise<DbFailure | null> {
+  const { error } = await supabase
+    .from('task_def')
+    .update({ ...patch, ...(patch.nombre !== undefined ? { nombre: patch.nombre.trim() } : {}) })
     .eq('id', id);
   return toDbFailure(error);
 }
