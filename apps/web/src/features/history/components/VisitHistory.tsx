@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -13,7 +13,6 @@ import {
 import {
   KEY_PARAM_IDS,
   parseVisitFilters,
-  readingStatus,
   writeVisitFilters,
   type VisitFilters,
 } from '@piscinas/shared';
@@ -25,10 +24,11 @@ import { Skeleton } from '../../../components/ui/Skeleton.js';
 import { cn, focusRing } from '../../../components/ui/utils.js';
 import { ReportStatusBadge } from '../../../components/ReportStatusBadge.js';
 import type { DbFailure } from '../../../lib/dbError.js';
-import { fetchVisit, fetchVisitPage, type ParamCatalog, type Visit } from '../lib/data.js';
+import { fetchVisit, type ParamCatalog, type Visit } from '../lib/data.js';
 import { formatDate, formatTime, paramLabel } from '../lib/format.js';
 import { VISIT_PARAM } from '../lib/links.js';
-import { useParamCatalog } from '../lib/useParamCatalog.js';
+import { visitOutOfRange, visitReadingStatus } from '../lib/visit.js';
+import { useVisitPages } from '../lib/useVisitPages.js';
 import { FailureAlert } from './FailureAlert.js';
 import { ReadingChip } from './ReadingChip.js';
 
@@ -71,7 +71,6 @@ export function VisitHistory({
   title: string;
 }) {
   const { t } = useTranslation();
-  const { catalog, failure: catalogFailure } = useParamCatalog();
   const [params, setParams] = useSearchParams();
   const filters = parseVisitFilters((k) => params.get(k));
   const focusId = params.get(VISIT_PARAM);
@@ -91,33 +90,13 @@ export function VisitHistory({
     };
   }, [filterKind, validFilter, poolId, poolIdsKey, filters.from, filters.to]);
 
-  const [visits, setVisits] = useState<Visit[] | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [failure, setFailure] = useState<DbFailure | null>(null);
+  const { catalog, visits, hasMore, loadingMore, failure, loadMore } = useVisitPages(
+    scope,
+    HISTORY_PAGE_SIZE,
+  );
+  const [linkFailure, setLinkFailure] = useState<DbFailure | null>(null);
   const [pinned, setPinned] = useState<Visit | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(focusId ? [focusId] : []));
-  const requestRef = useRef(0);
-
-  const load = useCallback(
-    async (offset: number) => {
-      if (!catalog) return;
-      const request = ++requestRef.current;
-      if (offset === 0) setVisits(null);
-      else setLoadingMore(true);
-      const r = await fetchVisitPage(scope, catalog, offset, HISTORY_PAGE_SIZE);
-      if (request !== requestRef.current) return; // a newer filter won
-      setFailure(r.failure);
-      setVisits((prev) => (offset === 0 ? r.data.visits : [...(prev ?? []), ...r.data.visits]));
-      setHasMore(r.data.hasMore);
-      setLoadingMore(false);
-    },
-    [catalog, scope],
-  );
-
-  useEffect(() => {
-    void load(0);
-  }, [load]);
 
   // A linked visit that isn't in the loaded pages (older, or filtered out) is fetched on its
   // own and shown above the list, so the link always lands somewhere.
@@ -131,14 +110,15 @@ export function VisitHistory({
     let active = true;
     void fetchVisit(focusId, catalog).then((r) => {
       if (!active) return;
-      if (r.failure) setFailure(r.failure);
-      const inScope = r.data && (!poolId || r.data.poolId === poolId);
+      setLinkFailure(r.failure);
+      const inScope =
+        r.data && (poolId ? r.data.poolId === poolId : !poolIds || poolIds.includes(r.data.poolId));
       setPinned(inScope ? r.data : null);
     });
     return () => {
       active = false;
     };
-  }, [focusId, catalog, visits, poolId]);
+  }, [focusId, catalog, visits, poolId, poolIds]);
 
   // Bring the linked visit into view once it's on screen.
   const scrolledFor = useRef<string | null>(null);
@@ -216,7 +196,7 @@ export function VisitHistory({
         )}
       </div>
 
-      <FailureAlert failure={catalogFailure ?? failure} />
+      <FailureAlert failure={failure ?? linkFailure} />
 
       {pinned && catalog && (
         <div>
@@ -238,7 +218,7 @@ export function VisitHistory({
       )}
 
       {visits === null || !catalog ? (
-        catalogFailure ? null : (
+        failure ? null : (
           <Card padded={false} aria-busy="true">
             {[0, 1, 2, 3].map((i) => (
               <div
@@ -297,11 +277,7 @@ export function VisitHistory({
               {t('history.shown', { count: visits.length })}
             </p>
             {hasMore && (
-              <Button
-                variant="secondary"
-                loading={loadingMore}
-                onClick={() => void load(visits.length)}
-              >
+              <Button variant="secondary" loading={loadingMore} onClick={loadMore}>
                 {t('history.loadMore')}
               </Button>
             )}
@@ -329,17 +305,11 @@ export function VisitRow({
 }) {
   const { t } = useTranslation();
   const defs = catalog.forRegion(visit.ccaa);
-  const evaluators = catalog.evaluatorDefs(visit.ccaa);
   const bySiloe = new Map(visit.readings.map((r) => [r.siloeParamId, r]));
   const panelId = `visita-${visit.id}-detalle`;
   const openIncidents = visit.incidents.filter((i) => i.open).length;
-  const status = (siloeId: number) => {
-    const r = bySiloe.get(siloeId);
-    return readingStatus(r?.value ?? null, evaluators.get(siloeId), r?.status);
-  };
-  const outOfRange = visit.readings.some(
-    (r) => r.siloeParamId != null && status(r.siloeParamId) === 'red',
-  );
+  const status = (siloeId: number) => visitReadingStatus(visit, siloeId, catalog);
+  const outOfRange = visitOutOfRange(visit, catalog);
   const where = [showPool ? visit.poolName : null, visit.basinName].filter(Boolean).join(' · ');
 
   return (

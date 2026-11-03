@@ -38,6 +38,7 @@ if (process.env.SHOT_DIR !== 'before') {
     { slug: 'pool-history', path: '/pools/pool-1?tab=historial', auth: 'full' },
     { slug: 'pool-history-visit', path: '/pools/pool-1?tab=historial&visita=hist-1', auth: 'full' },
     { slug: 'pool-trend', path: '/pools/pool-1?tab=evolucion', auth: 'full' },
+    { slug: 'client-detail', path: '/clients/cli-1', auth: 'full' },
   );
 }
 

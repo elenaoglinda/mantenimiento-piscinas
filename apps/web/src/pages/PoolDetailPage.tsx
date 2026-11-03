@@ -132,7 +132,11 @@ export function PoolDetailPage() {
         back={{ to: '/pools', label: t('nav.pools') }}
         title={pool.denominacion}
         description={
-          !isOwnerOrg && pool.client && !pool.client.is_self ? pool.client.name : undefined
+          !isOwnerOrg && pool.client && !pool.client.is_self ? (
+            <Link to={`/clients/${pool.client_id}`} className="underline-offset-4 hover:underline">
+              {pool.client.name}
+            </Link>
+          ) : undefined
         }
         badges={
           pool.siloe_cod_p ? (

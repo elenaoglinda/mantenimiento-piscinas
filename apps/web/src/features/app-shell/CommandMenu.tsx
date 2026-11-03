@@ -74,7 +74,7 @@ export function CommandMenu({ open, onClose }: { open: boolean; onClose: () => v
             icon: Waves,
           })),
           clients: (clients.data ?? []).map((c) => ({
-            to: `/clients?q=${encodeURIComponent(c.name)}`,
+            to: `/clients/${c.id}`,
             label: c.name,
             icon: Users,
           })),

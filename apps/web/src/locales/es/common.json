@@ -1035,6 +1035,17 @@
       "duplicate": "Ese registro ya existe.",
       "rule": "La base de datos ha rechazado la consulta.",
       "unknown": "No se ha podido cargar el historial. Inténtalo de nuevo."
+    },
+    "client": {
+      "contact": "Datos de contacto",
+      "billingAddress": "Dirección de facturación",
+      "pools": "Piscinas",
+      "noPools": "Este cliente aún no tiene piscinas",
+      "openIncidents": "Incidencias abiertas",
+      "openIncidentsHint": "Incidencias sin acción correctora en las visitas recientes.",
+      "noOpenIncidents": "No hay incidencias abiertas",
+      "timeline": "Todas las visitas",
+      "notFound": "No se encuentra este cliente."
     }
   }
 }

@@ -60,7 +60,7 @@ test('client → pool → vaso → report → SILOÉ export', async ({ page }) =
   const clientSheet = page.getByRole('dialog', { name: 'Nuevo cliente' });
   await clientSheet.getByLabel('Nombre').fill('Comunidad Las Dunas');
   await clientSheet.getByRole('button', { name: 'Guardar' }).click();
-  await expect(page.getByRole('button', { name: 'Comunidad Las Dunas' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Comunidad Las Dunas' })).toBeVisible();
 
   // 2. Pool (with its SILOÉ installation code)
   await page.goto('/pools');
