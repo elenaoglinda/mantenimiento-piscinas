@@ -19,8 +19,11 @@ import { madridToday } from '../invoicing/index.js';
  */
 export const KEY_PARAM_IDS = [1, 10, 9, 3] as const;
 
-/** SILOE parameters the trend chart offers, in the order of its selector. */
-export const TREND_PARAM_IDS = [1, 10, 9, 3, 2, 6, 7, 8] as const;
+/**
+ * Parameters the trend chart offers, in the order of its selector: SILOE ids, then the
+ * readings outside SILOE (keys from 101, see service-log/params.ts).
+ */
+export const TREND_PARAM_IDS = [1, 10, 9, 3, 2, 6, 7, 8, 101, 102, 103, 104] as const;
 
 // ---------------------------------------------------------------------------
 // Statuses

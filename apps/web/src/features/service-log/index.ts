@@ -11,3 +11,4 @@ export { ServiceLogAlert } from './components/ServiceLogAlert.js';
 export { useServiceLogForm } from './lib/useServiceLogForm.js';
 export { useVisitLogs, type VisitLog } from './lib/useVisitLogs.js';
 export { ReportServiceLogCard } from './components/ReportServiceLogCard.js';
+export { RecommendedChip } from './components/RecommendedChip.js';

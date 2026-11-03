@@ -11,7 +11,7 @@ incidents only.
 | Tasks done     | `task_def` (org list, ordered), `report_task` (per visit: hecho, nota) | Report form "Tareas" · report detail · Historial · Ajustes → Tareas de la visita   |
 
 Migrations: `supabase/migrations/20261103130000_chemical_products.sql`,
-`20261103130100_visit_tasks.sql` (each with its
+`20261103130100_visit_tasks.sql`, `20261103130200_parameters_outside_siloe.sql` (each with its
 `supabase/rollback/*.down.sql`). Database tests: `supabase/tests/service_log.test.sql`.
 Pure logic and its tests: `packages/shared/src/service-log/`.
 
@@ -43,6 +43,17 @@ Pure logic and its tests: `packages/shared/src/service-log/`.
   exactly like `measurement`.
 - **Quantities are typed, never guessed.** A product on the form without a valid amount
   blocks saving with a message on that row (`chemicalRows`); "0,5" and "0.5" both work.
+- **Readings outside SILOÉ never reach SILOÉ, and never raise a legal alert.** Their
+  parameter rows have `in_siloe = false` and no SILOÉ id. The SILOÉ aggregation
+  (`summarizeSeason`, pinned by a byte-for-byte XML test), the photo-import prompt and form,
+  the dashboard/bell alerts (`lib/legalAlerts.ts`) and the "solo fuera de rango" filter all
+  skip them. Their `min_ok`/`max_ok` are a _recommended_ range, so every screen says
+  "recomendado" ("Fuera de lo recomendado"), never "legal" or "fuera de rango".
+- **One numeric key for every parameter.** History, trends and CSV key parameters by number:
+  the SILOÉ id (1–16), or 101–104 for these four (`paramKey`, `EXTRA_PARAM_KEYS` in
+  `@piscinas/shared`). A new parameter outside SILOÉ needs a key there, or it is ignored.
+- **`select('*')` on parameter_def, never naming `in_siloe`.** Rows without the column (before
+  the migration) count as SILOÉ, so this code runs on a database the migration hasn't reached.
 - **An untouched checklist saves nothing.** Only tasks marked done or given a note become
   `report_task` rows (`taskRows`), so "0 of 8" is never stored for visits where nobody used
   the checklist, and history shows what was actually done.

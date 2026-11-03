@@ -277,6 +277,23 @@ const parameterDefs = [
     min_ok: null,
     max_ok: 75,
   },
+  // Outside SILOÉ: no SILOÉ id, recommended ranges (service log).
+  ...[
+    ['pd-7', 'alcalinidad_total', 'Alcalinidad total', 'mg/L CaCO3', 80, 120],
+    ['pd-8', 'dureza_calcica', 'Dureza cálcica', 'mg/L CaCO3', 200, 400],
+    ['pd-9', 'sal', 'Sal', 'g/L', 3, 5],
+    ['pd-10', 'fosfatos', 'Fosfatos', 'mg/L', null, 0.1],
+  ].map(([id, clave, name_es, unit, min_ok, max_ok]) => ({
+    ...paramBase,
+    id: id as string,
+    siloe_param_id: null as unknown as number,
+    in_siloe: false,
+    clave,
+    name_es: name_es as string,
+    unit: unit as string,
+    min_ok: min_ok as number | null,
+    max_ok: max_ok as number,
+  })),
 ];
 const reading = (id: string, report: string, def: string, value: number, status: string) => {
   const d = parameterDefs.find((x) => x.id === def)!;

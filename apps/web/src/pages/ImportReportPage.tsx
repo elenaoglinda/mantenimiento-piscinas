@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { evaluate, type ParameterStatus, type ReadingExtraction } from '@piscinas/shared';
+import {
+  evaluate,
+  isSiloeParameter,
+  type ParameterStatus,
+  type ReadingExtraction,
+} from '@piscinas/shared';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../auth/context.js';
 import {
   fetchResolvedParameterDefs,
   toEvaluatorDef,
-  LAB_PARAM_IDS,
+  isLabParameter,
   type ParameterDefRow,
 } from '../lib/parameters.js';
 import {
@@ -101,7 +106,8 @@ export function ImportReportPage() {
   }, []);
 
   const loadDefs = useCallback(async (ccaa: string | null) => {
-    setDefs(await fetchResolvedParameterDefs(ccaa));
+    // Photo import reads SILOE parameters only (the extraction prompt is generated from them).
+    setDefs((await fetchResolvedParameterDefs(ccaa)).filter(isSiloeParameter));
   }, []);
   useEffect(() => {
     if (selectedPool) void loadDefs(selectedPool.ccaa);
@@ -174,12 +180,12 @@ export function ImportReportPage() {
     }
   }
 
-  function setValue(defId: string, value: string, siloeId: number) {
+  function setValue(defId: string, value: string, def: ParameterDefRow) {
     setValues((prev) => ({
       ...prev,
       [defId]: {
         value,
-        lugar: prev[defId]?.lugar ?? (LAB_PARAM_IDS.has(siloeId) ? 'lab' : 'in_situ'),
+        lugar: prev[defId]?.lugar ?? (isLabParameter(def) ? 'lab' : 'in_situ'),
       },
     }));
   }
@@ -470,7 +476,7 @@ export function ImportReportPage() {
                       <input
                         inputMode="decimal"
                         value={raw}
-                        onChange={(e) => setValue(d.id, e.target.value, d.siloe_param_id)}
+                        onChange={(e) => setValue(d.id, e.target.value, d)}
                         aria-label={`${d.name_es} ${t('reports.value')}`}
                         className={`h-9 w-24 rounded-[var(--radius-md)] border bg-surface px-2.5 text-right text-text tabular-nums outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-focus/40 ${
                           needsCheck ? 'border-status-amber' : 'border-border'

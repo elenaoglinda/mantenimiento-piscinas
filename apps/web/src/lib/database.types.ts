@@ -383,11 +383,13 @@ export type Database = {
         Row: {
           active: boolean;
           ccaa: string | null;
+          clave: string | null;
           closure_max: number | null;
           closure_min: number | null;
           created_at: string;
           frequency: string | null;
           id: string;
+          in_siloe: boolean;
           mandatory: boolean;
           max_ok: number | null;
           max_warn: number | null;
@@ -395,7 +397,7 @@ export type Database = {
           min_ok: number | null;
           min_warn: number | null;
           name_es: string;
-          siloe_param_id: number;
+          siloe_param_id: number | null;
           unit: string | null;
           updated_at: string;
           warn_margin_ratio: number;
@@ -403,11 +405,13 @@ export type Database = {
         Insert: {
           active?: boolean;
           ccaa?: string | null;
+          clave?: string | null;
           closure_max?: number | null;
           closure_min?: number | null;
           created_at?: string;
           frequency?: string | null;
           id?: string;
+          in_siloe?: boolean;
           mandatory?: boolean;
           max_ok?: number | null;
           max_warn?: number | null;
@@ -415,7 +419,7 @@ export type Database = {
           min_ok?: number | null;
           min_warn?: number | null;
           name_es: string;
-          siloe_param_id: number;
+          siloe_param_id?: number | null;
           unit?: string | null;
           updated_at?: string;
           warn_margin_ratio?: number;
@@ -423,11 +427,13 @@ export type Database = {
         Update: {
           active?: boolean;
           ccaa?: string | null;
+          clave?: string | null;
           closure_max?: number | null;
           closure_min?: number | null;
           created_at?: string;
           frequency?: string | null;
           id?: string;
+          in_siloe?: boolean;
           mandatory?: boolean;
           max_ok?: number | null;
           max_warn?: number | null;
@@ -435,7 +441,7 @@ export type Database = {
           min_ok?: number | null;
           min_warn?: number | null;
           name_es?: string;
-          siloe_param_id?: number;
+          siloe_param_id?: number | null;
           unit?: string | null;
           updated_at?: string;
           warn_margin_ratio?: number;

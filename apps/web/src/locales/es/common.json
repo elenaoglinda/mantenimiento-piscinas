@@ -1115,6 +1115,21 @@
       "edit": "Editar tarea",
       "moveUp": "Subir {{name}}",
       "moveDown": "Bajar {{name}}"
+    },
+    "params": {
+      "otherTitle": "Otros parámetros (no SILOÉ)",
+      "otherHint": "Alcalinidad, dureza cálcica, sal y fosfatos. No se envían a SILOÉ.",
+      "recommendedRange": "Recomendado: {{range}}",
+      "recommendedBand": "Rango recomendado",
+      "status": {
+        "green": "Recomendado",
+        "amber": "Cerca del límite recomendado",
+        "red": "Fuera de lo recomendado",
+        "unknown": "Sin dato"
+      },
+      "notSiloe": "No SILOÉ · rango recomendado",
+      "outOfRecommended_one": "{{count}} lectura fuera de lo recomendado",
+      "outOfRecommended_other": "{{count}} lecturas fuera de lo recomendado"
     }
   }
 }

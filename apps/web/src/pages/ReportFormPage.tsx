@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { doneCount, evaluate, type ParameterStatus } from '@piscinas/shared';
+import { doneCount, evaluate, isSiloeParameter, type ParameterStatus } from '@piscinas/shared';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../auth/context.js';
 import {
   fetchResolvedParameterDefs,
   toEvaluatorDef,
-  LAB_PARAM_IDS,
+  isLabParameter,
   type ParameterDefRow,
 } from '../lib/parameters.js';
-import { LocateFixed, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, LocateFixed, Plus, Trash2 } from 'lucide-react';
 import { Alert } from '../components/ui/feedback.js';
 import { Button } from '../components/ui/Button.js';
 import { Card } from '../components/ui/Card.js';
@@ -22,9 +22,14 @@ import { StatusPill } from '../components/ui/StatusPill.js';
 import { TextField } from '../components/ui/TextField.js';
 import { SelectField } from '../components/ui/fields.js';
 import { StatusChip } from '../components/ui/StatusChip.js';
-import { cn } from '../components/ui/utils.js';
+import { cn, focusRing } from '../components/ui/utils.js';
 import { useRecordCrumb } from '../features/app-shell/index.js';
-import { ProductsSection, TasksSection, useServiceLogForm } from '../features/service-log/index.js';
+import {
+  ProductsSection,
+  RecommendedChip,
+  TasksSection,
+  useServiceLogForm,
+} from '../features/service-log/index.js';
 import type { Enums } from '../lib/database.types.js';
 import { HScroll } from '../components/ui/HScroll.js';
 
@@ -154,12 +159,12 @@ export function ReportFormPage() {
     if (selectedPool) void loadDefs(selectedPool.ccaa);
   }, [selectedPool, loadDefs]);
 
-  function setValue(defId: string, patch: Partial<MeasurementInput>, siloeId: number) {
+  function setValue(defId: string, patch: Partial<MeasurementInput>, def: ParameterDefRow) {
     setValues((prev) => ({
       ...prev,
       [defId]: {
         value: prev[defId]?.value ?? '',
-        lugar: prev[defId]?.lugar ?? (LAB_PARAM_IDS.has(siloeId) ? 'lab' : 'in_situ'),
+        lugar: prev[defId]?.lugar ?? (isLabParameter(def) ? 'lab' : 'in_situ'),
         ...patch,
       },
     }));
@@ -292,6 +297,88 @@ export function ReportFormPage() {
   const flagged = readings.filter((r) => r.status === 'red' || r.status === 'amber');
   const selectedBasin = selectedPool?.basin.find((b) => b.id === basinId);
   const filledIncidents = incidents.filter((i) => i.description.trim()).length;
+
+  const siloeDefs = defs.filter(isSiloeParameter);
+  const extraDefs = defs.filter((d) => !isSiloeParameter(d));
+
+  /** The readings grid; `recommended` labels ranges and lights as recommended, not legal. */
+  const paramTable = (list: ParameterDefRow[], recommended: boolean, caption: string) => (
+    <HScroll label={caption} className="-mx-1">
+      <table className="w-full min-w-[520px] text-sm">
+        <thead>
+          <tr className="border-b border-border text-left text-xs text-text-muted">
+            <th scope="col" className="px-1 pb-2 font-semibold">
+              {t('reports.parameter')}
+            </th>
+            <th scope="col" className="px-1 pb-2 font-semibold">
+              {t('reports.value')}
+            </th>
+            <th scope="col" className="px-1 pb-2 font-semibold">
+              {t('reports.lugar')}
+            </th>
+            <th scope="col" className="px-1 pb-2 text-right font-semibold">
+              {t('reports.statusFilter')}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {list.map((d) => {
+            const input = values[d.id];
+            const raw = input?.value ?? '';
+            const n = raw.trim() === '' ? null : Number(raw);
+            const status: ParameterStatus = evaluate(n, toEvaluatorDef(d)).status;
+            const lugar = input?.lugar ?? (isLabParameter(d) ? 'lab' : 'in_situ');
+            const range = rangeLabel(d);
+            return (
+              <tr key={d.id} className="border-b border-border last:border-0">
+                <td className="px-1 py-2">
+                  <span className="font-medium text-text">{d.name_es}</span>
+                  {d.unit && <span className="ml-1 text-xs text-text-muted">({d.unit})</span>}
+                  {range && (
+                    <span className="block text-xs text-text-muted">
+                      {recommended
+                        ? t('serviceLog.params.recommendedRange', { range })
+                        : t('reports.range', { range })}
+                    </span>
+                  )}
+                </td>
+                <td className="px-1 py-2">
+                  <input
+                    inputMode="decimal"
+                    value={raw}
+                    onChange={(e) => setValue(d.id, { value: e.target.value }, d)}
+                    className={cn(
+                      'h-9 w-24 rounded-[var(--radius-md)] border bg-surface px-2.5 text-right text-text tabular-nums outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-focus/40',
+                      status === 'red' ? 'border-status-red' : 'border-border',
+                    )}
+                    aria-label={`${d.name_es} ${t('reports.value')}`}
+                  />
+                </td>
+                <td className="px-1 py-2">
+                  <NativeSelect
+                    value={lugar}
+                    onChange={(e) => setValue(d.id, { lugar: e.target.value as Lugar }, d)}
+                    className="h-9 w-32"
+                    aria-label={`${d.name_es} ${t('reports.lugar')}`}
+                  >
+                    <option value="in_situ">{t('lugar.in_situ')}</option>
+                    <option value="lab">{t('lugar.lab')}</option>
+                  </NativeSelect>
+                </td>
+                <td className="px-1 py-2 text-right">
+                  {recommended ? (
+                    <RecommendedChip status={status} />
+                  ) : (
+                    <StatusChip status={status} />
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </HScroll>
+  );
 
   if (loading) return <ReportFormSkeleton />;
 
@@ -427,82 +514,38 @@ export function ReportFormPage() {
             {!basinId ? (
               <p className="text-sm text-text-muted">{t('reports.parametersHint')}</p>
             ) : (
-              <HScroll label={t('reports.parameters')} className="-mx-1">
-                <table className="w-full min-w-[520px] text-sm">
-                  <thead>
-                    <tr className="border-b border-border text-left text-xs text-text-muted">
-                      <th scope="col" className="px-1 pb-2 font-semibold">
-                        {t('reports.parameter')}
-                      </th>
-                      <th scope="col" className="px-1 pb-2 font-semibold">
-                        {t('reports.value')}
-                      </th>
-                      <th scope="col" className="px-1 pb-2 font-semibold">
-                        {t('reports.lugar')}
-                      </th>
-                      <th scope="col" className="px-1 pb-2 text-right font-semibold">
-                        {t('reports.statusFilter')}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {defs.map((d) => {
-                      const input = values[d.id];
-                      const raw = input?.value ?? '';
-                      const n = raw.trim() === '' ? null : Number(raw);
-                      const status: ParameterStatus = evaluate(n, toEvaluatorDef(d)).status;
-                      const lugar =
-                        input?.lugar ?? (LAB_PARAM_IDS.has(d.siloe_param_id) ? 'lab' : 'in_situ');
-                      const range = rangeLabel(d);
-                      return (
-                        <tr key={d.id} className="border-b border-border last:border-0">
-                          <td className="px-1 py-2">
-                            <span className="font-medium text-text">{d.name_es}</span>
-                            {d.unit && (
-                              <span className="ml-1 text-xs text-text-muted">({d.unit})</span>
-                            )}
-                            {range && (
-                              <span className="block text-xs text-text-muted">
-                                {t('reports.range', { range })}
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-1 py-2">
-                            <input
-                              inputMode="decimal"
-                              value={raw}
-                              onChange={(e) =>
-                                setValue(d.id, { value: e.target.value }, d.siloe_param_id)
-                              }
-                              className={cn(
-                                'h-9 w-24 rounded-[var(--radius-md)] border bg-surface px-2.5 text-right text-text tabular-nums outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-focus/40',
-                                status === 'red' ? 'border-status-red' : 'border-border',
-                              )}
-                              aria-label={`${d.name_es} ${t('reports.value')}`}
-                            />
-                          </td>
-                          <td className="px-1 py-2">
-                            <NativeSelect
-                              value={lugar}
-                              onChange={(e) =>
-                                setValue(d.id, { lugar: e.target.value as Lugar }, d.siloe_param_id)
-                              }
-                              className="h-9 w-32"
-                              aria-label={`${d.name_es} ${t('reports.lugar')}`}
-                            >
-                              <option value="in_situ">{t('lugar.in_situ')}</option>
-                              <option value="lab">{t('lugar.lab')}</option>
-                            </NativeSelect>
-                          </td>
-                          <td className="px-1 py-2 text-right">
-                            <StatusChip status={status} />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </HScroll>
+              <div className="flex flex-col gap-4">
+                {paramTable(siloeDefs, false, t('reports.parameters'))}
+                {extraDefs.length > 0 && (
+                  // Readings SILOÉ doesn't ask for: folded away, open when this visit has any.
+                  <details
+                    className="group rounded-[var(--radius-md)] border border-border"
+                    open={extraDefs.some((d) => (values[d.id]?.value ?? '').trim() !== '')}
+                  >
+                    <summary
+                      className={cn(
+                        'flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 text-sm font-medium text-text',
+                        focusRing,
+                      )}
+                    >
+                      <span>
+                        {t('serviceLog.params.otherTitle')}
+                        <span className="block text-xs font-normal text-text-muted">
+                          {t('serviceLog.params.otherHint')}
+                        </span>
+                      </span>
+                      <ChevronDown
+                        aria-hidden
+                        size={16}
+                        className="shrink-0 text-text-muted transition-transform group-open:rotate-180"
+                      />
+                    </summary>
+                    <div className="border-t border-border px-3 py-2">
+                      {paramTable(extraDefs, true, t('serviceLog.params.otherTitle'))}
+                    </div>
+                  </details>
+                )}
+              </div>
             )}
           </Section>
 

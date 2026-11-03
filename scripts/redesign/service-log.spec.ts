@@ -53,6 +53,25 @@ function seed(): Db {
     parameter_def: [
       def('pd-ph', 1, 'pH', 'pH', 7.2, 8),
       def('pd-cl', 10, 'Cloro libre residual', 'mg/L', 0.5, 2),
+      // Outside SILOÉ: no SILOÉ id, a clave, recommended ranges.
+      {
+        ...def('pd-alc', 0, 'Alcalinidad total', 'mg/L CaCO3', 80, 120),
+        siloe_param_id: null,
+        in_siloe: false,
+        clave: 'alcalinidad_total',
+      },
+      {
+        ...def('pd-sal', 0, 'Sal', 'g/L', 3, 5),
+        siloe_param_id: null,
+        in_siloe: false,
+        clave: 'sal',
+      },
+      {
+        ...def('pd-fos', 0, 'Fosfatos', 'mg/L', null, 0.1),
+        siloe_param_id: null,
+        in_siloe: false,
+        clave: 'fosfatos',
+      },
     ],
     client: [
       { id: 'c1', org_id: ORG, name: 'Comunidad Las Dunas', is_self: false, archived: false },
@@ -258,4 +277,53 @@ test('Ajustes: admins add, reorder and deactivate tasks', async ({ page }) => {
   await startVisit(page);
   await expect(page.getByLabel('Limpieza de duchas', { exact: true })).toBeVisible();
   await expect(page.getByLabel('Retirada de hojas', { exact: true })).toHaveCount(0);
+});
+
+test('readings outside SILOÉ: own section, "recomendado" wording, never a legal alert', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  const backend = await serveBackend(page, seed(), session);
+
+  await startVisit(page);
+  // Folded away until needed; the main table holds SILOÉ parameters only.
+  await expect(page.getByLabel('Sal Valor')).toBeHidden();
+  await page.getByText('Otros parámetros (no SILOÉ)').click();
+  await expect(page.getByText('Recomendado: 3–5')).toBeVisible();
+  await page.getByLabel('Sal Valor').fill('4.2');
+  await page.getByLabel('Fosfatos Valor').fill('0.3');
+  await expect(page.getByText('Fuera de lo recomendado').first()).toBeVisible();
+  await complete(page);
+
+  const saved = (backend.db.measurement as Row[]).map((m) => [m.parameter_def_id, m.value]).sort();
+  expect(saved).toEqual([
+    ['pd-fos', 0.3],
+    ['pd-ph', 7.4],
+    ['pd-sal', 4.2],
+  ]);
+  // The report is not "out of range": phosphates only miss a recommendation.
+  await expect(page.getByText(/fuera de rango/i)).toHaveCount(0);
+  await expect(page.getByRole('main')).toContainText('Fuera de lo recomendado');
+  await expect(page.getByRole('main')).toContainText('No SILOÉ');
+
+  // Historial: shown with the visit, worded as recommended, no red "out of range" edge.
+  await page.goto('/pools/p1?tab=historial');
+  const row = page.getByRole('list', { name: 'Historial' }).locator(':scope > li').first();
+  await expect(row).not.toHaveClass(/border-l-status-red/);
+  await row.getByRole('button', { expanded: false }).click();
+  await expect(row).toContainText('Fosfatos');
+  await expect(row).toContainText('Fuera de lo recomendado');
+
+  // Trends offer them, with a recommended (not legal) range.
+  await page.getByRole('tab', { name: 'Evolución' }).click();
+  await page.getByLabel('Parámetro').selectOption({ label: 'Sal' });
+  await expect(page.getByText('Recomendado: 3–5 g/L')).toBeVisible();
+  await expect(page.getByText('Rango recomendado')).toBeVisible();
+
+  // No legal alert in the bell for the phosphates.
+  await page.getByRole('button', { name: /Avisos/ }).click();
+  await expect(page.getByText('Todo en orden')).toBeVisible();
+
+  expect(errors).toEqual([]);
 });

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { formatInvoiceNumber } from '@piscinas/shared';
 import { supabase } from '../../lib/supabase.js';
 import { ACTIVITY_WINDOW_DAYS } from '../../lib/dashboard.js';
+import { fetchLegalRedReadings } from '../../lib/legalAlerts.js';
 import { needingAttention } from '../invoicing/data.js';
 import { historyLink } from '../history/index.js';
 import {
@@ -30,7 +31,7 @@ export function ShellDataProvider({ children }: { children: ReactNode }) {
     void (async () => {
       const [drafts, red, attention] = await Promise.all([
         supabase.from('report').select('id', { count: 'exact', head: true }).eq('status', 'draft'),
-        supabase.from('measurement').select('report_id').eq('status', 'red'),
+        fetchLegalRedReadings(),
         needingAttention(),
       ]);
 

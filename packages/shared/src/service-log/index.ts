@@ -4,3 +4,4 @@
  */
 export * from './chemicals.js';
 export * from './tasks.js';
+export * from './params.js';

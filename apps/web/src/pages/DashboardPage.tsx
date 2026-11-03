@@ -39,6 +39,7 @@ import {
 } from '../lib/dashboard.js';
 import type { Enums } from '../lib/database.types.js';
 import { historyLink } from '../features/history/index.js';
+import { fetchLegalRedReadings } from '../lib/legalAlerts.js';
 
 interface RecentReport {
   id: string;
@@ -126,7 +127,7 @@ export function DashboardPage() {
         )
         .order('visited_at', { ascending: false })
         .limit(100),
-      supabase.from('measurement').select('report_id').eq('status', 'red'),
+      fetchLegalRedReadings(),
       supabase.from('app_user').select('id', { count: 'exact', head: true }),
       supabase.from('route').select('id', { count: 'exact', head: true }),
       supabase.from('xml_export').select('id', { count: 'exact', head: true }),

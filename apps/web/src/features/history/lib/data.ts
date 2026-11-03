@@ -1,6 +1,8 @@
 import type { PostgrestError } from '@supabase/supabase-js';
 import {
   dateRangeBounds,
+  isExtraParamKey,
+  paramKey,
   type ParameterDef,
   type ParameterStatus,
   type VisitFilters,
@@ -101,9 +103,13 @@ interface RawVisit {
 /** Parameter definitions, loaded once per screen: names, units, thresholds. */
 export interface ParamCatalog {
   rows: ParameterDefRow[];
-  /** parameter_def.id → SILOE id, for every row (inactive ones too: old readings use them). */
+  /**
+   * parameter_def.id → parameter key, for every row (inactive ones too: old readings use
+   * them). The key is the SILOE id, or 101+ for readings outside SILOE (`paramKey` in
+   * @piscinas/shared). Everything named `siloeParamId` in this feature holds such a key.
+   */
   siloeIdByDefId: Map<string, number>;
-  /** The definitions that apply in a region, by SILOE id. */
+  /** The definitions that apply in a region, by parameter key. */
   forRegion(ccaa: string | null | undefined): Map<number, ParameterDefRow>;
   /** Same, as evaluator input for the traffic light. */
   evaluatorDefs(ccaa: string | null | undefined): Map<number, ParameterDef>;
@@ -115,14 +121,19 @@ export function buildCatalog(rows: ParameterDefRow[]): ParamCatalog {
     const key = ccaa ?? '';
     let hit = cache.get(key);
     if (!hit) {
-      hit = new Map(resolveParameterDefs(rows, ccaa).map((r) => [r.siloe_param_id, r]));
+      hit = new Map(resolveParameterDefs(rows, ccaa).map((r) => [paramKey(r)!, r]));
       cache.set(key, hit);
     }
     return hit;
   };
   return {
     rows,
-    siloeIdByDefId: new Map(rows.map((r) => [r.id, r.siloe_param_id])),
+    siloeIdByDefId: new Map(
+      rows.flatMap((r) => {
+        const key = paramKey(r);
+        return key == null ? [] : [[r.id, key] as const];
+      }),
+    ),
     forRegion,
     evaluatorDefs: (ccaa) =>
       new Map([...forRegion(ccaa)].map(([id, row]) => [id, toEvaluatorDef(row)])),
@@ -241,13 +252,17 @@ export async function fetchVisitPage(
  */
 const outOfRangeIds = /* @__PURE__ */ new Map<string, Promise<LoadResult<string[]>>>();
 
-async function listOutOfRangeIds(scope: VisitScope): Promise<LoadResult<string[]>> {
+async function listOutOfRangeIds(
+  scope: VisitScope,
+  catalog: ParamCatalog,
+): Promise<LoadResult<string[]>> {
   const key = JSON.stringify(scope);
   const cached = outOfRangeIds.get(key);
   if (cached) return cached;
   const promise = (async (): Promise<LoadResult<string[]>> => {
     type Row = {
       report_id: string;
+      parameter_def_id: string;
       report: {
         visited_at: string;
         pool_id: string;
@@ -260,7 +275,7 @@ async function listOutOfRangeIds(scope: VisitScope): Promise<LoadResult<string[]
       supabase
         .from('measurement')
         .select(
-          'report_id, report!measurement_report_id_org_id_fkey(visited_at, pool_id, basin_id, technician_id, status)',
+          'report_id, parameter_def_id, report!measurement_report_id_org_id_fkey(visited_at, pool_id, basin_id, technician_id, status)',
         )
         .eq('status', 'red')
         .range(from, to),
@@ -271,6 +286,9 @@ async function listOutOfRangeIds(scope: VisitScope): Promise<LoadResult<string[]
     for (const m of data) {
       const r = m.report;
       if (!r) continue;
+      // Legal "fuera de rango" only: readings outside SILOE have a recommended range.
+      const key = catalog.siloeIdByDefId.get(m.parameter_def_id);
+      if (key == null || isExtraParamKey(key)) continue;
       if (scope.pool && r.pool_id !== scope.pool) continue;
       if (pools && !pools.has(r.pool_id)) continue;
       if (scope.basin && r.basin_id !== scope.basin) continue;
@@ -319,7 +337,7 @@ async function fetchOutOfRangePage(
   offset: number,
   limit: number,
 ): Promise<LoadResult<{ visits: Visit[]; hasMore: boolean }>> {
-  const ids = await listOutOfRangeIds(scope);
+  const ids = await listOutOfRangeIds(scope, catalog);
   if (ids.failure) return { data: { visits: [], hasMore: false }, failure: ids.failure };
   const page = await fetchVisitsByIds(ids.data.slice(offset, offset + limit), catalog);
   return {
@@ -347,7 +365,7 @@ export async function fetchAllVisits(
 ): Promise<LoadResult<Visit[]>> {
   if (emptyScope(scope)) return { data: [], failure: null };
   if (scope.outOfRange) {
-    const ids = await listOutOfRangeIds(scope);
+    const ids = await listOutOfRangeIds(scope, catalog);
     if (ids.failure) return { data: [], failure: ids.failure };
     const out: Visit[] = [];
     // Chunked so the id list never makes the request URL too long.

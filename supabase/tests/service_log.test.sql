@@ -352,4 +352,60 @@ begin
 end $$;
 reset role;
 
+-- ===========================================================================
+-- 3. Readings outside SILOE: parameter_def.in_siloe
+-- ===========================================================================
+do $$
+begin
+  perform pg_temp.check(
+    (select count(*) from public.parameter_def where not in_siloe) = 4
+    and (select count(*) from public.parameter_def where not in_siloe and siloe_param_id is null) = 4,
+    'four parameters outside SILOE, none with a SILOE id');
+  perform pg_temp.check(
+    (select count(*) from public.parameter_def where in_siloe and siloe_param_id is null) = 0,
+    'every SILOE parameter keeps its SILOE id');
+  perform pg_temp.check(
+    (select string_agg(clave || ':' || coalesce(min_ok::text, '-') || '-' || max_ok::text, ',' order by clave)
+       from public.parameter_def where not in_siloe)
+    = 'alcalinidad_total:80-120,dureza_calcica:200-400,fosfatos:--0.1,sal:3-5',
+    'recommended ranges as specified');
+  perform pg_temp.check_fails(
+    'insert into public.parameter_def (siloe_param_id, in_siloe, name_es) values (null, true, ''x'')',
+    'check constraint', 'a SILOE parameter must have a SILOE id');
+  perform pg_temp.check_fails(
+    'insert into public.parameter_def (siloe_param_id, in_siloe, name_es) values (null, false, ''x'')',
+    'check constraint', 'a parameter outside SILOE needs a clave');
+  perform pg_temp.check_fails(
+    'insert into public.parameter_def (siloe_param_id, clave, in_siloe, name_es) values (null, ''sal'', false, ''Sal'')',
+    'duplicate key', 'one row per clave and region');
+end $$;
+
+-- Readings of these parameters behave like any other measurement (org-scoped, signed = frozen).
+select set_config('request.jwt.claim.sub', pg_temp.id('a_tech')::text, false);
+set role authenticated;
+do $$
+declare v_sal uuid := (select id from public.parameter_def where clave = 'sal');
+begin
+  insert into public.measurement (org_id, report_id, parameter_def_id, value, status, compliant)
+    values (pg_temp.id('a_org'), pg_temp.id('a_draft'), v_sal, 4.2, 'green', null);
+  perform pg_temp.check_fails(
+    format('insert into public.measurement (org_id, report_id, parameter_def_id, value, status)
+            values (%L, %L, %L, 4, %L)', pg_temp.id('a_org'), pg_temp.id('a_signed'), v_sal, 'green'),
+    'row-level security', 'no readings can be added to a signed report');
+  perform pg_temp.check_fails('update public.parameter_def set max_ok = 9 where clave = ''sal''',
+    'permission denied', 'members cannot change parameter definitions');
+end $$;
+reset role;
+
+select set_config('request.jwt.claim.sub', pg_temp.id('b_admin')::text, false);
+set role authenticated;
+do $$
+begin
+  perform pg_temp.check((select count(*) from public.measurement) = 0,
+    'org B sees none of org A''s readings');
+  perform pg_temp.check((select count(*) from public.parameter_def where not in_siloe) = 4,
+    'the parameter list itself is shared reference data');
+end $$;
+reset role;
+
 -- SERVICE_LOG_NEXT

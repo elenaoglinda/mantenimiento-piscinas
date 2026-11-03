@@ -11,6 +11,7 @@ import {
   TriangleAlert,
 } from 'lucide-react';
 import {
+  isExtraParamKey,
   KEY_PARAM_IDS,
   parseVisitFilters,
   writeVisitFilters,
@@ -413,6 +414,7 @@ export function VisitRow({
                           value={r.value}
                           unit={def?.unit}
                           status={r.siloeParamId != null ? status(r.siloeParamId) : r.status}
+                          recommended={r.siloeParamId != null && isExtraParamKey(r.siloeParamId)}
                         />
                       </dd>
                     </div>

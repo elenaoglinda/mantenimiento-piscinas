@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { LineChart } from 'lucide-react';
 import {
   buildTrend,
+  isExtraParamKey,
   TREND_PARAM_IDS,
   TREND_WINDOWS,
   trendDomain,
@@ -107,6 +108,9 @@ export function TrendPanel({
   const paramName = defRow?.name_es ?? `#${paramId}`;
   const unit = defRow?.unit && defRow.unit !== 'pH' ? defRow.unit : null;
   const range = rangeText(defRow?.min_ok ?? null, defRow?.max_ok ?? null, unit);
+  // Readings outside SILOÉ have a recommended range, never a legal one: say so everywhere.
+  const recommended = isExtraParamKey(paramId);
+  const redLabel = recommended ? t('serviceLog.params.status.red') : t('status.red');
 
   if (catalogFailure || failure) return <FailureAlert failure={catalogFailure ?? failure} />;
 
@@ -168,7 +172,11 @@ export function TrendPanel({
           {unit && <span className="font-normal text-text-muted"> ({unit})</span>}
         </h3>
         {range && (
-          <p className="text-sm text-text-muted">{t('history.trend.legalRange', { range })}</p>
+          <p className="text-sm text-text-muted">
+            {recommended
+              ? t('serviceLog.params.recommendedRange', { range })
+              : t('history.trend.legalRange', { range })}
+          </p>
         )}
       </div>
 
@@ -183,7 +191,12 @@ export function TrendPanel({
         />
       ) : (
         <>
-          <Legend series={series} hasBand={!!range} outOfRange={outOfRange} />
+          <Legend
+            series={series}
+            hasBand={!!range}
+            outOfRange={outOfRange}
+            recommended={recommended}
+          />
           <Suspense fallback={<Skeleton className="h-60 w-full" />}>
             <TrendChart
               series={series}
@@ -195,6 +208,7 @@ export function TrendPanel({
               from={now.getTime() - days * 86_400_000}
               to={now.getTime()}
               unit={unit}
+              redLabel={redLabel}
               summary={t('history.trend.summary', {
                 param: paramName,
                 count: days,
@@ -212,7 +226,7 @@ export function TrendPanel({
             >
               {t('history.trend.showTable')}
             </summary>
-            <TrendTable series={series} unit={unit} paramName={paramName} />
+            <TrendTable series={series} unit={unit} paramName={paramName} redLabel={redLabel} />
           </details>
         </>
       )}
@@ -232,10 +246,12 @@ function Legend({
   series,
   hasBand,
   outOfRange,
+  recommended,
 }: {
   series: ChartSeries[];
   hasBand: boolean;
   outOfRange: number;
+  recommended: boolean;
 }) {
   const { t } = useTranslation();
   return (
@@ -249,7 +265,7 @@ function Legend({
       {hasBand && (
         <li className="flex items-center gap-1.5">
           <span aria-hidden className="size-3 rounded-sm bg-[var(--chart-band)]" />
-          {t('history.trend.band')}
+          {recommended ? t('serviceLog.params.recommendedBand') : t('history.trend.band')}
         </li>
       )}
       {outOfRange > 0 && (
@@ -257,7 +273,9 @@ function Legend({
           <svg aria-hidden width="12" height="11" viewBox="0 0 12 11">
             <path d="M6,0.5l5.5,9.5h-11z" fill="var(--status-red)" />
           </svg>
-          {t('history.trend.outOfRange', { count: outOfRange })}
+          {recommended
+            ? t('serviceLog.params.outOfRecommended', { count: outOfRange })
+            : t('history.trend.outOfRange', { count: outOfRange })}
         </li>
       )}
     </ul>
@@ -269,9 +287,11 @@ function TrendTable({
   series,
   unit,
   paramName,
+  redLabel,
 }: {
   series: ChartSeries[];
   unit: string | null;
+  redLabel: string;
   paramName: string;
 }) {
   const { t } = useTranslation();
@@ -324,7 +344,7 @@ function TrendTable({
                         <span className={p.outOfRange ? 'font-semibold text-status-red-text' : ''}>
                           {formatValue(p.value)}
                           {p.outOfRange && (
-                            <span className="ml-1 text-xs font-medium">{t('status.red')}</span>
+                            <span className="ml-1 text-xs font-medium">{redLabel}</span>
                           )}
                         </span>
                       ) : (

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { niceTicks, type TrendPoint } from '@piscinas/shared';
 import { formatDate, formatValue } from '../lib/format.js';
 
@@ -29,6 +28,7 @@ export default function TrendChart({
   to,
   unit,
   summary,
+  redLabel,
 }: {
   series: ChartSeries[];
   band: { min: number | null; max: number | null } | null;
@@ -39,8 +39,9 @@ export default function TrendChart({
   unit: string | null;
   /** Accessible description of the chart. */
   summary: string;
+  /** Words for an out-of-range point ("Fuera de rango", or "…de lo recomendado"). */
+  redLabel: string;
 }) {
-  const { t } = useTranslation();
   const box = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(640);
   const [hover, setHover] = useState<number | null>(null);
@@ -209,7 +210,7 @@ export default function TrendChart({
                 {formatValue(p.value)}
                 {suffix}
                 {p.outOfRange && (
-                  <span className="ml-1 font-medium text-status-red-text">{t('status.red')}</span>
+                  <span className="ml-1 font-medium text-status-red-text">{redLabel}</span>
                 )}
               </span>
             </p>

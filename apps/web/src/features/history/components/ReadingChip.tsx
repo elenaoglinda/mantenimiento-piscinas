@@ -11,6 +11,7 @@ export function ReadingChip({
   status,
   title,
   className,
+  recommended = false,
 }: {
   label: string;
   value: number | null;
@@ -18,6 +19,8 @@ export function ReadingChip({
   status: ParameterStatus;
   title?: string;
   className?: string;
+  /** A reading outside SILOÉ: its light is against a recommended range, not a legal one. */
+  recommended?: boolean;
 }) {
   const { t } = useTranslation();
   return (
@@ -27,7 +30,7 @@ export function ReadingChip({
       // pH has no unit, but the catalogue stores "pH" as one; don't print "pH 7,4 pH".
       unit={unit && unit !== 'pH' ? unit : undefined}
       status={value == null ? 'unknown' : status}
-      statusLabel={t(`status.${status}`)}
+      statusLabel={recommended ? t(`serviceLog.params.status.${status}`) : t(`status.${status}`)}
       title={title}
       className={className}
     />
