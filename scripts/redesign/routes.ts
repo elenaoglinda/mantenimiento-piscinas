@@ -32,6 +32,14 @@ if (process.env.SHOT_DIR !== 'before') {
   );
 }
 
+// Service history (claude/service-history).
+if (process.env.SHOT_DIR !== 'before') {
+  ROUTES.push(
+    { slug: 'pool-history', path: '/pools/pool-1?tab=historial', auth: 'full' },
+    { slug: 'pool-history-visit', path: '/pools/pool-1?tab=historial&visita=hist-1', auth: 'full' },
+  );
+}
+
 // Added by the redesign; the "before" build doesn't have it.
 if (process.env.SHOT_DIR !== 'before') {
   ROUTES.push({ slug: 'design', path: '/design', auth: 'none' });
