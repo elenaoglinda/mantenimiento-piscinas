@@ -123,7 +123,8 @@ jobs:
       - name: Local seed (supabase/seed.sql) loads on an empty database, and only there
         run: |
           psql -d postgres -c 'create database seedcheck'
-          psql -v ON_ERROR_STOP=1 -q -d seedcheck -f supabase/tests/_local_supabase_stubs.sql
+          # Roles are server-wide and already exist from the first database; the rest is per database.
+          grep -v '^create role' supabase/tests/_local_supabase_stubs.sql | psql -v ON_ERROR_STOP=1 -q -d seedcheck
           for f in $(ls supabase/migrations/*.sql | sort); do
             psql -v ON_ERROR_STOP=1 -q -d seedcheck -f "$f"
           done
