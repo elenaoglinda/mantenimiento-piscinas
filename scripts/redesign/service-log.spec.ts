@@ -506,3 +506,60 @@ test('route stops: a saved report marks the stop done; skip with a reason; undo'
   ).toContainText('Pendiente');
   expect(errors).toEqual([]);
 });
+
+test('photo import: the draft takes products and tasks too, readings stay SILOÉ-only', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  const backend = await serveBackend(page, seed(), session);
+  // The extraction endpoint (Vercel function) isn't served by the harness: answer it here.
+  await page.route('**/api/extract-reading', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        model: 'test-model',
+        text: JSON.stringify({ readings: { ph: 7.3 } }),
+      }),
+    }),
+  );
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    'base64',
+  );
+
+  await page.goto('/reports/import');
+  await page
+    .locator('input[type="file"]')
+    .setInputFiles({ name: 'parte.png', mimeType: 'image/png', buffer: png });
+  await page.getByRole('button', { name: 'Analizar parte' }).click();
+  await page
+    .getByRole('combobox', { name: 'Piscina', exact: true })
+    .selectOption({ label: 'Las Dunas · Piscina' });
+  await page
+    .getByRole('combobox', { name: 'Vaso', exact: true })
+    .selectOption({ label: 'Vaso grande' });
+  await expect(page.getByLabel('pH Valor')).toHaveValue('7.3');
+  // Readings outside SILOÉ are not part of photo import.
+  await expect(page.getByLabel('Sal Valor')).toHaveCount(0);
+
+  await page
+    .getByRole('group', { name: 'Productos' })
+    .getByRole('button', { name: 'Cloro granulado' })
+    .click();
+  await page.getByLabel('Barrido / limpieza de fondo', { exact: true }).check();
+  await page.getByRole('button', { name: 'Guardar como borrador' }).click();
+  await expect(page).toHaveURL(/\/reports\/(?!import)[^/?]+$/);
+
+  const draft = (backend.db.report as Row[])[0];
+  expect(draft).toMatchObject({ status: 'draft', source: 'photo_import' });
+  expect(
+    (backend.db.report_chemical as Row[]).map((r) => [r.report_id, r.product_id, r.cantidad]),
+  ).toEqual([[draft.id, 'chem-1', 0.5]]);
+  expect((backend.db.report_task as Row[]).map((r) => [r.report_id, r.task_id])).toEqual([
+    [draft.id, 'task-1'],
+  ]);
+  await expect(page.getByRole('main')).toContainText('Cloro granulado');
+  expect(errors).toEqual([]);
+});

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ProductsSection, TasksSection, useServiceLogForm } from '../features/service-log/index.js';
 import {
   evaluate,
   isSiloeParameter,
@@ -85,6 +86,10 @@ export function ImportReportPage() {
   const [visitedAt, setVisitedAt] = useState(toLocalInput(new Date().toISOString()));
   const [notes, setNotes] = useState('');
 
+  // Products and tasks can be added to the draft too (service log); never prefilled from the
+  // photo — only readings are extracted.
+  const log = useServiceLogForm(undefined);
+  const [savedDraftId, setSavedDraftId] = useState<string | null>(null);
   const [defs, setDefs] = useState<ParameterDefRow[]>([]);
   const [values, setValues] = useState<Record<string, MeasurementInput>>({});
   const [lowConfidenceDefIds, setLowConfidenceDefIds] = useState<Set<string>>(new Set());
@@ -195,6 +200,10 @@ export function ImportReportPage() {
       setError(t('common.requiredField'));
       return;
     }
+    if (!log.validate()) {
+      setError(t('serviceLog.products.fixQuantities'));
+      return;
+    }
     setSaving(true);
     setError(null);
 
@@ -242,6 +251,16 @@ export function ImportReportPage() {
           };
         }),
       );
+    }
+
+    const logFailure = await log.save(rid, profile.org.id);
+    if (logFailure) {
+      // The draft exists with its readings. Say what failed and offer the draft in the normal
+      // form (saving here again would create a second draft).
+      setSaving(false);
+      setError(t(`serviceLog.db.${logFailure.code}`, { defaultValue: t('serviceLog.db.unknown') }));
+      setSavedDraftId(rid);
+      return;
     }
 
     // The original photo is the audit evidence — attach it, but never lose the report if the
@@ -493,6 +512,27 @@ export function ImportReportPage() {
           )}
 
           <Card>
+            <CardHeader title={t('serviceLog.products.title')} />
+            <ProductsSection
+              products={log.products}
+              failure={log.productsFailure}
+              value={log.chemicals}
+              onChange={log.setChemicals}
+              invalid={log.invalidChemicals}
+            />
+          </Card>
+
+          <Card>
+            <CardHeader title={t('serviceLog.tasks.title')} />
+            <TasksSection
+              defs={log.taskDefs}
+              failure={log.tasksFailure}
+              value={log.tasks}
+              onChange={log.setTasks}
+            />
+          </Card>
+
+          <Card>
             <TextareaField
               label={t('reports.notes')}
               value={notes}
@@ -501,9 +541,15 @@ export function ImportReportPage() {
           </Card>
 
           <div className="flex flex-col items-end gap-2">
-            <Button onClick={saveDraft} loading={saving} disabled={!poolId || !basinId}>
-              {t('photoImport.saveDraft')}
-            </Button>
+            {savedDraftId ? (
+              <Button asChild>
+                <Link to={`/reports/${savedDraftId}/edit`}>{t('serviceLog.openDraft')}</Link>
+              </Button>
+            ) : (
+              <Button onClick={saveDraft} loading={saving} disabled={!poolId || !basinId}>
+                {t('photoImport.saveDraft')}
+              </Button>
+            )}
             <p className="text-right text-xs text-text-muted">{t('photoImport.draftNote')}</p>
           </div>
         </>

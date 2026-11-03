@@ -1160,6 +1160,7 @@
       "progress": "{{done}} de {{total}} hechas",
       "progressSkipped_one": "{{count}} saltada",
       "progressSkipped_other": "{{count}} saltadas"
-    }
+    },
+    "openDraft": "Abrir el borrador"
   }
 }

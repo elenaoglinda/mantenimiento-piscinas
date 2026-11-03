@@ -17,8 +17,10 @@ Pure logic and its tests: `packages/shared/src/service-log/`.
 
 ## How it connects
 
-- **Report form** (`pages/ReportFormPage.tsx`) uses `useServiceLogForm(reportId)` and the
-  section components. The report row is saved first, then readings and incidents, then the
+- **Report form** (`pages/ReportFormPage.tsx`) and **photo import**
+  (`pages/ImportReportPage.tsx`) use `useServiceLogForm(reportId)` and the section components.
+  Photo import never fills products or tasks from the photo (only readings are extracted, and
+  only SILOÉ ones); the technician adds them before saving the draft. The report row is saved first, then readings and incidents, then the
   service log. If the log fails, the report stays saved, the form says exactly what failed,
   and saving again updates the same report instead of creating a second one.
 - **Historial** (`features/history`) asks `useVisitLogs(ids)` for the visits on screen, in a
