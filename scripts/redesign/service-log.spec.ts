@@ -327,3 +327,105 @@ test('readings outside SILOÉ: own section, "recomendado" wording, never a legal
 
   expect(errors).toEqual([]);
 });
+
+test('"Repetir última visita" copies technician, products and tasks — never readings', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  const db = seed();
+  db.app_user.push({
+    id: 'user-0002',
+    org_id: ORG,
+    role: 'technician',
+    full_name: 'Juan Pérez',
+    email: 'juan@example.com',
+  });
+  db.report.push({
+    id: 'prev-1',
+    org_id: ORG,
+    pool_id: 'p1',
+    basin_id: 'b1',
+    technician_id: 'user-0002',
+    visited_at: new Date(Date.now() - 7 * 86_400_000).toISOString(),
+    status: 'signed',
+    analysis_type: 'autocontrol',
+  });
+  db.measurement.push({
+    id: 'm-prev',
+    org_id: ORG,
+    report_id: 'prev-1',
+    parameter_def_id: 'pd-ph',
+    value: 7.9,
+    status: 'amber',
+  });
+  db.report_chemical.push(
+    {
+      id: 'rc-prev-1',
+      org_id: ORG,
+      report_id: 'prev-1',
+      product_id: 'chem-1',
+      cantidad: 0.75,
+      unidad: 'kg',
+    },
+    {
+      id: 'rc-prev-2',
+      org_id: ORG,
+      report_id: 'prev-1',
+      product_id: 'chem-4',
+      cantidad: 2,
+      unidad: 'L',
+    },
+  );
+  db.report_task.push(
+    {
+      id: 'rt-prev-1',
+      org_id: ORG,
+      report_id: 'prev-1',
+      task_id: 'task-1',
+      hecho: true,
+      nota: 'Mucha hoja',
+    },
+    {
+      id: 'rt-prev-2',
+      org_id: ORG,
+      report_id: 'prev-1',
+      task_id: 'task-3',
+      hecho: false,
+      nota: null,
+    },
+  );
+  const backend = await serveBackend(page, db, session);
+
+  await page.goto('/reports/new?poolId=p1');
+  await page.getByLabel('Vaso').selectOption({ label: 'Vaso grande' });
+  await expect(page.getByLabel('Técnico')).toHaveValue(appUser.id as string);
+  await page.getByRole('button', { name: 'Repetir última visita' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Copiado de la visita' })).toContainText(
+    'técnico, 2 productos añadidos, 1 tarea hecha',
+  );
+  await expect(page.getByText('Las lecturas no se copian: mídelas.')).toBeVisible();
+  await expect(page.getByLabel('Técnico')).toHaveValue('user-0002');
+  await expect(page.getByLabel('Cantidad de Cloro granulado')).toHaveValue('0,75');
+  await expect(page.getByLabel('Cantidad de Floculante')).toHaveValue('2');
+  await expect(page.getByLabel('Barrido / limpieza de fondo', { exact: true })).toBeChecked();
+  await expect(page.getByLabel('Contralavado del filtro', { exact: true })).not.toBeChecked();
+  // The note described that visit, not this one; readings are empty.
+  await expect(page.getByLabel('Nota de Barrido / limpieza de fondo')).toHaveCount(0);
+  await expect(page.getByLabel('pH Valor')).toHaveValue('');
+
+  await page.getByLabel('pH Valor').fill('7.5');
+  await complete(page);
+  const created = (backend.db.report as Row[]).find((r) => r.id !== 'prev-1')!;
+  expect(created.technician_id).toBe('user-0002');
+  expect(
+    (backend.db.report_chemical as Row[]).filter((r) => r.report_id === created.id),
+  ).toHaveLength(2);
+  expect((backend.db.report_task as Row[]).filter((r) => r.report_id === created.id)).toHaveLength(
+    1,
+  );
+  expect((backend.db.measurement as Row[]).filter((m) => m.report_id === created.id)).toEqual([
+    expect.objectContaining({ parameter_def_id: 'pd-ph', value: 7.5 }),
+  ]);
+  expect(errors).toEqual([]);
+});

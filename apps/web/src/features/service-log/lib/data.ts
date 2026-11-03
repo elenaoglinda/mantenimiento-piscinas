@@ -1,4 +1,4 @@
-import type { ChemicalProduct, ChemicalUnit, TaskDef, TaskRow } from '@piscinas/shared';
+import type { ChemicalProduct, ChemicalUnit, LastVisit, TaskDef, TaskRow } from '@piscinas/shared';
 import { supabase } from '../../../lib/supabase.js';
 import { toDbFailure, type DbFailure } from '../../../lib/dbError.js';
 
@@ -231,4 +231,59 @@ export async function updateTask(
     .update({ ...patch, ...(patch.nombre !== undefined ? { nombre: patch.nombre.trim() } : {}) })
     .eq('id', id);
   return toDbFailure(error);
+}
+
+// ---------------------------------------------------------------------------
+// Repetir última visita / technicians
+// ---------------------------------------------------------------------------
+
+/** The vaso's latest visit with its products and tasks (never its readings), or null. */
+export async function fetchLastVisit(
+  basinId: string,
+  excludeReportId?: string,
+): Promise<LoadResult<LastVisit | null>> {
+  let q = supabase
+    .from('report')
+    .select('id, visited_at, technician_id')
+    .eq('basin_id', basinId)
+    .order('visited_at', { ascending: false })
+    .limit(1);
+  if (excludeReportId) q = q.neq('id', excludeReportId);
+  const { data, error } = await q;
+  const rep = data?.[0];
+  if (error || !rep) return { data: null, failure: toDbFailure(error) };
+  const [chem, tasks] = await Promise.all([fetchReportChemicals(rep.id), fetchReportTasks(rep.id)]);
+  return {
+    data: {
+      visitedAt: rep.visited_at,
+      technicianId: rep.technician_id,
+      chemicals: chem.data,
+      tasks: tasks.data,
+    },
+    // A database without the service-log tables still repeats the technician.
+    failure: chem.failure?.code === 'missing_schema' ? null : (chem.failure ?? tasks.failure),
+  };
+}
+
+export interface Technician {
+  id: string;
+  label: string;
+  role: string;
+}
+
+/** Members who can record a visit (admins and technicians). */
+export async function fetchTechnicians(): Promise<LoadResult<Technician[]>> {
+  const { data, error } = await supabase
+    .from('app_user')
+    .select('id, full_name, email, role')
+    .in('role', ['admin', 'technician'])
+    .order('full_name');
+  return {
+    data: (data ?? []).map((u) => ({
+      id: u.id,
+      label: u.full_name?.trim() || u.email || '—',
+      role: u.role,
+    })),
+    failure: toDbFailure(error),
+  };
 }

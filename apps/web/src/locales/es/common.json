@@ -1130,6 +1130,17 @@
       "notSiloe": "No SILOÉ · rango recomendado",
       "outOfRecommended_one": "{{count}} lectura fuera de lo recomendado",
       "outOfRecommended_other": "{{count}} lecturas fuera de lo recomendado"
+    },
+    "technician": "Técnico",
+    "formerMember": "Antiguo miembro del equipo",
+    "repeat": {
+      "action": "Repetir última visita",
+      "none": "Este vaso no tiene visitas anteriores.",
+      "technician": "técnico",
+      "done": "Copiado de la visita del {{date}}: {{what}}.",
+      "skipped_one": "{{count}} elemento ya no está activo y no se ha copiado.",
+      "skipped_other": "{{count}} elementos ya no están activos y no se han copiado.",
+      "noReadings": "Las lecturas no se copian: mídelas."
     }
   }
 }

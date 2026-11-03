@@ -25,10 +25,13 @@ import { StatusChip } from '../components/ui/StatusChip.js';
 import { cn, focusRing } from '../components/ui/utils.js';
 import { useRecordCrumb } from '../features/app-shell/index.js';
 import {
+  fetchTechnicians,
   ProductsSection,
   RecommendedChip,
+  RepeatLastVisit,
   TasksSection,
   useServiceLogForm,
+  type Technician,
 } from '../features/service-log/index.js';
 import type { Enums } from '../lib/database.types.js';
 import { HScroll } from '../components/ui/HScroll.js';
@@ -86,6 +89,18 @@ export function ReportFormPage() {
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
+  // Who did the visit: the signed-in user by default; "Repetir última visita" may change it.
+  const [technicianId, setTechnicianId] = useState(profile?.user.id ?? '');
+  const [technicians, setTechnicians] = useState<Technician[]>([]);
+  useEffect(() => {
+    let active = true;
+    void fetchTechnicians().then((r) => {
+      if (active) setTechnicians(r.data);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Products (and, below, tasks) of this visit: the service log.
   const log = useServiceLogForm(reportId);
@@ -132,6 +147,7 @@ export function ReportFormPage() {
           setLat(rep.location_lat);
           setLng(rep.location_lng);
           setNotes(rep.notes ?? '');
+          setTechnicianId(rep.technician_id ?? '');
           const vmap: Record<string, MeasurementInput> = {};
           for (const m of meas ?? [])
             vmap[m.parameter_def_id] = { value: m.value?.toString() ?? '', lugar: m.lugar };
@@ -208,6 +224,7 @@ export function ReportFormPage() {
     setError(null);
 
     const reportPayload = {
+      technician_id: technicianId || null,
       pool_id: poolId,
       basin_id: basinId,
       analysis_type: analysisType,
@@ -229,7 +246,7 @@ export function ReportFormPage() {
           .single()
       : await supabase
           .from('report')
-          .insert({ ...reportPayload, org_id: profile.org.id, technician_id: profile.user.id })
+          .insert({ ...reportPayload, org_id: profile.org.id })
           .select('id')
           .single();
 
@@ -481,6 +498,36 @@ export function ReportFormPage() {
                     </option>
                   ))}
                 </SelectField>
+              </div>
+
+              <div className="grid items-end gap-4 sm:grid-cols-2">
+                <SelectField
+                  label={t('serviceLog.technician')}
+                  value={technicianId}
+                  onChange={(e) => setTechnicianId(e.target.value)}
+                >
+                  <option value="">{t('history.noTechnician')}</option>
+                  {/* Keep a technician who has since left the team selectable for old visits. */}
+                  {technicianId && !technicians.some((u) => u.id === technicianId) && (
+                    <option value={technicianId}>{t('serviceLog.formerMember')}</option>
+                  )}
+                  {technicians.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.label}
+                    </option>
+                  ))}
+                </SelectField>
+                {!reportId && basinId && log.products && log.taskDefs && (
+                  <RepeatLastVisit
+                    basinId={basinId}
+                    products={log.products}
+                    taskDefs={log.taskDefs}
+                    onRepeat={(v) => {
+                      if (v.technicianId) setTechnicianId(v.technicianId);
+                      log.prefill({ chemicals: v.chemicals, tasks: v.tasks });
+                    }}
+                  />
+                )}
               </div>
 
               <div className="grid items-end gap-4 sm:grid-cols-2">

@@ -54,6 +54,13 @@ Pure logic and its tests: `packages/shared/src/service-log/`.
   `@piscinas/shared`). A new parameter outside SILOÉ needs a key there, or it is ignored.
 - **`select('*')` on parameter_def, never naming `in_siloe`.** Rows without the column (before
   the migration) count as SILOÉ, so this code runs on a database the migration hasn't reached.
+- **"Repetir última visita" never copies readings.** It copies the technician, the products
+  (with last time's amounts, still editable) and the tasks done — without their notes, which
+  described that visit. Readings must be measured; the message says so every time. Products
+  or tasks deactivated since are left out and counted in the message (`repeatVisit`).
+- **The form now sets `report.technician_id`** from a "Técnico" select (default: you). Before,
+  it was always the person typing; an office user filling in a technician's paper now records
+  the right person.
 - **An untouched checklist saves nothing.** Only tasks marked done or given a note become
   `report_task` rows (`taskRows`), so "0 of 8" is never stored for visits where nobody used
   the checklist, and history shows what was actually done.
