@@ -4,5 +4,15 @@
   "outputDirectory": "apps/web/dist",
   "installCommand": "npm install",
   "framework": "vite",
-  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "functions": {
+    "api/report-pdf.ts": {
+      "maxDuration": 30
+    }
+  }
 }
