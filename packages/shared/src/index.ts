@@ -4,3 +4,4 @@ export * from './photoImport.js';
 export * from './siloe/catalogs.js';
 export * from './siloe/aggregate.js';
 export * from './siloe/xml.js';
+export * from './history/index.js';

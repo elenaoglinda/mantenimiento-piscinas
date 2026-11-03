@@ -37,6 +37,8 @@ interface Node {
   key: string;
   /** Column, or relation name for embeds. */
   name: string;
+  /** Foreign-key hint after "!", e.g. report_technician_id_fkey. */
+  hint?: string;
   children?: Node[];
 }
 
@@ -63,10 +65,11 @@ function parseSelect(s: string): Node[] {
     const inner = open >= 0 ? part.slice(open + 1, part.lastIndexOf(')')) : null;
     let key: string | null = null;
     if (head.includes(':')) [key, head] = head.split(':') as [string, string];
-    const name = head.split('!')[0].trim();
+    const [name, ...hints] = head.split('!').map((x) => x.trim());
     return {
       key: (key ?? name).trim(),
       name,
+      hint: hints.find((h) => h.endsWith('_fkey')),
       children: inner !== null ? parseSelect(inner) : undefined,
     };
   });
@@ -92,8 +95,11 @@ function project(db: Db, table: string, row: Row, nodes: Node[]): Row {
     }
     const target = embedTable(db, n.name);
     const rows = db[target] ?? [];
-    // Many-to-one when this row holds the foreign key; otherwise one-to-many.
+    // Many-to-one when this row holds the foreign key; otherwise one-to-many. A constraint hint
+    // names the column: report_technician_id_fkey → technician_id on report.
+    const hinted = n.hint?.replace(new RegExp(`^${table}_`), '').replace(/(_org_id)?_fkey$/, '');
     const fkCandidates = [
+      ...(hinted ? [hinted] : []),
       n.name.endsWith('_id') ? n.name : `${target}_id`,
       `${target.replace(/^invoice_/, '')}_id`,
     ];
@@ -113,7 +119,7 @@ function project(db: Db, table: string, row: Row, nodes: Node[]): Row {
 
 // ── filters ───────────────────────────────────────────────────────────────────
 
-const RESERVED = new Set(['select', 'order', 'limit', 'offset', 'on_conflict', 'columns']);
+const RESERVED = new Set(['select', 'order', 'limit', 'offset', 'on_conflict', 'columns', 'or']);
 
 function cmp(a: unknown, b: string): number {
   const na = Number(a);
@@ -222,8 +228,9 @@ export async function serveBackend(page: Page, db: Db, session: Row): Promise<Ba
         const [col, dir] = order.split(',')[0].split('.');
         rows = [...rows].sort((a, b) => cmp(a[col], String(b[col])) * (dir === 'desc' ? -1 : 1));
       }
+      const offset = Number(url.searchParams.get('offset')) || 0;
       const limit = Number(url.searchParams.get('limit'));
-      if (limit) rows = rows.slice(0, limit);
+      if (offset || limit) rows = rows.slice(offset, limit ? offset + limit : undefined);
       if (method === 'HEAD') {
         return route.fulfill({
           status: 200,

@@ -951,5 +951,90 @@
         ]
       }
     }
+  },
+  "history": {
+    "tab": "Historial",
+    "visits": "Visitas",
+    "today": "hoy",
+    "yesterday": "ayer",
+    "daysAgo_one": "hace {{count}} día",
+    "daysAgo_other": "hace {{count}} días",
+    "paramShort": {
+      "1": "pH",
+      "10": "Cl libre",
+      "9": "Cl comb.",
+      "3": "Temp."
+    },
+    "noTechnician": "Sin técnico",
+    "noReadings": "Esta visita no tiene lecturas.",
+    "incidentOpen": "Abierta",
+    "openReport": "Abrir informe",
+    "loadMore": "Cargar más",
+    "shown_one": "{{count}} visita",
+    "shown_other": "{{count}} visitas",
+    "linkedVisit": "Visita enlazada",
+    "emptyTitle": "Todavía no hay visitas",
+    "emptyHint": "Cuando se registre un informe aparecerá aquí, con sus lecturas.",
+    "noMatches": "Ninguna visita coincide",
+    "noMatchesHint": "Prueba con otro vaso o con otras fechas.",
+    "filters": {
+      "allBasins": "Todos los vasos",
+      "allPools": "Todas las piscinas",
+      "from": "Desde",
+      "to": "Hasta",
+      "clear": "Quitar filtros"
+    },
+    "icons": {
+      "incidents_one": "{{count}} incidencia",
+      "incidents_other": "{{count}} incidencias",
+      "incidentsOpen_one": "{{count}} incidencia, {{open}} abierta",
+      "incidentsOpen_other": "{{count}} incidencias, {{open}} abiertas",
+      "photos_one": "{{count}} foto",
+      "photos_other": "{{count}} fotos",
+      "labPdfs_one": "{{count}} PDF de laboratorio",
+      "labPdfs_other": "{{count}} PDF de laboratorio",
+      "signed": "Firmado"
+    },
+    "state": {
+      "title": "Último estado del agua",
+      "lastVisit": "Última visita:",
+      "overall": {
+        "green": "Todo en rango",
+        "amber": "Cerca del límite",
+        "red": "Fuera de rango",
+        "unknown": "Sin datos"
+      },
+      "emptyTitle": "Este vaso aún no tiene lecturas",
+      "emptyHint": "Registra un informe para ver aquí el estado del agua.",
+      "openIncidents_one": "{{count}} incidencia abierta",
+      "openIncidents_other": "{{count}} incidencias abiertas"
+    },
+    "trend": {
+      "tab": "Evolución",
+      "parameter": "Parámetro",
+      "window": "Periodo",
+      "days_one": "{{count}} día",
+      "days_other": "{{count}} días",
+      "legalRange": "Rango legal: {{range}}",
+      "band": "Rango legal",
+      "outOfRange_one": "{{count}} lectura fuera de rango",
+      "outOfRange_other": "{{count}} lecturas fuera de rango",
+      "emptyTitle": "Sin lecturas en este periodo",
+      "emptyHint_one": "No hay valores de este parámetro en el último día.",
+      "emptyHint_other": "No hay valores de este parámetro en los últimos {{count}} días.",
+      "summary_one": "Evolución de {{param}} en el último día ({{basins}}). {{out}} lecturas fuera de rango. Los datos están en la tabla siguiente.",
+      "summary_other": "Evolución de {{param}} en los últimos {{count}} días ({{basins}}). {{out}} lecturas fuera de rango. Los datos están en la tabla siguiente.",
+      "showTable": "Ver los datos en una tabla",
+      "tableCaption": "{{param}} por visita",
+      "date": "Fecha"
+    },
+    "db": {
+      "missing_schema": "No se encuentran las tablas de informes en la base de datos.",
+      "missing_function": "Falta una función de la base de datos.",
+      "forbidden": "Tu rol no permite ver este historial.",
+      "duplicate": "Ese registro ya existe.",
+      "rule": "La base de datos ha rechazado la consulta.",
+      "unknown": "No se ha podido cargar el historial. Inténtalo de nuevo."
+    }
   }
 }
