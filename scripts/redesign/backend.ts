@@ -1,4 +1,5 @@
 import type { Page, Route } from '@playwright/test';
+import { AUTH_STORAGE_KEY, SUPABASE_HOST } from './target';
 
 /**
  * A small in-memory stand-in for Supabase's REST API, enough for the end-to-end flow spec to
@@ -175,7 +176,7 @@ export interface Backend {
 export async function serveBackend(page: Page, db: Db, session: Row): Promise<Backend> {
   const backend: Backend = { db, writes: [] };
 
-  await page.route('https://mock.supabase.co/**', async (route: Route) => {
+  await page.route(`${SUPABASE_HOST}/**`, async (route: Route) => {
     const req = route.request();
     const url = new URL(req.url());
     const path = url.pathname;
@@ -208,6 +209,7 @@ export async function serveBackend(page: Page, db: Db, session: Row): Promise<Ba
     db[table] ??= [];
     const nodes = parseSelect(url.searchParams.get('select') ?? '*');
     const single = (req.headers()['accept'] ?? '').includes('vnd.pgrst.object');
+    let total: number | null = null;
     const respond = (rows: Row[], status = 200) => {
       const shaped = rows.map((r) => project(db, table, r, nodes));
       if (single) {
@@ -215,8 +217,9 @@ export async function serveBackend(page: Page, db: Db, session: Row): Promise<Ba
           ? json(shaped[0], status)
           : json({ code: 'PGRST116', message: 'no rows' }, 406);
       }
+      const all = total ?? shaped.length;
       return json(shaped, status, {
-        'content-range': shaped.length ? `0-${shaped.length - 1}/${shaped.length}` : '*/0',
+        'content-range': shaped.length ? `0-${shaped.length - 1}/${all}` : `*/${all}`,
       });
     };
 
@@ -228,6 +231,8 @@ export async function serveBackend(page: Page, db: Db, session: Row): Promise<Ba
         const [col, dir] = order.split(',')[0].split('.');
         rows = [...rows].sort((a, b) => cmp(a[col], String(b[col])) * (dir === 'desc' ? -1 : 1));
       }
+      // count=exact reports the total before paging, like PostgREST's Content-Range.
+      total = rows.length;
       const offset = Number(url.searchParams.get('offset')) || 0;
       const limit = Number(url.searchParams.get('limit'));
       if (offset || limit) rows = rows.slice(offset, limit ? offset + limit : undefined);
@@ -281,9 +286,10 @@ export async function serveBackend(page: Page, db: Db, session: Row): Promise<Ba
     return json({}, 405);
   });
 
-  await page.addInitScript((s) => {
-    window.localStorage.setItem('sb-mock-auth-token', JSON.stringify(s));
-  }, session);
+  await page.addInitScript(({ key, s }) => window.localStorage.setItem(key, JSON.stringify(s)), {
+    key: AUTH_STORAGE_KEY,
+    s: session,
+  });
 
   return backend;
 }

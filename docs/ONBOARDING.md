@@ -230,6 +230,9 @@ Routing is in `apps/web/src/App.tsx`. Guards live in `apps/web/src/auth/guards.t
     - `/` `DashboardPage` · `/pools` `PoolsPage` · `/pools/:poolId` `PoolDetailPage`
     - `/reports` `ReportsPage` · `/reports/new` & `/reports/:id/edit` `ReportFormPage` · `/reports/:id` `ReportDetailPage`
     - `/routes` `RoutesPage` · `/siloe` `SiloeExportPage` · `/clients` `ClientsPage` (company-only nav) · `/team` `TeamPage`
+    - `/clients/:clientId` `ClientDetailPage` (service history: contact, pools, every visit) — from
+      `features/history`, which also supplies the pool page's Resumen state cards, Historial and
+      Evolución tabs and the Informes filters/CSV. See `apps/web/src/features/history/README.md`.
 
 **Auth state:** `AuthProvider` (`src/auth/AuthProvider.tsx`) exposes `{ session, profile, loading,
 reloadProfile, signOut }` via `useAuth()`. `profile` is `{ user: app_user, org }` and is `null`

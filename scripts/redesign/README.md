@@ -5,7 +5,8 @@ need no credentials and never touch a real database. Used for the panel redesign
 ([`docs/redesign/PLAN.md`](../../docs/redesign/PLAN.md)); kept because they are the cheapest way
 to see every page at once and to catch layout, accessibility and keyboard regressions.
 
-Not part of CI and separate from `e2e/` (which runs against a real build with real env).
+Separate from `e2e/` (which runs against a real build with real env). CI's `ui` job runs
+`a11y overflow keyboard flow history` on every pull request.
 
 ```
 playwright.config.ts  builds the app against https://mock.supabase.co and serves it on :4174
@@ -13,7 +14,8 @@ routes.ts             every page, with the auth state it needs
 fixtures.ts           the fake org: clients, pools, basins, reports, readings, routes, SILOÉ
                       results, invoices, team — shaped like the queries the pages make
 mock.ts               read-only fake backend for screenshots (fixed fixtures)
-backend.ts            stateful fake backend (inserts/updates/deletes stick) for the flow spec
+backend.ts            stateful fake backend (inserts/updates/deletes stick) for the flow specs
+target.ts             which app and which Supabase host the specs talk to (see "A preview")
 
 capture.spec.ts       every route at 1440 / 1024 / 390 → docs/redesign/<SHOT_DIR>/
 shell-states.spec.ts  collapsed rail, ⌘K palette, user menu, mobile drawer
@@ -21,6 +23,8 @@ overflow.spec.ts      fails if any page scrolls sideways at 390px
 a11y.spec.ts          axe-core WCAG 2.1 A/AA on every page and on open overlays → _axe.json
 keyboard.spec.ts      skip link, palette, focus traps and focus return, tables, tabs, tooltips
 flow.spec.ts          client → pool → vaso → report → SILOÉ XML download, through the UI
+history.spec.ts       client → pool → vaso → 3 visits → last state, Historial, Evolución, client
+                      page, Informes filters + CSV, alert/bell/⌘K links; and a 35-visit pool
 lighthouse.spec.ts    Lighthouse accessibility per page (opt-in, LIGHTHOUSE=1) → _lighthouse.json
 ```
 
@@ -49,3 +53,16 @@ The fakes only answer what the pages ask. When a page starts selecting a new col
 add it to `fixtures.ts`; otherwise the screenshot shows a gap that isn't real. `backend.ts`
 mirrors the column defaults from `supabase/migrations` (e.g. `client.archived = false`) for the
 same reason. Pages with a `pageerror` are listed in `_report.json` next to the screenshots.
+
+## A deployed preview, with fake data
+
+The same specs can drive a Vercel preview instead of a local build. Point `BASE_URL` at the
+preview (a share link if it is protected) and `SUPABASE_HOST` at the Supabase URL that build
+was made with; the browser then answers every request to that host from the fixtures, so the
+preview renders the fake org and nothing reaches the real database.
+
+```sh
+BASE_URL=https://<preview>.vercel.app SUPABASE_HOST=https://<ref>.supabase.co \
+  SHOT_DIR=preview ONLY=pool-detail,pool-history,client-detail \
+  npx playwright test -c scripts/redesign/playwright.config.ts capture
+```

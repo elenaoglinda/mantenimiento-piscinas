@@ -52,7 +52,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       # Against the harness's fake Supabase backend (scripts/redesign): no secrets needed.
-      - run: npx playwright test -c scripts/redesign/playwright.config.ts a11y overflow keyboard flow
+      - run: npx playwright test -c scripts/redesign/playwright.config.ts a11y overflow keyboard flow history
         env:
           SHOT_DIR: ci
       - if: failure()
