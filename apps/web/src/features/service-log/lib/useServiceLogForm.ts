@@ -38,10 +38,16 @@ export function useServiceLogForm(reportId: string | undefined) {
 
   useEffect(() => {
     let active = true;
-    void fetchProducts().then((r) => {
+    // Catalogue and this visit's saved products together, so neither failure can hide the other.
+    void Promise.all([
+      fetchProducts(),
+      reportId ? fetchReportChemicals(reportId) : Promise.resolve({ data: [], failure: null }),
+    ]).then(([catalogue, saved]) => {
       if (!active) return;
-      setProducts(r.data);
-      setProductsFailure(r.failure);
+      setProducts(catalogue.data);
+      // An unreadable list must never be saved over as empty: keep the failure, write nothing.
+      setProductsFailure(catalogue.failure ?? saved.failure);
+      if (!saved.failure) setChemicals(entriesFromRows(saved.data));
     });
     void Promise.all([
       fetchTaskDefs(),
@@ -49,15 +55,12 @@ export function useServiceLogForm(reportId: string | undefined) {
     ]).then(([defs, saved]) => {
       if (!active) return;
       setTaskDefs(defs.data);
-      setTasksFailure(defs.failure);
+      // If this visit's saved tasks can't be read, show the failure and save nothing over them.
+      setTasksFailure(defs.failure ?? saved.failure);
       const entries = saved.failure ? [] : entriesFromTaskRows(saved.data);
       setSavedTasks(entries);
       setTasks(checklist(defs.data, entries));
     });
-    if (reportId)
-      void fetchReportChemicals(reportId).then((r) => {
-        if (active && !r.failure) setChemicals(entriesFromRows(r.data));
-      });
     return () => {
       active = false;
     };
@@ -72,14 +75,14 @@ export function useServiceLogForm(reportId: string | undefined) {
 
   /** Save after the report row exists. Returns the first failure, if any. */
   async function save(rid: string, orgId: string): Promise<DbFailure | null> {
-    // Nothing to write and nowhere to write it (migration not applied yet): not an error.
-    if (!(productsFailure && chemicals.length === 0)) {
+    // A section that failed to load is never written: either its table doesn't exist yet
+    // (migration not applied) or the visit's saved rows couldn't be read and must not be lost.
+    if (!productsFailure) {
       const f = await replaceReportChemicals(rid, orgId, chemicalRows(chemicals).rows);
       if (f) return f;
     }
-    const rows = taskRows(tasks ?? []);
-    if (tasksFailure && rows.length === 0) return null;
-    return replaceReportTasks(rid, orgId, rows);
+    if (tasksFailure || tasks === null) return null;
+    return replaceReportTasks(rid, orgId, taskRows(tasks));
   }
 
   return {

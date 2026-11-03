@@ -316,7 +316,9 @@ manual's expectations.
 ## 9. Data model (tables at a glance)
 
 Tenant tables (all `org_id` + RLS): `org`, `app_user`; `client` → `pool` → `basin` → `treatment`;
-`report` → (`measurement`, `incident`, `attachment`); `annual_result` → (`annual_result_param`,
+`report` → (`measurement`, `incident`, `attachment`, `report_chemical`, `report_task`);
+org catalogues `chemical_product` and `task_def` (service log, see
+`apps/web/src/features/service-log/README.md`); `annual_result` → (`annual_result_param`,
 `annual_result_period`); `route` → `route_stop`; `xml_export`. Reference tables (read-only to
 clients): `siloe_catalog`, `parameter_def`. Full column detail is in the migration files and the
 generated `database.types.ts`.

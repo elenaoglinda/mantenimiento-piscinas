@@ -100,3 +100,14 @@ jobs:
           echo "rollback correctly refused"
       - name: Service-log tests (other orgs locked out, signed reports immutable)
         run: psql -v ON_ERROR_STOP=1 -d app -f supabase/tests/service_log.test.sql
+      - name: Service-log migrations roll back and re-apply cleanly
+        run: |
+          for f in route_stop_status parameters_outside_siloe visit_tasks chemical_products; do
+            psql -v ON_ERROR_STOP=1 -q -d app -f supabase/rollback/$(ls supabase/rollback | grep "_$f.down.sql")
+          done
+          for f in $(ls supabase/migrations/202611031300*.sql supabase/migrations/202611031301*.sql \
+                        supabase/migrations/202611031302*.sql supabase/migrations/202611031303*.sql); do
+            psql -v ON_ERROR_STOP=1 -q -d app -f "$f"
+          done
+          psql -v ON_ERROR_STOP=1 -tA -d app -c \
+            "select count(*) from public.parameter_def where not in_siloe" | grep -qx 4
