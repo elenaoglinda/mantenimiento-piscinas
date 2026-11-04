@@ -21,6 +21,7 @@ const page = <K extends string>(load: () => Promise<Record<K, React.ComponentTyp
 const DashboardPage = page(() => import('./pages/DashboardPage.js'), 'DashboardPage');
 const TeamPage = page(() => import('./pages/TeamPage.js'), 'TeamPage');
 const ClientsPage = page(() => import('./pages/ClientsPage.js'), 'ClientsPage');
+const ClientDetailPage = page(() => import('./features/history/index.js'), 'ClientDetailPage');
 const PoolsPage = page(() => import('./pages/PoolsPage.js'), 'PoolsPage');
 const PoolDetailPage = page(() => import('./pages/PoolDetailPage.js'), 'PoolDetailPage');
 const ReportsPage = page(() => import('./pages/ReportsPage.js'), 'ReportsPage');
@@ -89,6 +90,7 @@ export function App() {
                   <Route path="/invoices/settings" element={<BillingSettingsPage />} />
                   <Route path="/invoices/:invoiceId" element={<InvoiceDetailPage />} />
                   <Route path="/clients" element={<ClientsPage />} />
+                  <Route path="/clients/:clientId" element={<ClientDetailPage />} />
                   <Route path="/team" element={<TeamPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/ayuda" element={<HelpPage />} />

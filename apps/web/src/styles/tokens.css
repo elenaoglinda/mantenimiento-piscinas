@@ -75,6 +75,19 @@
   --status-unknown-bg: #f1f5f9;
   --status-unknown-text: #5b677a;
 
+  /*
+   * Charts. One line per vaso, in this fixed order (never cycled; a 4th vaso is picked, not
+   * given a generated colour). Validated for colour-blind separation on the white surface
+   * (dataviz validator: worst adjacent CVD ΔE 9.2). --chart-3 is under 3:1 on white, so every
+   * chart also has a legend and a table version. Status colours stay reserved for the
+   * traffic light: out-of-range points use --status-red AND a different marker shape.
+   */
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-grid: #e6edf0;
+  --chart-band: #dcfce7; /* legal range, same tint as status-green-bg */
+
   /* Radius */
   --radius-sm: 0.375rem;
   --radius-md: 0.625rem;

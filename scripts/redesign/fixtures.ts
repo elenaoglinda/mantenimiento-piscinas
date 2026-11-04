@@ -193,6 +193,20 @@ const reports = [
     analysis_type: 'autocontrol',
     notes: null,
   },
+  // Four months of visits to Villa Mar (both vasos), for the history, trend and last-state
+  // screens. Newest first, like the app's queries.
+  ...Array.from({ length: 24 }, (_, i) => ({
+    id: `hist-${i + 1}`,
+    org_id: ORG,
+    pool_id: 'pool-1',
+    basin_id: i % 3 === 2 ? 'bas-2' : 'bas-1',
+    technician_id: i % 2 ? 'user-0002' : USER,
+    visited_at: iso(4 + i * 5),
+    status: i < 2 ? 'completed' : 'signed',
+    signed_at: i < 2 ? null : iso(4 + i * 5),
+    analysis_type: 'autocontrol',
+    notes: null,
+  })),
 ].map((r) => ({
   ...r,
   pool: { denominacion: pools.find((p) => p.id === r.pool_id)!.denominacion },
@@ -279,6 +293,31 @@ const reading = (id: string, report: string, def: string, value: number, status:
     parameter_def: { name_es: d.name_es, unit: d.unit },
   };
 };
+
+/** Plausible readings for the hist-N visits: a gentle drift with a few amber/red ones. */
+function historyReadings() {
+  const out: ReturnType<typeof reading>[] = [];
+  const status = (v: number, lo: number | null, hi: number) =>
+    (lo != null && v < lo) || v > hi
+      ? 'red'
+      : (lo != null && v < lo + (hi - lo) * 0.1) || v > hi - (hi - (lo ?? 0)) * 0.1
+        ? 'amber'
+        : 'green';
+  for (let i = 0; i < 24; i++) {
+    const r = `hist-${i + 1}`;
+    const cl = [1.1, 0.4, 1.3, 0.9, 1.6, 1.0, 2.3, 1.2][i % 8];
+    const ph = [7.4, 7.6, 7.3, 7.8, 7.5, 8.3, 7.4, 7.7][i % 8];
+    const cc = [0.2, 0.3, 0.1, 0.4, 0.2, 0.7, 0.3, 0.2][i % 8];
+    const temp = [27, 28, 26.5, 27.5, 29, 28.5, 26, 27][i % 8];
+    out.push(
+      reading(`hm-${i}-cl`, r, 'pd-1', cl, status(cl, 0.5, 2)),
+      reading(`hm-${i}-cc`, r, 'pd-2', cc, status(cc, null, 0.6)),
+      reading(`hm-${i}-ph`, r, 'pd-3', ph, status(ph, 7.2, 8)),
+      reading(`hm-${i}-t`, r, 'pd-5', temp, status(temp, null, 36)),
+    );
+  }
+  return out;
+}
 
 const at = (hh: number, mm: number) => {
   const d = new Date();
@@ -446,6 +485,30 @@ export const tables: Record<string, Record<string, unknown>[]> = {
     reading('m-4', 'rep-1', 'pd-4', 0.8, 'green'),
     reading('m-5', 'rep-2', 'pd-1', 3.4, 'red'),
     reading('m-6', 'rep-2', 'pd-3', 7.9, 'amber'),
+    ...historyReadings(),
+  ],
+  incident: [
+    {
+      id: 'inc-1',
+      org_id: ORG,
+      report_id: 'hist-1',
+      description: 'Skimmer del lado norte roto',
+      corrective_action: null,
+      created_at: iso(4),
+    },
+    {
+      id: 'inc-2',
+      org_id: ORG,
+      report_id: 'hist-6',
+      description: 'pH alto tras lluvia',
+      corrective_action: 'Dosificación de minorador de pH',
+      created_at: iso(29),
+    },
+  ],
+  attachment: [
+    { id: 'att-1', org_id: ORG, report_id: 'hist-1', kind: 'photo', storage_path: 'x/1.jpg' },
+    { id: 'att-2', org_id: ORG, report_id: 'hist-1', kind: 'photo', storage_path: 'x/2.jpg' },
+    { id: 'att-3', org_id: ORG, report_id: 'hist-4', kind: 'lab_pdf', storage_path: 'x/3.pdf' },
   ],
   annual_result: [
     {
@@ -542,3 +605,34 @@ export const session = {
     created_at: iso(90),
   },
 };
+
+// History screens embed each visit's readings, incidents, files and technician (and the pool's
+// client and region). The fake backend doesn't resolve embeds, so attach them here.
+for (const r of tables.report) {
+  const pool = pools.find((p) => p.id === r.pool_id)!;
+  const tech = [appUser, ...teamMembers].find((u) => u.id === r.technician_id);
+  Object.assign(r, {
+    pool: {
+      denominacion: pool.denominacion,
+      client_id: pool.client_id,
+      ccaa: null,
+      client: pool.client,
+    },
+    technician: tech ? { full_name: tech.full_name, email: tech.email } : null,
+    measurement: tables.measurement.filter((m) => m.report_id === r.id),
+    incident: tables.incident.filter((m) => m.report_id === r.id),
+    attachment: tables.attachment.filter((m) => m.report_id === r.id),
+  });
+}
+for (const m of tables.measurement) {
+  const r = tables.report.find((x) => x.id === m.report_id)!;
+  Object.assign(m, {
+    report: {
+      visited_at: r.visited_at,
+      pool_id: r.pool_id,
+      basin_id: r.basin_id,
+      technician_id: r.technician_id,
+      status: r.status,
+    },
+  });
+}

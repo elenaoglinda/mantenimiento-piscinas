@@ -77,10 +77,11 @@ test('axe: overlays in their open state', async ({ browser }) => {
       open: (p) => p.getByRole('button', { name: 'Menú' }).click(),
     },
     {
+      // A Clientes row opens the client page; editing is its "Editar" button.
       name: 'client edit sheet',
-      path: '/clients',
+      path: '/clients/cli-2',
       width: 1440,
-      open: (p) => p.getByRole('button', { name: 'Hotel Las Palmeras' }).click(),
+      open: (p) => p.getByRole('button', { name: 'Editar' }).click(),
     },
   ];
   const found: string[] = [];

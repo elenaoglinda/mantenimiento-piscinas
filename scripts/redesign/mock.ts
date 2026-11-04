@@ -1,5 +1,6 @@
 import type { BrowserContext, Page, Route } from '@playwright/test';
 import { appUser, session, tables, teamMembers } from './fixtures';
+import { AUTH_STORAGE_KEY, SUPABASE_HOST } from './target';
 
 /** Fake Supabase backend shared by the capture specs. See AUDIT.md for why each rule exists. */
 export type AuthMode = 'none' | 'no-profile' | 'full';
@@ -21,7 +22,7 @@ function json(route: Route, body: unknown, status = 200, extra: Record<string, s
 
 /** Works on a page, or on a whole context (so tabs opened by other tools — Lighthouse — match). */
 export async function mockSupabase(page: Page | BrowserContext, auth: AuthMode) {
-  await page.route('https://mock.supabase.co/**', async (route) => {
+  await page.route(`${SUPABASE_HOST}/**`, async (route) => {
     const req = route.request();
     const url = new URL(req.url());
     const path = url.pathname;
@@ -97,8 +98,9 @@ export async function mockSupabase(page: Page | BrowserContext, auth: AuthMode) 
   });
 
   if (auth !== 'none') {
-    await page.addInitScript((s) => {
-      window.localStorage.setItem('sb-mock-auth-token', JSON.stringify(s));
-    }, session);
+    await page.addInitScript(({ key, s }) => window.localStorage.setItem(key, JSON.stringify(s)), {
+      key: AUTH_STORAGE_KEY,
+      s: session,
+    });
   }
 }

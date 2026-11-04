@@ -94,7 +94,7 @@ const SUB_PAGES: { pattern: RegExp; labelKey: string }[] = [
   { pattern: /^\/reports\/[^/]+\/edit\/?$/, labelKey: 'shell.crumbs.edit' },
   { pattern: /^\/invoices\/resumen\/?$/, labelKey: 'shell.crumbs.summary' },
   { pattern: /^\/invoices\/settings\/?$/, labelKey: 'shell.crumbs.settings' },
-  { pattern: /^\/(pools|reports|invoices)\/[^/]+\/?$/, labelKey: 'shell.crumbs.detail' },
+  { pattern: /^\/(pools|reports|invoices|clients)\/[^/]+\/?$/, labelKey: 'shell.crumbs.detail' },
 ];
 
 export interface ResolvedRoute {

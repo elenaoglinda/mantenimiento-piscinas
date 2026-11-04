@@ -1,4 +1,5 @@
 import type { Page, Route } from '@playwright/test';
+import { AUTH_STORAGE_KEY, SUPABASE_HOST } from './target';
 
 /**
  * A small in-memory stand-in for Supabase's REST API, enough for the end-to-end flow spec to
@@ -37,6 +38,8 @@ interface Node {
   key: string;
   /** Column, or relation name for embeds. */
   name: string;
+  /** Foreign-key hint after "!", e.g. report_technician_id_fkey. */
+  hint?: string;
   children?: Node[];
 }
 
@@ -63,10 +66,11 @@ function parseSelect(s: string): Node[] {
     const inner = open >= 0 ? part.slice(open + 1, part.lastIndexOf(')')) : null;
     let key: string | null = null;
     if (head.includes(':')) [key, head] = head.split(':') as [string, string];
-    const name = head.split('!')[0].trim();
+    const [name, ...hints] = head.split('!').map((x) => x.trim());
     return {
       key: (key ?? name).trim(),
       name,
+      hint: hints.find((h) => h.endsWith('_fkey')),
       children: inner !== null ? parseSelect(inner) : undefined,
     };
   });
@@ -92,8 +96,11 @@ function project(db: Db, table: string, row: Row, nodes: Node[]): Row {
     }
     const target = embedTable(db, n.name);
     const rows = db[target] ?? [];
-    // Many-to-one when this row holds the foreign key; otherwise one-to-many.
+    // Many-to-one when this row holds the foreign key; otherwise one-to-many. A constraint hint
+    // names the column: report_technician_id_fkey → technician_id on report.
+    const hinted = n.hint?.replace(new RegExp(`^${table}_`), '').replace(/(_org_id)?_fkey$/, '');
     const fkCandidates = [
+      ...(hinted ? [hinted] : []),
       n.name.endsWith('_id') ? n.name : `${target}_id`,
       `${target.replace(/^invoice_/, '')}_id`,
     ];
@@ -113,7 +120,7 @@ function project(db: Db, table: string, row: Row, nodes: Node[]): Row {
 
 // ── filters ───────────────────────────────────────────────────────────────────
 
-const RESERVED = new Set(['select', 'order', 'limit', 'offset', 'on_conflict', 'columns']);
+const RESERVED = new Set(['select', 'order', 'limit', 'offset', 'on_conflict', 'columns', 'or']);
 
 function cmp(a: unknown, b: string): number {
   const na = Number(a);
@@ -169,7 +176,7 @@ export interface Backend {
 export async function serveBackend(page: Page, db: Db, session: Row): Promise<Backend> {
   const backend: Backend = { db, writes: [] };
 
-  await page.route('https://mock.supabase.co/**', async (route: Route) => {
+  await page.route(`${SUPABASE_HOST}/**`, async (route: Route) => {
     const req = route.request();
     const url = new URL(req.url());
     const path = url.pathname;
@@ -202,6 +209,7 @@ export async function serveBackend(page: Page, db: Db, session: Row): Promise<Ba
     db[table] ??= [];
     const nodes = parseSelect(url.searchParams.get('select') ?? '*');
     const single = (req.headers()['accept'] ?? '').includes('vnd.pgrst.object');
+    let total: number | null = null;
     const respond = (rows: Row[], status = 200) => {
       const shaped = rows.map((r) => project(db, table, r, nodes));
       if (single) {
@@ -209,8 +217,9 @@ export async function serveBackend(page: Page, db: Db, session: Row): Promise<Ba
           ? json(shaped[0], status)
           : json({ code: 'PGRST116', message: 'no rows' }, 406);
       }
+      const all = total ?? shaped.length;
       return json(shaped, status, {
-        'content-range': shaped.length ? `0-${shaped.length - 1}/${shaped.length}` : '*/0',
+        'content-range': shaped.length ? `0-${shaped.length - 1}/${all}` : `*/${all}`,
       });
     };
 
@@ -222,8 +231,11 @@ export async function serveBackend(page: Page, db: Db, session: Row): Promise<Ba
         const [col, dir] = order.split(',')[0].split('.');
         rows = [...rows].sort((a, b) => cmp(a[col], String(b[col])) * (dir === 'desc' ? -1 : 1));
       }
+      // count=exact reports the total before paging, like PostgREST's Content-Range.
+      total = rows.length;
+      const offset = Number(url.searchParams.get('offset')) || 0;
       const limit = Number(url.searchParams.get('limit'));
-      if (limit) rows = rows.slice(0, limit);
+      if (offset || limit) rows = rows.slice(offset, limit ? offset + limit : undefined);
       if (method === 'HEAD') {
         return route.fulfill({
           status: 200,
@@ -274,9 +286,10 @@ export async function serveBackend(page: Page, db: Db, session: Row): Promise<Ba
     return json({}, 405);
   });
 
-  await page.addInitScript((s) => {
-    window.localStorage.setItem('sb-mock-auth-token', JSON.stringify(s));
-  }, session);
+  await page.addInitScript(({ key, s }) => window.localStorage.setItem(key, JSON.stringify(s)), {
+    key: AUTH_STORAGE_KEY,
+    s: session,
+  });
 
   return backend;
 }

@@ -38,9 +38,11 @@ import {
   type StalePool,
 } from '../lib/dashboard.js';
 import type { Enums } from '../lib/database.types.js';
+import { historyLink } from '../features/history/index.js';
 
 interface RecentReport {
   id: string;
+  pool_id: string;
   visited_at: string;
   status: Enums<'report_status'>;
   pool: { denominacion: string } | null;
@@ -120,7 +122,7 @@ export function DashboardPage() {
       supabase
         .from('report')
         .select(
-          'id, visited_at, status, pool:pool_id!report_pool_id_org_id_fkey(denominacion), basin:basin_id!report_basin_id_org_id_fkey(denominacion)',
+          'id, pool_id, visited_at, status, pool:pool_id!report_pool_id_org_id_fkey(denominacion), basin:basin_id!report_basin_id_org_id_fkey(denominacion)',
         )
         .order('visited_at', { ascending: false })
         .limit(100),
@@ -498,7 +500,9 @@ export function DashboardPage() {
               {attention.map((r) => (
                 <li key={r.id}>
                   <Link
-                    to={`/reports/${r.id}`}
+                    // Into the pool's Historial, so the reading is seen next to the visits
+                    // before and after it; the row links on to the full report.
+                    to={historyLink(r.pool_id, r.id)}
                     className="flex items-center gap-3 rounded-[var(--radius-md)] border border-status-red/30 bg-status-red-bg/50 px-3 py-2 transition-colors hover:bg-status-red-bg"
                   >
                     <TriangleAlert

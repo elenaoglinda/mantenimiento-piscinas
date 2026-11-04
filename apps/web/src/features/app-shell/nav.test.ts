@@ -19,6 +19,8 @@ describe('resolveRoute', () => {
     expect(resolveRoute('/reports/abc/edit').subKey).toBe('shell.crumbs.edit');
     expect(resolveRoute('/invoices/settings').subKey).toBe('shell.crumbs.settings');
     expect(resolveRoute('/invoices/abc').subKey).toBe('shell.crumbs.detail');
+    expect(resolveRoute('/clients/abc').subKey).toBe('shell.crumbs.detail');
+    expect(resolveRoute('/clients/abc').item?.to).toBe('/clients');
   });
 
   it('has no sub-page for a section root', () => {

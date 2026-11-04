@@ -34,19 +34,18 @@ export function toEvaluatorDef(row: ParameterDefRow): ParameterDef {
 }
 
 /**
- * Resolve the active parameter definitions for a pool's region: one row per SILOE parameter,
- * preferring a CCAA-specific override over the national RD 742/2013 default. Ordered by
- * siloe_param_id so the form renders parameters in the canonical SILOE order.
+ * Pick, from all `parameter_def` rows, the active definition of each SILOE parameter for a
+ * pool's region, preferring a CCAA-specific override over the national RD 742/2013 default.
+ * Ordered by siloe_param_id so forms and tables render parameters in the canonical SILOE order.
  */
-export async function fetchResolvedParameterDefs(
+export function resolveParameterDefs(
+  rows: readonly ParameterDefRow[],
   ccaa: string | null | undefined,
-): Promise<ParameterDefRow[]> {
+): ParameterDefRow[] {
   const code = ccaaToCode(ccaa);
-  const { data, error } = await supabase.from('parameter_def').select('*').eq('active', true);
-  if (error || !data) return [];
-
   const byParam = new Map<number, ParameterDefRow>();
-  for (const row of data) {
+  for (const row of rows) {
+    if (!row.active) continue;
     const existing = byParam.get(row.siloe_param_id);
     if (!existing) {
       byParam.set(row.siloe_param_id, row);
@@ -58,4 +57,13 @@ export async function fetchResolvedParameterDefs(
     }
   }
   return [...byParam.values()].sort((a, b) => a.siloe_param_id - b.siloe_param_id);
+}
+
+/** Fetch and resolve the active parameter definitions for a pool's region. */
+export async function fetchResolvedParameterDefs(
+  ccaa: string | null | undefined,
+): Promise<ParameterDefRow[]> {
+  const { data, error } = await supabase.from('parameter_def').select('*').eq('active', true);
+  if (error || !data) return [];
+  return resolveParameterDefs(data, ccaa);
 }

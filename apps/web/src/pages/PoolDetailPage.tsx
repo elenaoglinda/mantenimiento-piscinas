@@ -3,18 +3,17 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../auth/context.js';
-import { ClipboardList, Pencil, Plus, ShieldCheck, Trash2, Waves } from 'lucide-react';
+import { Pencil, Plus, ShieldCheck, Trash2, Waves } from 'lucide-react';
 import { Alert } from '../components/ui/feedback.js';
 import { Button } from '../components/ui/Button.js';
 import { Card, CardHeader } from '../components/ui/Card.js';
-import { DataTable, type Column } from '../components/ui/DataTable.js';
 import { EmptyState } from '../components/ui/EmptyState.js';
 import { PageHeader } from '../components/ui/PageHeader.js';
 import { Skeleton, SkeletonText } from '../components/ui/Skeleton.js';
 import { StatusPill } from '../components/ui/StatusPill.js';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs.js';
-import { ReportStatusBadge } from '../components/ReportStatusBadge.js';
 import { useRecordCrumb } from '../features/app-shell/index.js';
+import { TrendPanel, VisitHistory, WaterStateCards } from '../features/history/index.js';
 import { PoolFormModal } from '../components/PoolFormModal.js';
 import { BasinFormModal } from '../components/BasinFormModal.js';
 import { TreatmentFormModal } from '../components/TreatmentFormModal.js';
@@ -23,12 +22,11 @@ import type { Tables } from '../lib/database.types.js';
 type Pool = Tables<'pool'> & { client: { name: string; is_self: boolean } | null };
 type Treatment = Tables<'treatment'>;
 type BasinWithTreatments = Tables<'basin'> & { treatment: Treatment[] };
-type PoolReport = Pick<Tables<'report'>, 'id' | 'visited_at' | 'status' | 'analysis_type'> & {
-  basin: { denominacion: string } | null;
-};
 
-const TABS = ['resumen', 'vasos', 'informes', 'siloe'] as const;
+const TABS = ['resumen', 'historial', 'evolucion', 'vasos', 'siloe'] as const;
 type Tab = (typeof TABS)[number];
+/** Old links to the tab Historial replaced still land on it. */
+const TAB_ALIASES: Record<string, Tab> = { informes: 'historial' };
 
 export function PoolDetailPage() {
   const { t } = useTranslation();
@@ -39,12 +37,14 @@ export function PoolDetailPage() {
 
   const [pool, setPool] = useState<Pool | null>(null);
   const [basins, setBasins] = useState<BasinWithTreatments[]>([]);
-  const [reports, setReports] = useState<PoolReport[] | null>(null);
+  const [visits, setVisits] = useState<{ count: number; last: string | null } | null>(null);
   // The open tab lives in the URL (?tab=vasos) so it survives reloads and can be linked.
   const [params, setParams] = useSearchParams();
-  const tab: Tab = (TABS as readonly string[]).includes(params.get('tab') ?? '')
-    ? (params.get('tab') as Tab)
-    : 'resumen';
+  const rawTab = params.get('tab') ?? '';
+  const tab: Tab = (TABS as readonly string[]).includes(rawTab)
+    ? (rawTab as Tab)
+    : (TAB_ALIASES[rawTab] ?? 'resumen');
+  // Switching tabs drops the previous tab's filters (vaso, dates, linked visit).
   const setTab = (next: string) =>
     setParams(next === 'resumen' ? {} : { tab: next }, { replace: true });
   const [loading, setLoading] = useState(true);
@@ -85,24 +85,25 @@ export function PoolDetailPage() {
     void load();
   }, [load]);
 
-  // This pool's visits, for the Informes tab and the last-visit figure. Read-only.
+  // How many visits this pool has, and the last one, for the summary figures. Read-only.
   useEffect(() => {
     if (!poolId) return;
     let active = true;
     void (async () => {
-      const { data } = await supabase
+      const { data, count, error } = await supabase
         .from('report')
-        .select(
-          'id, visited_at, status, analysis_type, basin!report_basin_id_org_id_fkey(denominacion)',
-        )
+        .select('visited_at', { count: 'exact' })
         .eq('pool_id', poolId)
-        .order('visited_at', { ascending: false });
-      if (active) setReports((data as PoolReport[] | null) ?? []);
+        .order('visited_at', { ascending: false })
+        .limit(1);
+      if (!active) return;
+      if (error) setError(t('common.genericError'));
+      else setVisits({ count: count ?? 0, last: data?.[0]?.visited_at ?? null });
     })();
     return () => {
       active = false;
     };
-  }, [poolId]);
+  }, [poolId, t]);
 
   useRecordCrumb(pool?.denominacion);
 
@@ -122,34 +123,8 @@ export function PoolDetailPage() {
   if (error) return <Alert tone="error">{error}</Alert>;
   if (!pool || !profile) return <Alert tone="error">{t('common.genericError')}</Alert>;
 
-  const lastVisit = reports?.[0]?.visited_at ?? null;
-  const reportColumns: Column<PoolReport>[] = [
-    {
-      id: 'date',
-      header: t('reports.visitedAt'),
-      cell: (r) => (
-        <time dateTime={r.visited_at}>{new Date(r.visited_at).toLocaleString('es-ES')}</time>
-      ),
-      sortValue: (r) => r.visited_at,
-    },
-    {
-      id: 'basin',
-      header: t('reports.basin'),
-      cell: (r) => r.basin?.denominacion ?? t('common.none'),
-      hideBelow: 'sm',
-    },
-    {
-      id: 'type',
-      header: t('reports.analysisType'),
-      cell: (r) => t(`analysisType.${r.analysis_type}`),
-      hideBelow: 'md',
-    },
-    {
-      id: 'status',
-      header: t('reports.statusFilter'),
-      cell: (r) => <ReportStatusBadge status={r.status} />,
-    },
-  ];
+  const lastVisit = visits?.last ?? null;
+  const basinRefs = basins.map((b) => ({ id: b.id, denominacion: b.denominacion }));
 
   return (
     <div>
@@ -157,7 +132,11 @@ export function PoolDetailPage() {
         back={{ to: '/pools', label: t('nav.pools') }}
         title={pool.denominacion}
         description={
-          !isOwnerOrg && pool.client && !pool.client.is_self ? pool.client.name : undefined
+          !isOwnerOrg && pool.client && !pool.client.is_self ? (
+            <Link to={`/clients/${pool.client_id}`} className="underline-offset-4 hover:underline">
+              {pool.client.name}
+            </Link>
+          ) : undefined
         }
         badges={
           pool.siloe_cod_p ? (
@@ -191,17 +170,18 @@ export function PoolDetailPage() {
             {t('basins.title')}
             <Count n={basins.length} />
           </TabsTrigger>
-          <TabsTrigger value="informes">
-            {t('reports.title')}
-            {reports && <Count n={reports.length} />}
+          <TabsTrigger value="historial">
+            {t('history.tab')}
+            {visits && <Count n={visits.count} />}
           </TabsTrigger>
+          <TabsTrigger value="evolucion">{t('history.trend.tab')}</TabsTrigger>
           <TabsTrigger value="siloe">SILOÉ</TabsTrigger>
         </TabsList>
 
         <TabsContent value="resumen" className="flex flex-col gap-6">
           <div className="grid grid-cols-3 gap-3 sm:gap-4">
             <Fact label={t('pools.lastVisit')}>
-              {reports === null ? (
+              {visits === null ? (
                 <Skeleton className="h-6 w-28" />
               ) : lastVisit ? (
                 <time dateTime={lastVisit}>{new Date(lastVisit).toLocaleDateString('es-ES')}</time>
@@ -210,10 +190,16 @@ export function PoolDetailPage() {
               )}
             </Fact>
             <Fact label={t('basins.title')}>{basins.length}</Fact>
-            <Fact label={t('reports.title')}>
-              {reports === null ? <Skeleton className="h-6 w-10" /> : reports.length}
+            <Fact label={t('history.visits')}>
+              {visits === null ? <Skeleton className="h-6 w-10" /> : visits.count}
             </Fact>
           </div>
+          <WaterStateCards
+            poolId={pool.id}
+            ccaa={pool.ccaa}
+            basins={basinRefs}
+            canWrite={canWrite}
+          />
           <Card>
             <CardHeader title={t('pools.details')} />
             <dl className="grid gap-x-6 gap-y-4 text-sm sm:grid-cols-2">
@@ -370,28 +356,27 @@ export function PoolDetailPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="informes">
-          <DataTable
-            caption={t('reports.title')}
-            columns={reportColumns}
-            rows={reports ?? []}
-            getRowId={(r) => r.id}
-            rowHref={(r) => `/reports/${r.id}`}
-            loading={reports === null}
-            empty={
-              <EmptyState
-                icon={<ClipboardList size={22} />}
-                title={t('pools.reportsEmpty')}
-                action={
-                  canWrite && (
-                    <Button asChild>
-                      <Link to={`/reports/new?poolId=${pool.id}`}>{t('reports.addReport')}</Link>
-                    </Button>
-                  )
-                }
-              />
-            }
-          />
+        <TabsContent value="historial">
+          {tab === 'historial' && (
+            <VisitHistory
+              poolId={pool.id}
+              filterKind="basin"
+              filterOptions={basinRefs.map((b) => ({ id: b.id, label: b.denominacion }))}
+              newReportHref={canWrite ? `/reports/new?poolId=${pool.id}` : undefined}
+              title={t('history.tab')}
+            />
+          )}
+        </TabsContent>
+
+        <TabsContent value="evolucion">
+          {tab === 'evolucion' &&
+            (basins.length === 0 ? (
+              <Card padded={false}>
+                <EmptyState compact icon={<Waves size={20} />} title={t('basins.empty')} />
+              </Card>
+            ) : (
+              <TrendPanel poolId={pool.id} ccaa={pool.ccaa} basins={basinRefs} />
+            ))}
         </TabsContent>
 
         <TabsContent value="siloe" className="flex flex-col gap-4">

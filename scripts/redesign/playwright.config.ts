@@ -17,19 +17,22 @@ export default defineConfig({
   reporter: 'list',
   timeout: 600_000,
   use: {
-    baseURL: 'http://localhost:4174',
+    // BASE_URL checks a deployed preview instead of a local build (see target.ts).
+    baseURL: process.env.BASE_URL ?? 'http://localhost:4174',
     launchOptions: process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {},
   },
-  webServer: {
-    command:
-      // VERCEL_ENV=preview includes the internal /design gallery, as on a Vercel preview.
-      'VITE_SUPABASE_URL=https://mock.supabase.co VITE_SUPABASE_ANON_KEY=mock-anon-key VERCEL_ENV=preview ' +
-      'npm run build -w @piscinas/web && npm run preview -w @piscinas/web -- --port 4174 --strictPort',
-    url: 'http://localhost:4174',
-    // APP_DIR=<checkout> captures another checkout (e.g. a worktree of main for the "before"
-    // set) with this harness and these fixtures, so before/after compare like with like.
-    cwd: process.env.APP_DIR,
-    reuseExistingServer: false,
-    timeout: 180_000,
-  },
+  webServer: process.env.BASE_URL
+    ? undefined
+    : {
+        command:
+          // VERCEL_ENV=preview includes the internal /design gallery, as on a Vercel preview.
+          'VITE_SUPABASE_URL=https://mock.supabase.co VITE_SUPABASE_ANON_KEY=mock-anon-key VERCEL_ENV=preview ' +
+          'npm run build -w @piscinas/web && npm run preview -w @piscinas/web -- --port 4174 --strictPort',
+        url: 'http://localhost:4174',
+        // APP_DIR=<checkout> captures another checkout (e.g. a worktree of main for the "before"
+        // set) with this harness and these fixtures, so before/after compare like with like.
+        cwd: process.env.APP_DIR,
+        reuseExistingServer: false,
+        timeout: 180_000,
+      },
 });
