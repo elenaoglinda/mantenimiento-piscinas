@@ -70,7 +70,7 @@ export function AttachmentsSection({
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-semibold text-text">{t('reports.attachments')}</h2>
         {editable && (
-          <div className="flex gap-3 text-sm font-medium text-primary">
+          <div className="flex gap-3 text-sm font-medium text-accent">
             <button type="button" onClick={() => photoInput.current?.click()} disabled={uploading}>
               {t('reports.addPhoto')}
             </button>
@@ -117,7 +117,7 @@ export function AttachmentsSection({
                   href={a.url ?? '#'}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex size-24 items-center justify-center rounded-[var(--radius-md)] border border-border bg-surface-muted text-xs text-primary"
+                  className="flex size-24 items-center justify-center rounded-[var(--radius-md)] border border-border bg-surface-muted text-xs text-accent"
                 >
                   PDF
                 </a>

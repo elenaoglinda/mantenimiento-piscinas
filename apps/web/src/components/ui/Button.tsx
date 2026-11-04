@@ -1,34 +1,35 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { forwardRef, type ButtonHTMLAttributes } from 'react';
+import { Slot } from '@radix-ui/react-slot';
+import type { VariantProps } from 'class-variance-authority';
+import { cn } from './utils.js';
+import { buttonVariants } from './variants.js';
 
-type Variant = 'primary' | 'secondary' | 'ghost';
-
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: Variant;
+export interface ButtonProps
+  extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
+  /** Shows a spinner and disables the button while an action runs. */
   loading?: boolean;
-  children: ReactNode;
+  /** Render the child element (e.g. a router `<Link>`) with button styles. */
+  asChild?: boolean;
 }
 
-const base =
-  'inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] px-4 py-2.5 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-60';
-
-const variants: Record<Variant, string> = {
-  primary: 'bg-primary text-primary-contrast hover:bg-primary-hover',
-  secondary: 'border border-border bg-surface text-text hover:bg-surface-muted',
-  ghost: 'text-text hover:bg-surface-muted',
-};
-
-export function Button({
-  variant = 'primary',
-  loading = false,
-  disabled,
-  children,
-  className = '',
-  ...rest
-}: ButtonProps) {
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  { variant, size, loading = false, asChild = false, disabled, className, children, ...rest },
+  ref,
+) {
+  if (asChild) {
+    return (
+      <Slot ref={ref} className={cn(buttonVariants({ variant, size }), className)} {...rest}>
+        {children}
+      </Slot>
+    );
+  }
+  // No default `type`: existing forms rely on the native submit default.
   return (
     <button
-      className={`${base} ${variants[variant]} ${className}`}
+      ref={ref}
+      className={cn(buttonVariants({ variant, size }), className)}
       disabled={disabled || loading}
+      aria-busy={loading || undefined}
       {...rest}
     >
       {loading && (
@@ -40,4 +41,4 @@ export function Button({
       {children}
     </button>
   );
-}
+});

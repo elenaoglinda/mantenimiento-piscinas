@@ -20,6 +20,7 @@ export function CopyLinkField({ url }: { url: string }) {
     <div className="flex items-center gap-2">
       <input
         readOnly
+        aria-label={t('invitations.linkLabel')}
         value={url}
         onFocus={(e) => e.currentTarget.select()}
         className="min-w-0 flex-1 rounded-[var(--radius-md)] border border-border bg-surface-muted px-3 py-2 text-sm text-text"

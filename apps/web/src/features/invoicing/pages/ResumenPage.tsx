@@ -4,9 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { formatEuros, isOverdue, madridToday } from '@piscinas/shared';
 import { listInvoices, needingAttention, type InvoiceWithRelations } from '../lib/data.js';
 import type { DbFailure } from '../../../lib/dbError.js';
-import { Card, Spinner } from '../../../components/ui/feedback.js';
+import { CircleAlert, Clock, Euro, ReceiptText, ShieldCheck } from 'lucide-react';
+import { Card, CardHeader } from '../../../components/ui/Card.js';
+import { EmptyState } from '../../../components/ui/EmptyState.js';
+import { StatCard } from '../../../components/ui/StatCard.js';
+import { StatusPill } from '../../../components/ui/StatusPill.js';
+import { SkeletonText } from '../../../components/ui/Skeleton.js';
 import { DbFailureAlert } from '../components/DbFailureAlert.js';
-import { FacturacionNav, TestEnvBadge } from '../components/FacturacionNav.js';
+import { InvoicingHeader } from '../components/InvoicingHeader.js';
 
 /**
  * Billing at a glance. Deliberately small: four numbers that answer "is anything wrong, and how
@@ -33,8 +38,6 @@ export function ResumenPage() {
     void load();
   }, [load]);
 
-  if (loading) return <Spinner />;
-
   const month = madridToday().slice(0, 7);
   const issued = invoices.filter((i) => i.status !== 'draft');
   const billedThisMonth = issued
@@ -48,46 +51,68 @@ export function ResumenPage() {
   );
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-text">{t('invoicing.title')}</h1>
-        <TestEnvBadge />
-      </div>
-      <FacturacionNav />
+    <div className="flex flex-col gap-6">
+      <InvoicingHeader className="mb-0" />
       <DbFailureAlert failure={failure} />
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label={t('invoicing.resumen.billedMonth')} value={formatEuros(billedThisMonth)} />
-        <Stat label={t('invoicing.resumen.outstanding')} value={formatEuros(outstanding)} />
-        <Stat
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label={t('invoicing.resumen.billedMonth')}
+          value={formatEuros(billedThisMonth)}
+          icon={<Euro size={16} />}
+          loading={loading}
+        />
+        <StatCard
+          label={t('invoicing.resumen.outstanding')}
+          value={formatEuros(outstanding)}
+          icon={<Clock size={16} />}
+          loading={loading}
+        />
+        <StatCard
           label={t('invoicing.resumen.overdue')}
           value={String(overdue.length)}
-          tone={overdue.length > 0 ? 'red' : undefined}
+          icon={<ReceiptText size={16} />}
+          tone={overdue.length > 0 ? 'alert' : 'default'}
+          loading={loading}
         />
-        <Stat
+        <StatCard
           label={t('invoicing.resumen.attention')}
           value={String(attention.length)}
-          tone={attention.length > 0 ? 'red' : undefined}
+          icon={<CircleAlert size={16} />}
+          tone={attention.length > 0 ? 'alert' : 'default'}
+          loading={loading}
         />
       </div>
 
       <Card>
-        <h2 className="mb-2 text-lg font-semibold text-text">{t('invoicing.resumen.attention')}</h2>
-        {attention.length === 0 ? (
-          <p className="text-sm text-text-muted">{t('invoicing.resumen.allClear')}</p>
+        <CardHeader title={t('invoicing.resumen.attention')} />
+        {loading ? (
+          <SkeletonText />
+        ) : attention.length === 0 ? (
+          <EmptyState
+            compact
+            icon={<ShieldCheck size={20} />}
+            title={t('invoicing.resumen.allClear')}
+          />
         ) : (
-          <ul className="flex flex-col gap-2 text-sm">
+          <ul className="flex flex-col text-sm">
             {attention.map((a) => {
               const inv = invoices.find((i) => i.id === a.invoice_id);
               return (
-                <li key={a.invoice_id} className="flex flex-wrap justify-between gap-2">
-                  <Link to={`/invoices/${a.invoice_id}`} className="text-primary hover:underline">
+                <li
+                  key={a.invoice_id}
+                  className="flex flex-wrap items-center justify-between gap-2 border-b border-border py-2.5 last:border-0"
+                >
+                  <Link
+                    to={`/invoices/${a.invoice_id}`}
+                    className="font-medium text-text hover:text-accent"
+                  >
                     {inv?.invoice_series?.code ?? ''}/{inv?.number ?? '—'} ·{' '}
                     {inv?.client?.name ?? ''}
                   </Link>
-                  <span className="text-status-red">
+                  <StatusPill tone="red">
                     {t(`invoicing.resumen.reason.${a.reason}`, { defaultValue: a.reason })}
-                  </span>
+                  </StatusPill>
                 </li>
               );
             })}
@@ -95,18 +120,5 @@ export function ResumenPage() {
         )}
       </Card>
     </div>
-  );
-}
-
-function Stat({ label, value, tone }: { label: string; value: string; tone?: 'red' }) {
-  return (
-    <Card>
-      <p className="text-sm text-text-muted">{label}</p>
-      <p
-        className={`mt-1 text-2xl font-semibold ${tone === 'red' ? 'text-status-red' : 'text-text'}`}
-      >
-        {value}
-      </p>
-    </Card>
   );
 }

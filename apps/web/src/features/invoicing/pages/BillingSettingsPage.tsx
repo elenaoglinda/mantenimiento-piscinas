@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { isValidNif } from '@piscinas/shared';
 import { supabase } from '../../../lib/supabase.js';
 import { useAuth } from '../../../auth/context.js';
 import { toDbFailure, type DbFailure } from '../../../lib/dbError.js';
-import { Alert, Card, Spinner } from '../../../components/ui/feedback.js';
+import { Alert } from '../../../components/ui/feedback.js';
+import { Card, CardHeader } from '../../../components/ui/Card.js';
+import { SkeletonText } from '../../../components/ui/Skeleton.js';
+import { InvoicingHeader } from '../components/InvoicingHeader.js';
 import { DbFailureAlert } from '../components/DbFailureAlert.js';
 import { Button } from '../../../components/ui/Button.js';
 import { TextField } from '../../../components/ui/TextField.js';
@@ -92,24 +95,30 @@ export function BillingSettingsPage() {
     setBusy(false);
   }
 
-  if (loading) return <Spinner />;
+  if (loading)
+    return (
+      <div>
+        <InvoicingHeader />
+        <Card>
+          <SkeletonText lines={6} />
+        </Card>
+      </div>
+    );
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <Link to="/invoices" className="text-sm text-primary hover:underline">
-          ← {t('invoicing.backToInvoices')}
-        </Link>
-        <h1 className="mt-1 text-2xl font-semibold text-text">{t('invoicing.fiscalTitle')}</h1>
-        <p className="text-sm text-text-muted">{t('invoicing.fiscalSubtitle')}</p>
-      </div>
+      <InvoicingHeader className="mb-1" />
 
       {!canWrite && <Alert tone="info">{t('invoicing.fiscalAdminOnly')}</Alert>}
       <DbFailureAlert failure={failure} />
       {saved && <Alert tone="success">{t('invoicing.fiscalSaved')}</Alert>}
 
       <Card>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <CardHeader
+          title={t('invoicing.fiscalTitle')}
+          description={t('invoicing.fiscalSubtitle')}
+        />
+        <div className="grid gap-4 sm:grid-cols-2">
           <TextField
             label={t('invoicing.nif')}
             value={form.nif}
@@ -149,7 +158,7 @@ export function BillingSettingsPage() {
           />
         </div>
         {canWrite && (
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-border pt-4">
             <Button onClick={onSave} loading={busy} disabled={!canSave}>
               {t('common.save')}
             </Button>

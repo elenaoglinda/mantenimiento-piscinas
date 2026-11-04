@@ -74,7 +74,7 @@ export function AddressAutocomplete({
         onChange={(e) => onTextChange(e.target.value)}
         onFocus={() => suggestions.length && setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
-        className="rounded-[var(--radius-md)] border border-border bg-surface px-3 py-2.5 text-text outline-none transition-colors placeholder:text-text-muted focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30"
+        className="rounded-[var(--radius-md)] border border-border bg-surface px-3 py-2.5 text-text outline-none transition-colors placeholder:text-text-muted focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-focus/40"
       />
       {open && suggestions.length > 0 && (
         <ul className="absolute top-full z-20 mt-1 max-h-60 w-full overflow-auto rounded-[var(--radius-md)] border border-border bg-surface shadow-lg">

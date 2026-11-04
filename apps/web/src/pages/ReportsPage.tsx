@@ -1,10 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ClipboardList, FileUp, Plus, Waves } from 'lucide-react';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../auth/context.js';
-import { Alert, Card, Spinner } from '../components/ui/feedback.js';
+import { Alert } from '../components/ui/feedback.js';
 import { Button } from '../components/ui/Button.js';
+import { Card } from '../components/ui/Card.js';
+import { DataTable, TableToolbar, type Column } from '../components/ui/DataTable.js';
+import { EmptyState } from '../components/ui/EmptyState.js';
+import { PageHeader } from '../components/ui/PageHeader.js';
+import { cn, focusRing, fold } from '../components/ui/utils.js';
 import { ReportStatusBadge } from '../components/ReportStatusBadge.js';
 import type { Enums, Tables } from '../lib/database.types.js';
 
@@ -13,6 +19,8 @@ type ReportRow = Tables<'report'> & {
   basin: { denominacion: string } | null;
 };
 type StatusFilter = Enums<'report_status'> | 'all';
+
+const FILTERS: StatusFilter[] = ['all', 'draft', 'completed', 'signed'];
 
 export function ReportsPage() {
   const { t } = useTranslation();
@@ -24,6 +32,13 @@ export function ReportsPage() {
   const [clientCount, setClientCount] = useState(0);
   const [poolCount, setPoolCount] = useState(0);
   const [filter, setFilter] = useState<StatusFilter>('all');
+  // ⌘K can deep-link a search here with ?q=, also while this page is already open.
+  const [params] = useSearchParams();
+  const [query, setQuery] = useState(params.get('q') ?? '');
+  useEffect(() => {
+    const q = params.get('q');
+    if (q !== null) setQuery(q);
+  }, [params]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,80 +67,178 @@ export function ReportsPage() {
     void load();
   }, [load]);
 
-  const needsSetup = poolCount === 0;
+  // The first load decides whether setup is needed; later filter reloads keep the table.
+  const [loadedOnce, setLoadedOnce] = useState(false);
+  useEffect(() => {
+    if (!loading) setLoadedOnce(true);
+  }, [loading]);
+
+  const needsSetup = loadedOnce && poolCount === 0;
   const setupHint =
     isCompany && clientCount === 0 ? t('reports.needClientAndPool') : t('reports.needPool');
 
+  const rows = useMemo(() => {
+    const q = fold(query.trim());
+    if (!q) return reports;
+    return reports.filter((r) =>
+      fold(`${r.pool?.denominacion ?? ''} ${r.basin?.denominacion ?? ''}`).includes(q),
+    );
+  }, [reports, query]);
+
+  const columns: Column<ReportRow>[] = [
+    {
+      id: 'pool',
+      header: t('reports.pool'),
+      cell: (r) => (
+        <span className="flex flex-col">
+          <span>
+            {r.pool?.denominacion ?? '—'} · {r.basin?.denominacion ?? '—'}
+          </span>
+          <time dateTime={r.visited_at} className="text-xs font-normal text-text-muted sm:hidden">
+            {new Date(r.visited_at).toLocaleString('es-ES')}
+          </time>
+        </span>
+      ),
+      sortValue: (r) => `${r.pool?.denominacion ?? ''} ${r.basin?.denominacion ?? ''}`,
+    },
+    {
+      id: 'date',
+      header: t('reports.visitedAt'),
+      cell: (r) => (
+        <time dateTime={r.visited_at}>{new Date(r.visited_at).toLocaleString('es-ES')}</time>
+      ),
+      sortValue: (r) => r.visited_at,
+      hideBelow: 'sm',
+    },
+    {
+      id: 'type',
+      header: t('reports.analysisType'),
+      cell: (r) => t(`analysisType.${r.analysis_type}`),
+      sortValue: (r) => r.analysis_type,
+      hideBelow: 'lg',
+    },
+    {
+      id: 'status',
+      header: t('reports.statusFilter'),
+      cell: (r) => <ReportStatusBadge status={r.status} />,
+      sortValue: (r) => r.status,
+    },
+  ];
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-text">{t('reports.title')}</h1>
-          <p className="text-sm text-text-muted">{t('reports.subtitle')}</p>
-        </div>
-        {canWrite && !needsSetup && !loading && (
-          <div className="flex flex-wrap gap-2">
-            <Link to="/reports/import">
-              <Button variant="secondary">{t('photoImport.entryAction')}</Button>
-            </Link>
-            <Link to="/reports/new">
-              <Button>{t('reports.addReport')}</Button>
-            </Link>
-          </div>
-        )}
-      </div>
+    <div>
+      <PageHeader
+        title={t('reports.title')}
+        description={t('reports.subtitle')}
+        actions={
+          canWrite &&
+          !needsSetup &&
+          loadedOnce && (
+            <>
+              <Button asChild variant="secondary">
+                <Link to="/reports/import">
+                  <FileUp aria-hidden size={16} />
+                  {t('photoImport.entryAction')}
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link to="/reports/new">
+                  <Plus aria-hidden size={16} />
+                  {t('reports.addReport')}
+                </Link>
+              </Button>
+            </>
+          )
+        }
+      />
 
-      {!needsSetup && !loading && (
-        <div className="flex items-center gap-2">
-          <label className="text-sm text-text-muted" htmlFor="statusFilter">
-            {t('reports.statusFilter')}
-          </label>
-          <select
-            id="statusFilter"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value as StatusFilter)}
-            className="rounded-[var(--radius-md)] border border-border bg-surface px-2.5 py-1.5 text-sm text-text"
-          >
-            <option value="all">{t('reports.allStatuses')}</option>
-            <option value="draft">{t('reportStatus.draft')}</option>
-            <option value="completed">{t('reportStatus.completed')}</option>
-            <option value="signed">{t('reportStatus.signed')}</option>
-          </select>
-        </div>
-      )}
-
-      {loading ? (
-        <Spinner />
-      ) : error ? (
+      {error ? (
         <Alert tone="error">{error}</Alert>
       ) : needsSetup ? (
-        <Card>
-          <p className="text-text-muted">{setupHint}</p>
-        </Card>
-      ) : reports.length === 0 ? (
-        <Card>
-          <p className="text-text-muted">{t('reports.empty')}</p>
+        <Card padded={false}>
+          <EmptyState
+            icon={<Waves size={22} />}
+            title={t('reports.setupTitle')}
+            description={setupHint}
+            action={
+              canWrite && (
+                <Button asChild>
+                  <Link to={isCompany && clientCount === 0 ? '/clients' : '/pools'}>
+                    {isCompany && clientCount === 0
+                      ? t('pools.addClientFirst')
+                      : t('pools.addPool')}
+                  </Link>
+                </Button>
+              )
+            }
+          />
         </Card>
       ) : (
-        <div className="flex flex-col gap-2">
-          {reports.map((r) => (
-            <Link
-              key={r.id}
-              to={`/reports/${r.id}`}
-              className="flex items-center justify-between gap-3 rounded-[var(--radius-lg)] border border-border bg-surface p-4 shadow-sm transition-colors hover:bg-surface-muted"
+        <>
+          <TableToolbar
+            search={query}
+            onSearch={setQuery}
+            searchPlaceholder={t('reports.searchPlaceholder')}
+          >
+            <div
+              role="group"
+              aria-label={t('reports.statusFilter')}
+              className="inline-flex rounded-[var(--radius-md)] border border-border bg-surface p-0.5"
             >
-              <div className="min-w-0">
-                <p className="truncate font-medium text-text">
-                  {r.pool?.denominacion ?? '—'} · {r.basin?.denominacion ?? '—'}
-                </p>
-                <p className="text-sm text-text-muted">
-                  {new Date(r.visited_at).toLocaleString('es-ES')}
-                </p>
-              </div>
-              <ReportStatusBadge status={r.status} />
-            </Link>
-          ))}
-        </div>
+              {FILTERS.map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  aria-pressed={filter === f}
+                  onClick={() => setFilter(f)}
+                  className={cn(
+                    'h-8 rounded-[var(--radius-sm)] px-3 text-sm font-medium transition-colors',
+                    focusRing,
+                    filter === f
+                      ? 'bg-accent-soft text-navy-800'
+                      : 'text-text-muted hover:text-text',
+                  )}
+                >
+                  {f === 'all' ? t('reports.allStatuses') : t(`reportStatus.${f}`)}
+                </button>
+              ))}
+            </div>
+          </TableToolbar>
+          <DataTable
+            caption={t('reports.title')}
+            columns={columns}
+            rows={rows}
+            getRowId={(r) => r.id}
+            rowHref={(r) => `/reports/${r.id}`}
+            loading={loading}
+            empty={
+              reports.length === 0 && filter === 'all' ? (
+                <EmptyState
+                  icon={<ClipboardList size={22} />}
+                  title={t('reports.emptyTitle')}
+                  description={t('reports.emptyHint')}
+                  action={
+                    canWrite && (
+                      <Button asChild>
+                        <Link to="/reports/new">
+                          <Plus aria-hidden size={16} />
+                          {t('reports.addReport')}
+                        </Link>
+                      </Button>
+                    )
+                  }
+                />
+              ) : (
+                <EmptyState
+                  compact
+                  icon={<ClipboardList size={20} />}
+                  title={t('reports.noMatches')}
+                  description={t('reports.noMatchesHint')}
+                />
+              )
+            }
+          />
+        </>
       )}
     </div>
   );

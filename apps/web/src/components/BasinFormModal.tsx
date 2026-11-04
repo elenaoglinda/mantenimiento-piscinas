@@ -36,6 +36,7 @@ export function BasinFormModal({
   const [lamina, setLamina] = useState(basin?.lamina_m2?.toString() ?? '');
   const [profMax, setProfMax] = useState(basin?.prof_max?.toString() ?? '');
   const [profMin, setProfMin] = useState(basin?.prof_min?.toString() ?? '');
+  const [siloeCodV, setSiloeCodV] = useState(basin?.siloe_cod_v ?? '');
   const [observaciones, setObservaciones] = useState(basin?.observaciones ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +56,7 @@ export function BasinFormModal({
       lamina_m2: numOrNull(lamina),
       prof_max: numOrNull(profMax),
       prof_min: numOrNull(profMin),
+      siloe_cod_v: siloeCodV.trim() || null,
       observaciones: observaciones.trim() || null,
     };
     const { error } = basin
@@ -121,6 +123,12 @@ export function BasinFormModal({
             onChange={(e) => setProfMin(e.target.value)}
           />
         </div>
+        <TextField
+          label={t('basins.siloeCodV')}
+          hint={t('basins.siloeCodVHint')}
+          value={siloeCodV}
+          onChange={(e) => setSiloeCodV(e.target.value)}
+        />
         <TextareaField
           label={t('basins.observaciones')}
           value={observaciones}

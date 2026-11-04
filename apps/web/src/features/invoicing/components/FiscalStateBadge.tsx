@@ -1,15 +1,17 @@
 import { useTranslation } from 'react-i18next';
 import { fiscalState, isOverdue, type FiscalState } from '@piscinas/shared';
+import { StatusPill } from '../../../components/ui/StatusPill.js';
+import type { Tone } from '../../../components/ui/variants.js';
 import type { Enums } from '../../../lib/database.types.js';
 
-const TONE: Record<FiscalState, string> = {
-  draft: 'bg-surface-muted text-text-muted',
-  pending_send: 'bg-status-amber/15 text-status-amber',
-  sent: 'bg-status-green/15 text-status-green',
-  sent_with_errors: 'bg-status-amber/15 text-status-amber',
-  rejected: 'bg-status-red/15 text-status-red',
-  cancelled: 'bg-surface-muted text-text-muted line-through',
-  rectified: 'bg-surface-muted text-text-muted',
+const TONE: Record<FiscalState, Tone> = {
+  draft: 'neutral',
+  pending_send: 'amber',
+  sent: 'green',
+  sent_with_errors: 'amber',
+  rejected: 'red',
+  cancelled: 'neutral',
+  rectified: 'info',
 };
 
 export interface FiscalBadgeInvoice {
@@ -29,9 +31,9 @@ export function FiscalStateBadge({ invoice }: { invoice: FiscalBadgeInvoice }) {
     hasRectificativa: invoice.rectified,
   });
   return (
-    <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${TONE[state]}`}>
+    <StatusPill tone={TONE[state]} className={state === 'cancelled' ? 'line-through' : undefined}>
       {t(`invoicing.fiscal.${state}`)}
-    </span>
+    </StatusPill>
   );
 }
 
@@ -50,15 +52,10 @@ export function PaymentBadge({
 
   const overdue = isOverdue(dueDate, paymentStatus);
   const key = paymentStatus === 'paid' ? 'paid' : overdue ? 'overdue' : 'pending';
-  const tone =
-    key === 'paid'
-      ? 'bg-status-green/15 text-status-green'
-      : key === 'overdue'
-        ? 'bg-status-red/15 text-status-red'
-        : 'bg-surface-muted text-text-muted';
+  const tone: Tone = key === 'paid' ? 'green' : key === 'overdue' ? 'red' : 'neutral';
   return (
-    <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${tone}`}>
+    <StatusPill tone={tone} dot={false}>
       {t(`invoicing.payment.${key}`)}
-    </span>
+    </StatusPill>
   );
 }

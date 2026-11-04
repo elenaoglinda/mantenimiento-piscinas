@@ -124,7 +124,12 @@ export function PoolFormModal({
   }
 
   return (
-    <Modal open onClose={onClose} title={pool ? t('pools.editPool') : t('pools.addPool')}>
+    <Modal
+      open
+      variant="sheet"
+      onClose={onClose}
+      title={pool ? t('pools.editPool') : t('pools.addPool')}
+    >
       <form className="flex flex-col gap-4" onSubmit={onSubmit}>
         {error && <Alert tone="error">{error}</Alert>}
 
@@ -235,7 +240,8 @@ export function PoolFormModal({
           onChange={(e) => setObservaciones(e.target.value)}
         />
 
-        <div className="flex justify-end gap-2">
+        {/* Kept in view at the bottom of the side panel while the long form scrolls. */}
+        <div className="sticky -bottom-5 -mx-6 -mb-5 flex justify-end gap-2 border-t border-border bg-surface px-6 py-4">
           <Button type="button" variant="secondary" onClick={onClose}>
             {t('common.cancel')}
           </Button>

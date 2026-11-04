@@ -1,49 +1,31 @@
-import {
-  useId,
-  type SelectHTMLAttributes,
-  type TextareaHTMLAttributes,
-  type ReactNode,
-} from 'react';
-
-const controlClass =
-  'rounded-[var(--radius-md)] border border-border bg-surface px-3 py-2.5 text-text outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30';
-
-function FieldShell({ label, id, children }: { label: string; id: string; children: ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-medium text-text">
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-}
+import type { ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
+import { Field, NativeSelect, Textarea } from './Input.js';
 
 interface SelectFieldProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label: string;
+  hint?: string;
   children: ReactNode;
 }
 
-export function SelectField({ label, children, className = '', ...rest }: SelectFieldProps) {
-  const id = useId();
+/** `Field` + `NativeSelect`. */
+export function SelectField({ label, hint, children, ...rest }: SelectFieldProps) {
   return (
-    <FieldShell label={label} id={id}>
-      <select id={id} className={`${controlClass} ${className}`} {...rest}>
-        {children}
-      </select>
-    </FieldShell>
+    <Field label={label} hint={hint}>
+      <NativeSelect {...rest}>{children}</NativeSelect>
+    </Field>
   );
 }
 
 interface TextareaFieldProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label: string;
+  hint?: string;
 }
 
-export function TextareaField({ label, className = '', ...rest }: TextareaFieldProps) {
-  const id = useId();
+/** `Field` + `Textarea`. */
+export function TextareaField({ label, hint, ...rest }: TextareaFieldProps) {
   return (
-    <FieldShell label={label} id={id}>
-      <textarea id={id} rows={3} className={`${controlClass} ${className}`} {...rest} />
-    </FieldShell>
+    <Field label={label} hint={hint}>
+      <Textarea {...rest} />
+    </Field>
   );
 }

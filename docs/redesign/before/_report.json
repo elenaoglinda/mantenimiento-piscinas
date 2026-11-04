@@ -1,0 +1,362 @@
+[
+  {
+    "route": "/login",
+    "width": 1440,
+    "errors": [],
+    "finalUrl": "/login"
+  },
+  {
+    "route": "/login",
+    "width": 1024,
+    "errors": [],
+    "finalUrl": "/login"
+  },
+  {
+    "route": "/login",
+    "width": 390,
+    "errors": [],
+    "finalUrl": "/login"
+  },
+  {
+    "route": "/signup",
+    "width": 1440,
+    "errors": [],
+    "finalUrl": "/signup"
+  },
+  {
+    "route": "/signup",
+    "width": 1024,
+    "errors": [],
+    "finalUrl": "/signup"
+  },
+  {
+    "route": "/signup",
+    "width": 390,
+    "errors": [],
+    "finalUrl": "/signup"
+  },
+  {
+    "route": "/invite/demo-token",
+    "width": 1440,
+    "errors": [],
+    "finalUrl": "/invite/demo-token"
+  },
+  {
+    "route": "/invite/demo-token",
+    "width": 1024,
+    "errors": [],
+    "finalUrl": "/invite/demo-token"
+  },
+  {
+    "route": "/invite/demo-token",
+    "width": 390,
+    "errors": [],
+    "finalUrl": "/invite/demo-token"
+  },
+  {
+    "route": "/onboarding",
+    "width": 1440,
+    "errors": [],
+    "finalUrl": "/onboarding"
+  },
+  {
+    "route": "/onboarding",
+    "width": 1024,
+    "errors": [],
+    "finalUrl": "/onboarding"
+  },
+  {
+    "route": "/onboarding",
+    "width": 390,
+    "errors": [],
+    "finalUrl": "/onboarding"
+  },
+  {
+    "route": "/",
+    "width": 1440,
+    "errors": [],
+    "finalUrl": "/"
+  },
+  {
+    "route": "/",
+    "width": 1024,
+    "errors": [],
+    "finalUrl": "/"
+  },
+  {
+    "route": "/",
+    "width": 390,
+    "errors": [],
+    "finalUrl": "/"
+  },
+  {
+    "route": "/pools",
+    "width": 1440,
+    "errors": [],
+    "finalUrl": "/pools"
+  },
+  {
+    "route": "/pools",
+    "width": 1024,
+    "errors": [],
+    "finalUrl": "/pools"
+  },
+  {
+    "route": "/pools",
+    "width": 390,
+    "errors": [],
+    "finalUrl": "/pools"
+  },
+  {
+    "route": "/pools/pool-1",
+    "width": 1440,
+    "errors": [],
+    "finalUrl": "/pools/pool-1"
+  },
+  {
+    "route": "/pools/pool-1",
+    "width": 1024,
+    "errors": [],
+    "finalUrl": "/pools/pool-1"
+  },
+  {
+    "route": "/pools/pool-1",
+    "width": 390,
+    "errors": [],
+    "finalUrl": "/pools/pool-1"
+  },
+  {
+    "route": "/reports",
+    "width": 1440,
+    "errors": [],
+    "finalUrl": "/reports"
+  },
+  {
+    "route": "/reports",
+    "width": 1024,
+    "errors": [],
+    "finalUrl": "/reports"
+  },
+  {
+    "route": "/reports",
+    "width": 390,
+    "errors": [],
+    "finalUrl": "/reports"
+  },
+  {
+    "route": "/reports/new",
+    "width": 1440,
+    "errors": [],
+    "finalUrl": "/reports/new"
+  },
+  {
+    "route": "/reports/new",
+    "width": 1024,
+    "errors": [],
+    "finalUrl": "/reports/new"
+  },
+  {
+    "route": "/reports/new",
+    "width": 390,
+    "errors": [],
+    "finalUrl": "/reports/new"
+  },
+  {
+    "route": "/reports/import",
+    "width": 1440,
+    "errors": [],
+    "finalUrl": "/reports/import"
+  },
+  {
+    "route": "/reports/import",
+    "width": 1024,
+    "errors": [],
+    "finalUrl": "/reports/import"
+  },
+  {
+    "route": "/reports/import",
+    "width": 390,
+    "errors": [],
+    "finalUrl": "/reports/import"
+  },
+  {
+    "route": "/reports/rep-1",
+    "width": 1440,
+    "errors": [],
+    "finalUrl": "/reports/rep-1"
+  },
+  {
+    "route": "/reports/rep-1",
+    "width": 1024,
+    "errors": [],
+    "finalUrl": "/reports/rep-1"
+  },
+  {
+    "route": "/reports/rep-1",
+    "width": 390,
+    "errors": [],
+    "finalUrl": "/reports/rep-1"
+  },
+  {
+    "route": "/reports/rep-1/edit",
+    "width": 1440,
+    "errors": [],
+    "finalUrl": "/reports/rep-1/edit"
+  },
+  {
+    "route": "/reports/rep-1/edit",
+    "width": 1024,
+    "errors": [],
+    "finalUrl": "/reports/rep-1/edit"
+  },
+  {
+    "route": "/reports/rep-1/edit",
+    "width": 390,
+    "errors": [],
+    "finalUrl": "/reports/rep-1/edit"
+  },
+  {
+    "route": "/routes",
+    "width": 1440,
+    "errors": [],
+    "finalUrl": "/routes"
+  },
+  {
+    "route": "/routes",
+    "width": 1024,
+    "errors": [],
+    "finalUrl": "/routes"
+  },
+  {
+    "route": "/routes",
+    "width": 390,
+    "errors": [],
+    "finalUrl": "/routes"
+  },
+  {
+    "route": "/siloe",
+    "width": 1440,
+    "errors": [],
+    "finalUrl": "/siloe"
+  },
+  {
+    "route": "/siloe",
+    "width": 1024,
+    "errors": [],
+    "finalUrl": "/siloe"
+  },
+  {
+    "route": "/siloe",
+    "width": 390,
+    "errors": [],
+    "finalUrl": "/siloe"
+  },
+  {
+    "route": "/invoices",
+    "width": 1440,
+    "errors": [],
+    "finalUrl": "/invoices"
+  },
+  {
+    "route": "/invoices",
+    "width": 1024,
+    "errors": [],
+    "finalUrl": "/invoices"
+  },
+  {
+    "route": "/invoices",
+    "width": 390,
+    "errors": [],
+    "finalUrl": "/invoices"
+  },
+  {
+    "route": "/invoices/resumen",
+    "width": 1440,
+    "errors": [],
+    "finalUrl": "/invoices/resumen"
+  },
+  {
+    "route": "/invoices/resumen",
+    "width": 1024,
+    "errors": [],
+    "finalUrl": "/invoices/resumen"
+  },
+  {
+    "route": "/invoices/resumen",
+    "width": 390,
+    "errors": [],
+    "finalUrl": "/invoices/resumen"
+  },
+  {
+    "route": "/invoices/settings",
+    "width": 1440,
+    "errors": [],
+    "finalUrl": "/invoices/settings"
+  },
+  {
+    "route": "/invoices/settings",
+    "width": 1024,
+    "errors": [],
+    "finalUrl": "/invoices/settings"
+  },
+  {
+    "route": "/invoices/settings",
+    "width": 390,
+    "errors": [],
+    "finalUrl": "/invoices/settings"
+  },
+  {
+    "route": "/invoices/inv-1",
+    "width": 1440,
+    "errors": [],
+    "finalUrl": "/invoices/inv-1"
+  },
+  {
+    "route": "/invoices/inv-1",
+    "width": 1024,
+    "errors": [],
+    "finalUrl": "/invoices/inv-1"
+  },
+  {
+    "route": "/invoices/inv-1",
+    "width": 390,
+    "errors": [],
+    "finalUrl": "/invoices/inv-1"
+  },
+  {
+    "route": "/clients",
+    "width": 1440,
+    "errors": [],
+    "finalUrl": "/clients"
+  },
+  {
+    "route": "/clients",
+    "width": 1024,
+    "errors": [],
+    "finalUrl": "/clients"
+  },
+  {
+    "route": "/clients",
+    "width": 390,
+    "errors": [],
+    "finalUrl": "/clients"
+  },
+  {
+    "route": "/team",
+    "width": 1440,
+    "errors": [],
+    "finalUrl": "/team"
+  },
+  {
+    "route": "/team",
+    "width": 1024,
+    "errors": [],
+    "finalUrl": "/team"
+  },
+  {
+    "route": "/team",
+    "width": 390,
+    "errors": [],
+    "finalUrl": "/team"
+  }
+]

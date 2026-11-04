@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Card } from '../ui/feedback.js';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Card } from '../ui/Card.js';
+import { cn, focusRing } from '../ui/utils.js';
 import { madridTime, monthGrid, type RouteLite } from '../../lib/dashboard.js';
 
 interface RoutesCalendarProps {
@@ -39,26 +41,32 @@ export function RoutesCalendar({
   return (
     <Card className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-text">{t('dashboard.calendarTitle')}</h2>
+        <h2 className="text-base font-semibold text-text">{t('dashboard.calendarTitle')}</h2>
         <div className="flex items-center gap-1">
           <button
             type="button"
             aria-label={t('dashboard.prevMonth')}
             onClick={onPrev}
-            className="rounded-[var(--radius-md)] px-2 py-1 text-text-muted hover:bg-surface-muted hover:text-text"
+            className={cn(
+              'inline-flex size-8 items-center justify-center rounded-[var(--radius-md)] text-text-muted hover:bg-surface-muted hover:text-text',
+              focusRing,
+            )}
           >
-            ‹
+            <ChevronLeft aria-hidden size={16} />
           </button>
-          <span className="min-w-32 text-center text-sm font-medium text-text capitalize">
+          <span className="inline-block min-w-32 text-center text-sm font-medium text-text first-letter:uppercase">
             {monthLabel}
           </span>
           <button
             type="button"
             aria-label={t('dashboard.nextMonth')}
             onClick={onNext}
-            className="rounded-[var(--radius-md)] px-2 py-1 text-text-muted hover:bg-surface-muted hover:text-text"
+            className={cn(
+              'inline-flex size-8 items-center justify-center rounded-[var(--radius-md)] text-text-muted hover:bg-surface-muted hover:text-text',
+              focusRing,
+            )}
           >
-            ›
+            <ChevronRight aria-hidden size={16} />
           </button>
         </div>
       </div>
@@ -70,27 +78,35 @@ export function RoutesCalendar({
           </div>
         ))}
         {grid.map((day) => {
-          const count = (routesByDate.get(day.date) ?? []).length;
+          const dayRoutes = routesByDate.get(day.date) ?? [];
+          const count = dayRoutes.length;
+          const stopCount = dayRoutes.reduce((n, r) => n + r.stops.length, 0);
           const isSelected = day.date === selected;
           return (
             <button
               key={day.date}
               type="button"
               onClick={() => setSelected(day.date)}
-              className={`relative flex aspect-square flex-col items-center justify-center rounded-[var(--radius-md)] text-sm transition-colors ${
+              aria-pressed={isSelected}
+              aria-label={
+                count > 0
+                  ? `${Number(day.date.slice(8, 10))} · ${t('dashboard.stops', { count: stopCount })}`
+                  : undefined
+              }
+              className={`relative flex h-10 w-full min-w-0 flex-col items-center justify-center rounded-[var(--radius-md)] text-sm tabular-nums transition-colors ${focusRing} ${
                 isSelected
                   ? 'bg-primary text-primary-contrast'
                   : day.inMonth
                     ? 'text-text hover:bg-surface-muted'
-                    : 'text-text-muted/50 hover:bg-surface-muted'
-              } ${day.isToday && !isSelected ? 'ring-1 ring-primary' : ''}`}
+                    : 'text-text-muted hover:bg-surface-muted'
+              } ${day.isToday && !isSelected ? 'ring-1 ring-accent' : ''}`}
             >
               {Number(day.date.slice(8, 10))}
               {count > 0 && (
                 <span
                   aria-hidden
                   className={`mt-0.5 size-1.5 rounded-full ${
-                    isSelected ? 'bg-primary-contrast' : 'bg-primary'
+                    isSelected ? 'bg-primary-contrast' : 'bg-accent'
                   }`}
                 />
               )}
@@ -100,7 +116,7 @@ export function RoutesCalendar({
       </div>
 
       <div>
-        <p className="mb-2 text-sm font-medium text-text">
+        <p className="mb-2 text-sm font-medium text-text first-letter:uppercase">
           {new Intl.DateTimeFormat(i18n.language, {
             weekday: 'long',
             day: 'numeric',
@@ -115,7 +131,7 @@ export function RoutesCalendar({
             {selectedStops.map((stop, i) => (
               <li
                 key={i}
-                className="flex items-center justify-between gap-3 rounded-[var(--radius-md)] border border-border px-3 py-2"
+                className="flex items-center justify-between gap-3 border-b border-border py-2 last:border-0"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-text">{stop.poolName}</p>
@@ -132,7 +148,7 @@ export function RoutesCalendar({
         )}
         <Link
           to="/routes"
-          className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
+          className="mt-3 inline-block text-sm font-medium text-accent hover:underline"
         >
           {t('dashboard.planRouteLink')}
         </Link>

@@ -1,50 +1,90 @@
 /*
- * Design tokens — single source of truth for color, radius and elevation.
+ * Design tokens — single source of truth for colour, type, radius and elevation.
  *
- * Everything visual references these CSS custom properties (mapped into Tailwind via @theme
- * in index.css). To re-skin the app, change values here only — no component edits needed.
- * Palette: calm aqua/teal primary + clear semantic green/amber/red. See spec §12.
+ * Everything visual references these custom properties (mapped into Tailwind via @theme in
+ * index.css). To re-skin the app, change values here only — no component edits needed.
+ *
+ * Palette: "clean pool water", taken from cloro.app. Every brand hue sits between 186° and
+ * 215° (cyan → blue). The previous teal sat near 175°, which is why it read as green — like a
+ * pool that needs shocking. Nothing below 185°. See docs/redesign/PLAN.md §2 and the contrast
+ * audit in docs/redesign/AUDIT.md.
  */
 
 :root {
-  /* Brand scale (teal/aqua) */
-  --brand-50: #f0fdfa;
-  --brand-100: #ccfbf1;
-  --brand-200: #99f6e4;
-  --brand-300: #5eead4;
-  --brand-400: #2dd4bf;
-  --brand-500: #14b8a6;
-  --brand-600: #0d9488;
-  --brand-700: #0f766e;
-  --brand-800: #115e59;
-  --brand-900: #134e4a;
+  /* Aqua-blue — clean pool water */
+  --brand-50: #eef9fc;
+  --brand-100: #d5f1f7;
+  --brand-200: #aee3ef;
+  --brand-300: #74cde2;
+  --brand-400: #36b0ce;
+  --brand-500: #1394b5;
+  --brand-600: #007a96;
+  --brand-700: #006b79; /* website primary — links, active states */
+  --brand-800: #0a5566;
+  --brand-900: #0b4252;
+
+  /* Marine navy — primary buttons, sidebar active text */
+  --navy-700: #0e4a66;
+  --navy-800: #00303b; /* website deep navy */
+  --navy-900: #00161c; /* website ink */
 
   /* Semantic roles */
-  --primary: var(--brand-600);
-  --primary-hover: var(--brand-700);
+  --primary: var(--navy-800); /* primary buttons, like "Prueba gratis" on the website */
+  --primary-hover: var(--navy-900);
   --primary-contrast: #ffffff;
+  --accent: var(--brand-700); /* links, active nav, selected tabs, progress */
+  --accent-soft: var(--brand-50); /* active nav background, selected rows */
+  /*
+   * Deviation from the plan's brand-400: that shade is 2.4:1 against the page background and
+   * fails WCAG's 3:1 minimum for UI elements. brand-500 is the nearest passing shade (3.3:1).
+   */
+  --focus-ring: var(--brand-500);
 
   /* Surfaces & text */
-  --bg: #f6f8f8;
+  --bg: #f5f9fa; /* cool, very light aqua-grey */
   --surface: #ffffff;
-  --surface-muted: #eef2f2;
-  --text: #0f1f1d;
-  --text-muted: #5b6b69;
-  --border: #d8e0df;
+  --surface-muted: #eef4f6;
+  --sidebar-bg: #f8fbfc;
+  --text: #00161c;
+  --text-muted: #506169; /* website slate */
+  --border: #dce6ea;
 
-  /* Status (traffic-light) */
+  /* cloro.app hero gradient: light aqua into warm white (auth screens' brand panel). */
+  --hero-from: var(--brand-100);
+  --hero-via: var(--brand-50);
+  --hero-to: #fbf7f1;
+
+  /*
+   * Status (traffic-light) — kept apart from brand so "OK" never looks like brand.
+   *
+   * The base values are for fills, dots and bars. Status-coloured TEXT must use the -text
+   * variants: the base values are only 2.3–3.9:1 on their tints and fail WCAG AA, which the
+   * pills did before this redesign too. The -text shades are the lightest that pass ≥ 4.5:1
+   * on both the -bg tint and the 15 % tints used by pills.
+   */
   --status-green: #16a34a;
   --status-green-bg: #dcfce7;
+  --status-green-text: #166534;
   --status-amber: #d97706;
   --status-amber-bg: #fef3c7;
+  --status-amber-text: #a34a07;
   --status-red: #dc2626;
   --status-red-bg: #fee2e2;
+  --status-red-text: #b91c1c;
   --status-unknown: #94a3b8;
   --status-unknown-bg: #f1f5f9;
+  --status-unknown-text: #5b677a;
 
   /* Radius */
   --radius-sm: 0.375rem;
   --radius-md: 0.625rem;
-  --radius-lg: 1rem;
+  --radius-lg: 0.875rem;
   --radius-full: 9999px;
+
+  /* Elevation */
+  --shadow-card: 0 1px 2px rgb(0 22 28 / 0.04), 0 1px 3px rgb(0 22 28 / 0.06);
+
+  /* Type — self-hosted via @fontsource, imported in main.tsx */
+  --font-body: 'DM Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-heading: 'Space Grotesk', 'DM Sans', ui-sans-serif, system-ui, sans-serif;
 }

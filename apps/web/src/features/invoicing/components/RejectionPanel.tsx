@@ -30,7 +30,7 @@ export function RejectionPanel({
 
   return (
     <Card>
-      <h2 className="mb-2 text-lg font-semibold text-status-red">
+      <h2 className="mb-2 text-base font-semibold text-status-red-text">
         {t('invoicing.rejection.title')}
       </h2>
 

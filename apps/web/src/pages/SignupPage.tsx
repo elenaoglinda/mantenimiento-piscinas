@@ -90,7 +90,7 @@ export function SignupPage() {
 
         <p className="mt-6 text-center text-sm text-text-muted">
           {t('auth.haveAccount')}{' '}
-          <Link to="/login" className="font-medium text-primary hover:underline">
+          <Link to="/login" className="font-medium text-accent hover:underline">
             {t('auth.signInLink')}
           </Link>
         </p>

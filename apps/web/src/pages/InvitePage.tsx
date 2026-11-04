@@ -114,7 +114,7 @@ export function InvitePage() {
           <h1 className="text-xl font-semibold text-text">{t('invitations.acceptTitle')}</h1>
           <Alert tone="error">{invalidReason}</Alert>
           <p className="mt-4 text-center text-sm text-text-muted">
-            <Link to="/" className="font-medium text-primary hover:underline">
+            <Link to="/" className="font-medium text-accent hover:underline">
               {t('invitations.goHome')}
             </Link>
           </p>
@@ -131,7 +131,7 @@ export function InvitePage() {
           <h1 className="text-xl font-semibold text-text">{t('invitations.acceptTitle')}</h1>
           <p className="mt-2 text-sm text-text-muted">{t('invitations.alreadyMember')}</p>
           <p className="mt-4 text-center text-sm text-text-muted">
-            <Link to="/" className="font-medium text-primary hover:underline">
+            <Link to="/" className="font-medium text-accent hover:underline">
               {t('invitations.goHome')}
             </Link>
           </p>

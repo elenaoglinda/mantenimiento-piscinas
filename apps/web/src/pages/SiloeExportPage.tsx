@@ -8,13 +8,34 @@ import {
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../auth/context.js';
 import { buildExport, generateAnnualResults } from '../lib/siloeExport.js';
-import { Alert, Card, Spinner } from '../components/ui/feedback.js';
+import { Check, Download, FileCheck2, ShieldCheck, Sparkles } from 'lucide-react';
+import { Alert } from '../components/ui/feedback.js';
 import { Button } from '../components/ui/Button.js';
+import { Card, CardHeader } from '../components/ui/Card.js';
+import { DataTable, type Column } from '../components/ui/DataTable.js';
+import { EmptyState } from '../components/ui/EmptyState.js';
+import { PageHeader } from '../components/ui/PageHeader.js';
+import { ProgressBar } from '../components/ui/ProgressBar.js';
+import { Select } from '../components/ui/Select.js';
+import { SkeletonText } from '../components/ui/Skeleton.js';
+import { StatusPill } from '../components/ui/StatusPill.js';
 import { TextField } from '../components/ui/TextField.js';
 import { SelectField } from '../components/ui/fields.js';
+import { cn } from '../components/ui/utils.js';
 import type { Enums, Tables } from '../lib/database.types.js';
 
 type AnalysisType = Enums<'analysis_type'>;
+/** Fields the XML validator requires on each annual result (codes are checked at download). */
+const REQUIRED: {
+  key: 'laboratorio' | 'fecha_apertura' | 'fecha_cierre' | 'dias_apertura';
+  label: string;
+}[] = [
+  { key: 'laboratorio', label: 'siloe.laboratorio' },
+  { key: 'fecha_apertura', label: 'siloe.fechaApertura' },
+  { key: 'fecha_cierre', label: 'siloe.fechaCierre' },
+  { key: 'dias_apertura', label: 'siloe.diasApertura' },
+];
+
 type Row = Tables<'annual_result'> & {
   basin: { denominacion: string } | null;
   annual_result_param: { id: string }[];
@@ -140,173 +161,270 @@ export function SiloeExportPage() {
     setInfo(t('siloe.exportSuccess'));
   }
 
+  const missing = (r: Row) =>
+    REQUIRED.filter(({ key }) => r[key] === null || r[key] === undefined || r[key] === '');
+  const readyCount = rows.filter((r) => missing(r).length === 0).length;
+  const exported = exports.some((x) => x.kind === 'resultado_anual' && x.period_year === year);
+  // 0: choose + generate, 1: review, 2: download. Done steps get a check.
+  const step = rows.length === 0 ? 0 : exported ? 3 : 1;
+  const thisYear = new Date().getFullYear();
+  const years = Array.from({ length: 6 }, (_, i) => String(thisYear - i));
+  if (!years.includes(String(year))) years.push(String(year));
+
+  const exportColumns: Column<Tables<'xml_export'>>[] = [
+    {
+      id: 'date',
+      header: t('siloe.exportedAt'),
+      cell: (x) => (
+        <time dateTime={x.created_at}>{new Date(x.created_at).toLocaleString('es-ES')}</time>
+      ),
+      sortValue: (x) => x.created_at,
+    },
+    {
+      id: 'year',
+      header: t('siloe.year'),
+      cell: (x) => x.period_year ?? '—',
+      sortValue: (x) => x.period_year,
+    },
+    { id: 'kind', header: t('siloe.kind'), cell: (x) => x.kind, hideBelow: 'md' },
+    { id: 'count', header: t('basins.title'), cell: (x) => x.item_count, align: 'right' },
+  ];
+
   return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="text-2xl font-semibold text-text">{t('siloe.title')}</h1>
-        <p className="text-sm text-text-muted">{t('siloe.subtitle')}</p>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader className="mb-0" title={t('siloe.title')} description={t('siloe.subtitle')} />
+
+      <ol
+        aria-label={t('photoImport.stepsLabel')}
+        className="grid grid-cols-1 gap-3 sm:grid-cols-3"
+      >
+        {[t('siloe.step1'), t('siloe.step2'), t('siloe.step3')].map((label, i) => {
+          const done = i < step;
+          const current = i === step;
+          return (
+            <li
+              key={label}
+              aria-current={current ? 'step' : undefined}
+              className={cn(
+                'flex items-center gap-3 rounded-[var(--radius-lg)] border px-4 py-3 text-sm',
+                current
+                  ? 'border-accent bg-accent-soft font-medium text-navy-800'
+                  : 'border-border bg-surface text-text-muted',
+              )}
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  'inline-flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
+                  done
+                    ? 'bg-primary text-primary-contrast'
+                    : current
+                      ? 'bg-surface text-navy-800'
+                      : 'border border-border',
+                )}
+              >
+                {done ? <Check size={14} /> : i + 1}
+              </span>
+              {label}
+            </li>
+          );
+        })}
+      </ol>
 
       <Card>
-        <div className="flex flex-wrap items-end gap-4">
-          <div className="w-32">
-            <TextField
-              label={t('siloe.year')}
-              type="number"
+        <CardHeader title={t('siloe.step1')} description={t('siloe.step1Hint')} />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+          <div className="flex flex-col gap-1.5 sm:w-40">
+            <label htmlFor="siloe-year" className="text-sm font-medium text-text">
+              {t('siloe.year')}
+            </label>
+            <Select
+              id="siloe-year"
               value={String(year)}
-              onChange={(e) => setYear(Number(e.target.value))}
+              onValueChange={(v) => setYear(Number(v))}
+              options={years.map((y) => ({ value: y, label: y }))}
             />
           </div>
-          <div className="w-56">
-            <SelectField
-              label={t('siloe.analysisType')}
+          <div className="flex flex-col gap-1.5 sm:w-56">
+            <label htmlFor="siloe-type" className="text-sm font-medium text-text">
+              {t('siloe.analysisType')}
+            </label>
+            <Select
+              id="siloe-type"
               value={analysisType}
-              onChange={(e) => setAnalysisType(e.target.value as AnalysisType)}
-            >
-              <option value="autocontrol">{t('analysisType.autocontrol')}</option>
-              <option value="vigilancia">{t('analysisType.vigilancia')}</option>
-            </SelectField>
+              onValueChange={(v) => setAnalysisType(v as AnalysisType)}
+              options={[
+                { value: 'autocontrol', label: t('analysisType.autocontrol') },
+                { value: 'vigilancia', label: t('analysisType.vigilancia') },
+              ]}
+            />
           </div>
           {canWrite && (
-            <Button onClick={onGenerate} loading={busy}>
+            <Button
+              onClick={onGenerate}
+              loading={busy}
+              variant={rows.length ? 'secondary' : 'primary'}
+            >
+              {!busy && <Sparkles aria-hidden size={16} />}
               {t('siloe.generate')}
             </Button>
           )}
         </div>
         {info && (
-          <div className="mt-3">
-            <Alert tone="success">{info}</Alert>
-          </div>
+          <Alert tone="success" className="mt-4">
+            {info}
+          </Alert>
         )}
       </Card>
 
       {errors.length > 0 && (
-        <Card>
-          <h2 className="mb-2 text-lg font-semibold text-status-red">
-            {t('siloe.validationTitle')}
-          </h2>
-          <ul className="flex flex-col gap-1 text-sm text-text">
+        <Alert tone="error">
+          <p className="font-semibold">{t('siloe.validationTitle')}</p>
+          <ul className="mt-1 flex flex-col gap-1">
             {errors.map((e, i) => (
               <li key={i}>
-                <span className="font-mono text-xs text-text-muted">{e.code}</span> · {e.message}
-                {e.context && <span className="text-text-muted"> ({e.context})</span>}
+                <span className="font-mono text-xs opacity-80">{e.code}</span> · {e.message}
+                {e.context && <span className="opacity-80"> ({e.context})</span>}
               </li>
             ))}
           </ul>
-        </Card>
+        </Alert>
       )}
 
       {loading ? (
-        <Spinner />
-      ) : rows.length === 0 ? (
         <Card>
-          <p className="text-text-muted">{t('siloe.noResults')}</p>
+          <SkeletonText lines={6} />
+        </Card>
+      ) : rows.length === 0 ? (
+        <Card padded={false}>
+          <EmptyState
+            icon={<ShieldCheck size={22} />}
+            title={t('siloe.emptyTitle', { year })}
+            description={t('siloe.noResults')}
+          />
         </Card>
       ) : (
         <>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold text-text">{t('siloe.resultsTitle', { year })}</h2>
-            {canWrite && (
-              <div className="flex flex-wrap gap-2">
-                <Button variant="secondary" onClick={onSave} loading={busy}>
-                  {t('siloe.saveChanges')}
-                </Button>
-                <Button onClick={onDownload} loading={busy}>
-                  {t('siloe.downloadXml')}
-                </Button>
-              </div>
-            )}
-          </div>
+          <Card>
+            <CardHeader
+              title={t('siloe.resultsTitle', { year })}
+              description={t('siloe.readiness', { ready: readyCount, total: rows.length })}
+              actions={
+                canWrite && (
+                  <>
+                    <Button variant="secondary" onClick={onSave} loading={busy}>
+                      {t('siloe.saveChanges')}
+                    </Button>
+                    <Button onClick={onDownload} loading={busy}>
+                      {!busy && <Download aria-hidden size={16} />}
+                      {t('siloe.downloadXml')}
+                    </Button>
+                  </>
+                )
+              }
+            />
+            <ProgressBar
+              value={readyCount}
+              max={rows.length}
+              tone={readyCount === rows.length ? 'green' : 'accent'}
+              label={t('siloe.readiness', { ready: readyCount, total: rows.length })}
+            />
+          </Card>
 
-          {rows.map((r) => (
-            <Card key={r.id}>
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="font-medium text-text">{r.basin?.denominacion ?? '—'}</h3>
-                <span className="text-sm text-text-muted">
-                  {t('siloe.paramsCount', { count: r.annual_result_param.length })}
-                </span>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <TextField
-                  label={t('siloe.laboratorio')}
-                  value={r.laboratorio ?? ''}
-                  onChange={(e) => patchRow(r.id, { laboratorio: e.target.value })}
-                />
-                <TextField
-                  label={t('siloe.fechaApertura')}
-                  type="date"
-                  value={r.fecha_apertura ?? ''}
-                  onChange={(e) => patchRow(r.id, { fecha_apertura: e.target.value })}
-                />
-                <TextField
-                  label={t('siloe.fechaCierre')}
-                  type="date"
-                  value={r.fecha_cierre ?? ''}
-                  onChange={(e) => patchRow(r.id, { fecha_cierre: e.target.value })}
-                />
-                <TextField
-                  label={t('siloe.diasApertura')}
-                  type="number"
-                  value={String(r.dias_apertura ?? '')}
-                  onChange={(e) => patchRow(r.id, { dias_apertura: Number(e.target.value) })}
-                />
-                <TextField
-                  label={t('siloe.nIniciales')}
-                  type="number"
-                  value={String(r.n_iniciales)}
-                  onChange={(e) => patchRow(r.id, { n_iniciales: Number(e.target.value) })}
-                />
-                <TextField
-                  label={t('siloe.nRutina')}
-                  type="number"
-                  value={String(r.n_rutina)}
-                  onChange={(e) => patchRow(r.id, { n_rutina: Number(e.target.value) })}
-                />
-                <TextField
-                  label={t('siloe.nPeriodicos')}
-                  type="number"
-                  value={String(r.n_periodicos)}
-                  onChange={(e) => patchRow(r.id, { n_periodicos: Number(e.target.value) })}
-                />
-                <SelectField
-                  label={t('siloe.puntoMuestreo')}
-                  value={String(r.punto_muestreo)}
-                  onChange={(e) => patchRow(r.id, { punto_muestreo: Number(e.target.value) })}
-                >
-                  {[1, 2, 3, 4].map((n) => (
-                    <option key={n} value={n}>
-                      {t(`puntoMuestreo.${n}`)}
-                    </option>
-                  ))}
-                </SelectField>
-              </div>
-            </Card>
-          ))}
+          {rows.map((r) => {
+            const gaps = missing(r);
+            return (
+              <Card key={r.id}>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-base font-semibold text-text">
+                      {r.basin?.denominacion ?? '—'}
+                    </h3>
+                    {gaps.length === 0 ? (
+                      <StatusPill tone="green">{t('siloe.ready')}</StatusPill>
+                    ) : (
+                      <StatusPill tone="amber">
+                        {t('siloe.missing', { fields: gaps.map((g) => t(g.label)).join(', ') })}
+                      </StatusPill>
+                    )}
+                  </div>
+                  <span className="text-sm text-text-muted">
+                    {t('siloe.paramsCount', { count: r.annual_result_param.length })}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                  <TextField
+                    label={t('siloe.laboratorio')}
+                    value={r.laboratorio ?? ''}
+                    onChange={(e) => patchRow(r.id, { laboratorio: e.target.value })}
+                  />
+                  <TextField
+                    label={t('siloe.fechaApertura')}
+                    type="date"
+                    value={r.fecha_apertura ?? ''}
+                    onChange={(e) => patchRow(r.id, { fecha_apertura: e.target.value })}
+                  />
+                  <TextField
+                    label={t('siloe.fechaCierre')}
+                    type="date"
+                    value={r.fecha_cierre ?? ''}
+                    onChange={(e) => patchRow(r.id, { fecha_cierre: e.target.value })}
+                  />
+                  <TextField
+                    label={t('siloe.diasApertura')}
+                    type="number"
+                    value={String(r.dias_apertura ?? '')}
+                    onChange={(e) => patchRow(r.id, { dias_apertura: Number(e.target.value) })}
+                  />
+                  <TextField
+                    label={t('siloe.nIniciales')}
+                    type="number"
+                    value={String(r.n_iniciales)}
+                    onChange={(e) => patchRow(r.id, { n_iniciales: Number(e.target.value) })}
+                  />
+                  <TextField
+                    label={t('siloe.nRutina')}
+                    type="number"
+                    value={String(r.n_rutina)}
+                    onChange={(e) => patchRow(r.id, { n_rutina: Number(e.target.value) })}
+                  />
+                  <TextField
+                    label={t('siloe.nPeriodicos')}
+                    type="number"
+                    value={String(r.n_periodicos)}
+                    onChange={(e) => patchRow(r.id, { n_periodicos: Number(e.target.value) })}
+                  />
+                  <SelectField
+                    label={t('siloe.puntoMuestreo')}
+                    value={String(r.punto_muestreo)}
+                    onChange={(e) => patchRow(r.id, { punto_muestreo: Number(e.target.value) })}
+                  >
+                    {[1, 2, 3, 4].map((n) => (
+                      <option key={n} value={n}>
+                        {t(`puntoMuestreo.${n}`)}
+                      </option>
+                    ))}
+                  </SelectField>
+                </div>
+              </Card>
+            );
+          })}
         </>
       )}
 
-      <Card>
-        <h2 className="mb-2 text-lg font-semibold text-text">{t('siloe.history')}</h2>
-        {exports.length === 0 ? (
-          <p className="text-sm text-text-muted">{t('siloe.historyEmpty')}</p>
-        ) : (
-          <ul className="flex flex-col gap-2 text-sm">
-            {exports.map((x) => (
-              <li
-                key={x.id}
-                className="flex flex-col gap-0.5 sm:flex-row sm:justify-between sm:gap-3"
-              >
-                <span className="text-text">
-                  {x.kind} · {x.period_year} · {t('siloe.paramsCount', { count: x.item_count })}
-                </span>
-                <span className="shrink-0 text-text-muted">
-                  {new Date(x.created_at).toLocaleString('es-ES')}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+      <section>
+        <h2 className="mb-3 text-base font-semibold text-text">{t('siloe.history')}</h2>
+        <DataTable
+          caption={t('siloe.history')}
+          columns={exportColumns}
+          rows={exports}
+          getRowId={(x) => x.id}
+          loading={loading}
+          empty={
+            <EmptyState compact icon={<FileCheck2 size={20} />} title={t('siloe.historyEmpty')} />
+          }
+        />
+      </section>
     </div>
   );
 }

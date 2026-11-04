@@ -40,6 +40,29 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e
 
+  ui:
+    name: ui checks (axe, keyboard, overflow, end-to-end)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # Against the harness's fake Supabase backend (scripts/redesign): no secrets needed.
+      - run: npx playwright test -c scripts/redesign/playwright.config.ts a11y overflow keyboard flow
+        env:
+          SHOT_DIR: ci
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-checks
+          path: |
+            docs/redesign/ci/
+            test-results/
+
   sql:
     name: database lifecycle
     runs-on: ubuntu-latest

@@ -28,8 +28,13 @@ import {
   type InvoiceWithRelations,
 } from '../lib/data.js';
 import type { DbFailure } from '../../../lib/dbError.js';
-import { Alert, Card, Spinner } from '../../../components/ui/feedback.js';
+import { Send, Trash2 } from 'lucide-react';
+import { Alert } from '../../../components/ui/feedback.js';
 import { Button } from '../../../components/ui/Button.js';
+import { Card, CardHeader } from '../../../components/ui/Card.js';
+import { PageHeader } from '../../../components/ui/PageHeader.js';
+import { Skeleton, SkeletonText } from '../../../components/ui/Skeleton.js';
+import { useRecordCrumb } from '../../app-shell/index.js';
 import { TextField } from '../../../components/ui/TextField.js';
 import { Modal } from '../../../components/ui/Modal.js';
 import { DbFailureAlert } from '../components/DbFailureAlert.js';
@@ -38,6 +43,7 @@ import { InvoiceTimeline } from '../components/InvoiceTimeline.js';
 import { RejectionPanel } from '../components/RejectionPanel.js';
 import { RectificativaDialog } from '../components/RectificativaDialog.js';
 import type { Tables } from '../../../lib/database.types.js';
+import { HScroll } from '../../../components/ui/HScroll.js';
 
 export function InvoiceDetailPage() {
   const { t } = useTranslation();
@@ -98,13 +104,19 @@ export function InvoiceDetailPage() {
     void load();
   }, [load]);
 
-  if (loading) return <Spinner />;
+  useRecordCrumb(
+    invoice ? formatInvoiceNumber(invoice.invoice_series?.code ?? '', invoice.number) : null,
+  );
+
+  if (loading) return <InvoiceSkeleton />;
   if (!invoice) {
     return (
       <div className="flex flex-col gap-3">
-        <Link to="/invoices" className="text-sm text-primary hover:underline">
-          ← {t('invoicing.backToInvoices')}
-        </Link>
+        <PageHeader
+          className="mb-2"
+          back={{ to: '/invoices', label: t('invoicing.backToInvoices') }}
+          title={t('invoicing.notFound')}
+        />
         <DbFailureAlert failure={failure} />
         {!failure && <Alert tone="error">{t('invoicing.notFound')}</Alert>}
       </div>
@@ -154,300 +166,324 @@ export function InvoiceDetailPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <Link to="/invoices" className="text-sm text-primary hover:underline">
-            ← {t('invoicing.backToInvoices')}
-          </Link>
-          <h1 className="mt-1 text-2xl font-semibold text-text">
-            {formatInvoiceNumber(invoice.invoice_series?.code ?? '', invoice.number)}
-          </h1>
-          <p className="truncate text-sm text-text-muted">
+      <PageHeader
+        className="mb-1"
+        back={{ to: '/invoices', label: t('invoicing.backToInvoices') }}
+        title={formatInvoiceNumber(invoice.invoice_series?.code ?? '', invoice.number)}
+        description={
+          <span className="block max-w-2xl truncate">
             {invoice.client?.name ?? '—'} · {invoice.descripcion}
-          </p>
-        </div>
-        <span className="flex flex-wrap items-center gap-1.5">
-          <FiscalStateBadge invoice={{ ...invoice, rectified: Boolean(rectificativa) }} />
-          <PaymentBadge
-            paymentStatus={invoice.payment_status}
-            dueDate={invoice.due_date}
-            status={invoice.status}
-          />
-        </span>
-      </div>
+          </span>
+        }
+        badges={
+          <>
+            <FiscalStateBadge invoice={{ ...invoice, rectified: Boolean(rectificativa) }} />
+            <PaymentBadge
+              paymentStatus={invoice.payment_status}
+              dueDate={invoice.due_date}
+              status={invoice.status}
+            />
+          </>
+        }
+        actions={
+          canWrite && (isDraft || (!isVoid && invoice.send_status !== 'accepted')) ? (
+            <>
+              {isDraft && (
+                <>
+                  <Button
+                    variant="ghost"
+                    onClick={() =>
+                      void run(async () => {
+                        const f = await deleteDraft(invoice!.id);
+                        if (!f) navigate('/invoices');
+                        return f;
+                      })
+                    }
+                    loading={busy}
+                  >
+                    {t('invoicing.deleteDraft')}
+                  </Button>
+                  <Button onClick={() => setConfirmIssue(true)} disabled={lines.length === 0}>
+                    {t('invoicing.issue')}
+                  </Button>
+                </>
+              )}
+              {!isDraft && !isVoid && invoice.send_status !== 'accepted' && (
+                <Button
+                  onClick={() =>
+                    void run(async () => {
+                      const r = await sendInvoice(invoice!);
+                      if (!r.failure && !r.skipped) setInfo(t('invoicing.sent'));
+                      return r.failure;
+                    })
+                  }
+                  loading={busy}
+                >
+                  {!busy && <Send aria-hidden size={16} />}
+                  {t('invoicing.send')}
+                </Button>
+              )}
+            </>
+          ) : undefined
+        }
+      />
 
       <DbFailureAlert failure={failure} />
       {info && <Alert tone="success">{info}</Alert>}
 
       {!isDraft && !isVoid && <Alert tone="info">{t('invoicing.immutableNotice')}</Alert>}
 
-      {/* Where this invoice sits relative to its corrections. */}
-      {(rectificativa || invoice.rectifies_invoice_id || invoice.replaced_by_invoice_id) && (
-        <Card>
-          <ul className="flex flex-col gap-1 text-sm">
-            {rectificativa && (
-              <li>
-                {t('invoicing.link.rectifiedBy')}{' '}
-                <Link to={`/invoices/${rectificativa.id}`} className="text-primary hover:underline">
-                  {t('invoicing.link.open')}
-                </Link>
-              </li>
-            )}
-            {invoice.rectifies_invoice_id && (
-              <li>
-                {t('invoicing.link.rectifies')}{' '}
-                <Link
-                  to={`/invoices/${invoice.rectifies_invoice_id}`}
-                  className="text-primary hover:underline"
-                >
-                  {t('invoicing.link.open')}
-                </Link>
-              </li>
-            )}
-            {invoice.replaced_by_invoice_id && (
-              <li>
-                {t('invoicing.link.replacedBy')}{' '}
-                <Link
-                  to={`/invoices/${invoice.replaced_by_invoice_id}`}
-                  className="text-primary hover:underline"
-                >
-                  {t('invoicing.link.open')}
-                </Link>
-              </li>
-            )}
-          </ul>
-        </Card>
-      )}
-
-      {invoice.send_status === 'rejected' && canWrite && (
-        <RejectionPanel
-          errorCode={openRecord?.error_code ?? null}
-          errorMessage={openRecord?.error_message ?? invoice.last_error}
-          busy={busy}
-          onResend={() =>
-            void run(async () => (await sendInvoice(invoice!, 'subsanacion')).failure)
-          }
-          onSubsanar={() =>
-            void run(async () => (await sendInvoice(invoice!, 'subsanacion')).failure)
-          }
-          onCancelAndReplace={() =>
-            void run(async () => {
-              const { id, failure: f } = await cancelAndReplace(invoice!.id);
-              if (id) navigate(`/invoices/${id}`);
-              return f;
-            })
-          }
-        />
-      )}
-
-      <Card>
-        <h2 className="mb-3 text-lg font-semibold text-text">{t('invoicing.lines')}</h2>
-        {lines.length === 0 ? (
-          <p className="text-sm text-text-muted">{t('invoicing.noLines')}</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[32rem] text-sm">
-              <thead>
-                <tr className="text-left text-text-muted">
-                  <th className="py-1 pr-2 font-medium">{t('invoicing.lineDescription')}</th>
-                  <th className="py-1 pr-2 text-right font-medium">{t('invoicing.quantity')}</th>
-                  <th className="py-1 pr-2 text-right font-medium">{t('invoicing.unitPrice')}</th>
-                  <th className="py-1 pr-2 text-right font-medium">{t('invoicing.taxRate')}</th>
-                  <th className="py-1 pr-2 text-right font-medium">{t('invoicing.lineTotal')}</th>
-                  {isDraft && canWrite && <th className="py-1" />}
-                </tr>
-              </thead>
-              <tbody>
-                {lines.map((l) => (
-                  <tr key={l.id} className="border-t border-border">
-                    <td className="py-2 pr-2 text-text">{l.description}</td>
-                    <td className="py-2 pr-2 text-right text-text">{l.quantity}</td>
-                    <td className="py-2 pr-2 text-right text-text">
-                      {formatEuros(Number(l.unit_price_cents))}
-                    </td>
-                    <td className="py-2 pr-2 text-right text-text">{l.tax_rate}%</td>
-                    <td className="py-2 pr-2 text-right text-text">
-                      {formatEuros(Number(l.base_cents))}
-                    </td>
-                    {isDraft && canWrite && (
-                      <td className="py-2 text-right">
-                        <button
-                          type="button"
-                          className="text-sm text-status-red hover:underline"
-                          onClick={() => void run(() => deleteLine(l.id))}
-                        >
-                          {t('common.delete')}
-                        </button>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {isDraft && canWrite && (
-          <div className="mt-4 grid gap-3 sm:grid-cols-4">
-            <TextField
-              label={t('invoicing.lineDescription')}
-              value={desc}
-              onChange={(e) => setDesc(e.target.value)}
-            />
-            <TextField
-              label={t('invoicing.quantity')}
-              value={qty}
-              onChange={(e) => setQty(e.target.value)}
-              inputMode="decimal"
-            />
-            <TextField
-              label={t('invoicing.unitPrice')}
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              inputMode="decimal"
-              hint={t('invoicing.unitPriceHint')}
-            />
-            <div className="flex items-end">
-              <Button variant="secondary" onClick={onAddLine} loading={busy}>
-                {t('invoicing.addLine')}
-              </Button>
-            </div>
-          </div>
-        )}
-      </Card>
-
-      <Card>
-        <h2 className="mb-3 text-lg font-semibold text-text">{t('invoicing.totals')}</h2>
-        <dl className="flex flex-col gap-1 text-sm">
-          {breakdown.map((b) => (
-            <div key={b.taxRate} className="flex justify-between">
-              <dt className="text-text-muted">{t('invoicing.baseAtRate', { rate: b.taxRate })}</dt>
-              <dd className="text-text">
-                {formatEuros(b.baseCents)} + {formatEuros(b.quotaCents)}
-              </dd>
-            </div>
-          ))}
-          <div className="flex justify-between border-t border-border pt-2 text-base font-semibold">
-            <dt className="text-text">{t('invoicing.total')}</dt>
-            <dd className="text-text">{formatEuros(Number(invoice.total_cents))}</dd>
-          </div>
-        </dl>
-      </Card>
-
-      {!isDraft && (
-        <Card>
-          <h2 className="mb-3 text-lg font-semibold text-text">{t('invoicing.verifactu')}</h2>
-          <dl className="flex flex-col gap-1 text-sm">
-            <Row label={t('invoicing.aeatEstado')} value={invoice.aeat_estado ?? '—'} />
-            <Row label={t('invoicing.huella')} value={invoice.verifacti_huella ?? '—'} mono />
-            {invoice.aeat_csv && <Row label="CSV" value={invoice.aeat_csv} mono />}
-            {openRecord && (
-              <Row label={t('invoicing.attempts')} value={String(openRecord.attempts)} />
-            )}
-          </dl>
-          {invoice.aeat_url && (
-            <a
-              href={invoice.aeat_url}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-3 inline-block text-sm text-primary hover:underline"
-            >
-              {t('invoicing.validateAtAeat')}
-            </a>
-          )}
-        </Card>
-      )}
-
-      <InvoiceTimeline entries={activity} />
-
-      {canWrite && (
-        <div className="flex flex-wrap gap-2">
-          {isDraft && (
-            <>
-              <Button onClick={() => setConfirmIssue(true)} disabled={lines.length === 0}>
-                {t('invoicing.issue')}
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  void run(async () => {
-                    const f = await deleteDraft(invoice!.id);
-                    if (!f) navigate('/invoices');
-                    return f;
-                  })
-                }
-                loading={busy}
-              >
-                {t('invoicing.deleteDraft')}
-              </Button>
-            </>
-          )}
-
-          {!isDraft && !isVoid && invoice.send_status !== 'accepted' && (
-            <Button
-              onClick={() =>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="flex min-w-0 flex-col gap-6">
+          {invoice.send_status === 'rejected' && canWrite && (
+            <RejectionPanel
+              errorCode={openRecord?.error_code ?? null}
+              errorMessage={openRecord?.error_message ?? invoice.last_error}
+              busy={busy}
+              onResend={() =>
+                void run(async () => (await sendInvoice(invoice!, 'subsanacion')).failure)
+              }
+              onSubsanar={() =>
+                void run(async () => (await sendInvoice(invoice!, 'subsanacion')).failure)
+              }
+              onCancelAndReplace={() =>
                 void run(async () => {
-                  const r = await sendInvoice(invoice!);
-                  if (!r.failure && !r.skipped) setInfo(t('invoicing.sent'));
-                  return r.failure;
+                  const { id, failure: f } = await cancelAndReplace(invoice!.id);
+                  if (id) navigate(`/invoices/${id}`);
+                  return f;
                 })
               }
-              loading={busy}
-            >
-              {t('invoicing.send')}
-            </Button>
+            />
           )}
+          {/* Where this invoice sits relative to its corrections. */}
+          {(rectificativa || invoice.rectifies_invoice_id || invoice.replaced_by_invoice_id) && (
+            <Card>
+              <ul className="flex flex-col gap-1 text-sm">
+                {rectificativa && (
+                  <li>
+                    {t('invoicing.link.rectifiedBy')}{' '}
+                    <Link
+                      to={`/invoices/${rectificativa.id}`}
+                      className="text-accent hover:underline"
+                    >
+                      {t('invoicing.link.open')}
+                    </Link>
+                  </li>
+                )}
+                {invoice.rectifies_invoice_id && (
+                  <li>
+                    {t('invoicing.link.rectifies')}{' '}
+                    <Link
+                      to={`/invoices/${invoice.rectifies_invoice_id}`}
+                      className="text-accent hover:underline"
+                    >
+                      {t('invoicing.link.open')}
+                    </Link>
+                  </li>
+                )}
+                {invoice.replaced_by_invoice_id && (
+                  <li>
+                    {t('invoicing.link.replacedBy')}{' '}
+                    <Link
+                      to={`/invoices/${invoice.replaced_by_invoice_id}`}
+                      className="text-accent hover:underline"
+                    >
+                      {t('invoicing.link.open')}
+                    </Link>
+                  </li>
+                )}
+              </ul>
+            </Card>
+          )}
+          <Card>
+            <CardHeader title={t('invoicing.lines')} />
+            {lines.length === 0 ? (
+              <p className="text-sm text-text-muted">{t('invoicing.noLines')}</p>
+            ) : (
+              <HScroll label={t('invoicing.lines')}>
+                <table className="w-full min-w-[32rem] text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-xs text-text-muted">
+                      <th className="py-1 pr-2 font-semibold">{t('invoicing.lineDescription')}</th>
+                      <th className="py-1 pr-2 text-right font-semibold">
+                        {t('invoicing.quantity')}
+                      </th>
+                      <th className="py-1 pr-2 text-right font-semibold">
+                        {t('invoicing.unitPrice')}
+                      </th>
+                      <th className="py-1 pr-2 text-right font-semibold">
+                        {t('invoicing.taxRate')}
+                      </th>
+                      <th className="py-1 pr-2 text-right font-semibold">
+                        {t('invoicing.lineTotal')}
+                      </th>
+                      {isDraft && canWrite && <th className="py-1" />}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lines.map((l) => (
+                      <tr key={l.id} className="border-b border-border last:border-0">
+                        <td className="py-2 pr-2 text-text">{l.description}</td>
+                        <td className="py-2 pr-2 text-right text-text">{l.quantity}</td>
+                        <td className="py-2 pr-2 text-right text-text">
+                          {formatEuros(Number(l.unit_price_cents))}
+                        </td>
+                        <td className="py-2 pr-2 text-right text-text">{l.tax_rate}%</td>
+                        <td className="py-2 pr-2 text-right text-text">
+                          {formatEuros(Number(l.base_cents))}
+                        </td>
+                        {isDraft && canWrite && (
+                          <td className="py-2 text-right">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`${t('common.delete')}: ${l.description}`}
+                              title={t('common.delete')}
+                              onClick={() => void run(() => deleteLine(l.id))}
+                            >
+                              <Trash2 aria-hidden size={16} />
+                            </Button>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </HScroll>
+            )}
 
+            {isDraft && canWrite && (
+              <div className="mt-4 grid gap-3 border-t border-border pt-4 sm:grid-cols-[2fr_1fr_1fr_auto]">
+                <TextField
+                  label={t('invoicing.lineDescription')}
+                  value={desc}
+                  onChange={(e) => setDesc(e.target.value)}
+                />
+                <TextField
+                  label={t('invoicing.quantity')}
+                  value={qty}
+                  onChange={(e) => setQty(e.target.value)}
+                  inputMode="decimal"
+                />
+                <TextField
+                  label={t('invoicing.unitPrice')}
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  inputMode="decimal"
+                  hint={t('invoicing.unitPriceHint')}
+                />
+                <div className="flex items-start sm:pt-[26px]">
+                  <Button variant="secondary" onClick={onAddLine} loading={busy}>
+                    {t('invoicing.addLine')}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </Card>
+
+          <InvoiceTimeline entries={activity} />
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-6">
+          <Card>
+            <CardHeader title={t('invoicing.totals')} />
+            <dl className="flex flex-col gap-1 text-sm">
+              {breakdown.map((b) => (
+                <div key={b.taxRate} className="flex justify-between">
+                  <dt className="text-text-muted">
+                    {t('invoicing.baseAtRate', { rate: b.taxRate })}
+                  </dt>
+                  <dd className="text-right text-text tabular-nums">
+                    {formatEuros(b.baseCents)} + {formatEuros(b.quotaCents)}
+                  </dd>
+                </div>
+              ))}
+              <div className="mt-2 flex items-baseline justify-between border-t border-border pt-3">
+                <dt className="font-semibold text-text">{t('invoicing.total')}</dt>
+                <dd className="font-display text-2xl font-semibold text-text tabular-nums">
+                  {formatEuros(Number(invoice.total_cents))}
+                </dd>
+              </div>
+            </dl>
+          </Card>
           {!isDraft && (
-            <Button
-              variant="secondary"
-              onClick={() => void run(async () => (await refreshStatus(invoice!)).failure)}
-              loading={busy}
-            >
-              {t('invoicing.refreshStatus')}
-            </Button>
-          )}
-
-          {!isDraft && !isVoid && (
-            <>
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  void run(() => markPaid(invoice!.id, invoice!.payment_status !== 'paid'))
-                }
-                loading={busy}
-              >
-                {invoice.payment_status === 'paid'
-                  ? t('invoicing.markUnpaid')
-                  : t('invoicing.markPaid')}
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => void run(() => cancelInvoice(invoice!.id))}
-              >
-                {t('invoicing.cancel')}
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  void run(async () => {
-                    const { id, failure: f } = await cancelAndReplace(invoice!.id);
-                    if (id) navigate(`/invoices/${id}`);
-                    return f;
-                  })
-                }
-              >
-                {t('invoicing.cancelAndReplace')}
-              </Button>
-              {invoice.send_status === 'accepted' && !rectificativa && (
-                <Button variant="secondary" onClick={() => setRectOpen(true)}>
-                  {t('invoicing.rectificativa.action')}
-                </Button>
+            <Card>
+              <CardHeader title={t('invoicing.verifactu')} />
+              <dl className="flex flex-col gap-2 text-sm">
+                <Row label={t('invoicing.aeatEstado')} value={invoice.aeat_estado ?? '—'} />
+                <Row label={t('invoicing.huella')} value={invoice.verifacti_huella ?? '—'} mono />
+                {invoice.aeat_csv && <Row label="CSV" value={invoice.aeat_csv} mono />}
+                {openRecord && (
+                  <Row label={t('invoicing.attempts')} value={String(openRecord.attempts)} />
+                )}
+              </dl>
+              {invoice.aeat_url && (
+                <a
+                  href={invoice.aeat_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-block text-sm text-accent hover:underline"
+                >
+                  {t('invoicing.validateAtAeat')}
+                </a>
               )}
-            </>
+            </Card>
+          )}
+          {canWrite && !isDraft && (
+            <Card>
+              <CardHeader title={t('invoicing.actions')} />
+              <div className="flex flex-col gap-2 [&>button]:w-full">
+                <Button
+                  variant="secondary"
+                  onClick={() => void run(async () => (await refreshStatus(invoice!)).failure)}
+                  loading={busy}
+                >
+                  {t('invoicing.refreshStatus')}
+                </Button>
+                {!isVoid && (
+                  <>
+                    <Button
+                      variant="secondary"
+                      onClick={() =>
+                        void run(() => markPaid(invoice!.id, invoice!.payment_status !== 'paid'))
+                      }
+                      loading={busy}
+                    >
+                      {invoice.payment_status === 'paid'
+                        ? t('invoicing.markUnpaid')
+                        : t('invoicing.markPaid')}
+                    </Button>
+                    {invoice.send_status === 'accepted' && !rectificativa && (
+                      <Button variant="secondary" onClick={() => setRectOpen(true)}>
+                        {t('invoicing.rectificativa.action')}
+                      </Button>
+                    )}
+                    <Button
+                      variant="secondary"
+                      onClick={() =>
+                        void run(async () => {
+                          const { id, failure: f } = await cancelAndReplace(invoice!.id);
+                          if (id) navigate(`/invoices/${id}`);
+                          return f;
+                        })
+                      }
+                    >
+                      {t('invoicing.cancelAndReplace')}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="text-status-red-text"
+                      onClick={() => void run(() => cancelInvoice(invoice!.id))}
+                    >
+                      {t('invoicing.cancel')}
+                    </Button>
+                  </>
+                )}
+              </div>
+            </Card>
           )}
         </div>
-      )}
+      </div>
 
       {/* Issuing is irreversible: the number is allocated and the invoice is filed. */}
       <Modal
@@ -510,6 +546,24 @@ function Row({ label, value, mono }: { label: string; value: string; mono?: bool
     <div className="flex justify-between gap-3">
       <dt className="text-text-muted">{label}</dt>
       <dd className={`truncate text-text ${mono ? 'font-mono text-xs' : ''}`}>{value}</dd>
+    </div>
+  );
+}
+
+function InvoiceSkeleton() {
+  return (
+    <div aria-busy="true">
+      <Skeleton className="mb-3 h-4 w-24" />
+      <Skeleton className="mb-2 h-8 w-48" />
+      <Skeleton className="mb-8 h-4 w-72 max-w-full" />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <Card>
+          <SkeletonText lines={6} />
+        </Card>
+        <Card>
+          <SkeletonText lines={3} />
+        </Card>
+      </div>
     </div>
   );
 }

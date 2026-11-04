@@ -1,0 +1,128 @@
+[
+  {
+    "route": "/login",
+    "finalUrl": "/login",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/signup",
+    "finalUrl": "/signup",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/invite/demo-token",
+    "finalUrl": "/invite/demo-token",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/onboarding",
+    "finalUrl": "/onboarding",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/",
+    "finalUrl": "/",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/pools",
+    "finalUrl": "/pools",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/pools/pool-1",
+    "finalUrl": "/pools/pool-1",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/reports",
+    "finalUrl": "/reports",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/reports/new",
+    "finalUrl": "/reports/new",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/reports/import",
+    "finalUrl": "/reports/import",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/reports/rep-1",
+    "finalUrl": "/reports/rep-1",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/reports/rep-1/edit",
+    "finalUrl": "/reports/rep-1/edit",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/routes",
+    "finalUrl": "/routes",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/siloe",
+    "finalUrl": "/siloe",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/invoices",
+    "finalUrl": "/invoices",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/invoices/resumen",
+    "finalUrl": "/invoices/resumen",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/invoices/settings",
+    "finalUrl": "/invoices/settings",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/invoices/inv-1",
+    "finalUrl": "/invoices/inv-1",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/clients",
+    "finalUrl": "/clients",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/team",
+    "finalUrl": "/team",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/design",
+    "finalUrl": "/design",
+    "score": 100,
+    "failing": []
+  }
+]

@@ -18,29 +18,47 @@
   --color-brand-800: var(--brand-800);
   --color-brand-900: var(--brand-900);
 
+  --color-navy-700: var(--navy-700);
+  --color-navy-800: var(--navy-800);
+  --color-navy-900: var(--navy-900);
+
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-primary-contrast: var(--primary-contrast);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-focus: var(--focus-ring);
 
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-surface-muted: var(--surface-muted);
+  --color-sidebar: var(--sidebar-bg);
   --color-text: var(--text);
   --color-text-muted: var(--text-muted);
   --color-border: var(--border);
 
   --color-status-green: var(--status-green);
   --color-status-green-bg: var(--status-green-bg);
+  --color-status-green-text: var(--status-green-text);
   --color-status-amber: var(--status-amber);
   --color-status-amber-bg: var(--status-amber-bg);
+  --color-status-amber-text: var(--status-amber-text);
   --color-status-red: var(--status-red);
   --color-status-red-bg: var(--status-red-bg);
+  --color-status-red-text: var(--status-red-text);
   --color-status-unknown: var(--status-unknown);
   --color-status-unknown-bg: var(--status-unknown-bg);
+  --color-status-unknown-text: var(--status-unknown-text);
 
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
+  --radius-full: var(--radius-full);
+
+  --shadow-card: var(--shadow-card);
+
+  --font-sans: var(--font-body);
+  --font-display: var(--font-heading);
 }
 
 html,
@@ -59,15 +77,31 @@ body {
   margin: 0;
   background-color: var(--bg);
   color: var(--text);
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
+  font-family: var(--font-body);
+  font-size: 0.875rem; /* 14px body, per the type scale */
+  line-height: 1.25rem;
   -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * Type: Space Grotesk for headings (and KPI numbers, via `font-display`); DM Sans everywhere
+ * else. Same pairing as cloro.app.
+ */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.01em;
+}
+
+/*
+ * Tables in this app are mostly ppm, pH, €, counts and dates — columns that should line up.
+ * Tabular figures stop a "1,4" and an "8,0" from being different widths.
+ */
+table,
+time {
+  font-variant-numeric: tabular-nums;
 }
 
 /*
@@ -80,4 +114,90 @@ body {
   textarea {
     font-size: 16px;
   }
+}
+
+/*
+ * Arrow for native selects (components/ui/Input.tsx → NativeSelect). A background rather than an
+ * icon element, so it stays inside the control at any width. Stroke is --text-muted: a data URI
+ * can't read CSS variables.
+ */
+@utility select-chevron {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23506169' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px 16px;
+}
+
+/* Motion for the component kit (dialogs, sheets, toasts). Off when the user asks for less. */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    /* `transform`, not `translate`: Tailwind v4 centres with the separate `translate` property. */
+    transform: translateY(8px);
+  }
+}
+@keyframes sheet-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* react-day-picker, themed with our tokens (see components/ui/DatePicker.tsx). */
+.cloro-calendar .rdp-root {
+  --rdp-accent-color: var(--accent);
+  --rdp-accent-background-color: var(--accent-soft);
+  --rdp-today-color: var(--accent);
+  --rdp-day-height: 36px;
+  --rdp-day-width: 36px;
+  --rdp-day_button-height: 34px;
+  --rdp-day_button-width: 34px;
+  --rdp-day_button-border-radius: var(--radius-md);
+  --rdp-nav_button-height: 2rem;
+  --rdp-nav_button-width: 2rem;
+  font-size: 0.875rem;
+}
+.cloro-calendar .rdp-caption_label {
+  font-family: var(--font-heading);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.cloro-calendar .rdp-weekday {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  opacity: 1;
+}
+.cloro-calendar .rdp-selected .rdp-day_button {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-contrast);
+}
+.cloro-calendar .rdp-day_button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
 }
