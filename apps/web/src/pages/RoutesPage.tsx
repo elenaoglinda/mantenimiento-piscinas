@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { stopCounts } from '@piscinas/shared';
+import { StopActions, StopStatusPill, type StopState } from '../features/service-log/index.js';
 import { useAuth } from '../auth/context.js';
 import { supabase } from '../lib/supabase.js';
 import { googleMapsLink, optimizeRoute, routeMapUrl, type LatLng } from '../lib/routing.js';
@@ -46,7 +48,7 @@ interface Plan {
   duration: number;
 }
 
-interface AgendaStop {
+interface AgendaStop extends StopState {
   seq: number;
   eta: string | null;
   poolId: string;
@@ -113,6 +115,7 @@ export function RoutesPage() {
   const [technician, setTechnician] = useState('all');
   const [technicians, setTechnicians] = useState<{ id: string; name: string }[]>([]);
   const [poolInfo, setPoolInfo] = useState<Map<string, PoolInfo>>(new Map());
+  const [stopsVersion, setStopsVersion] = useState(0);
   const [agenda, setAgenda] = useState<AgendaRoute[] | null>(null);
   const [poolQuery, setPoolQuery] = useState('');
 
@@ -164,11 +167,17 @@ export function RoutesPage() {
         Tables<'route'>,
         'id' | 'route_date' | 'technician_id' | 'distance_m' | 'duration_s'
       >[];
-      let stops: { route_id: string; pool_id: string; seq: number; eta: string | null }[] = [];
+      let stops: (StopState & {
+        route_id: string;
+        pool_id: string;
+        seq: number;
+        eta: string | null;
+      })[] = [];
       if (routes.length > 0) {
         const { data: stopData } = await supabase
           .from('route_stop')
-          .select('route_id, pool_id, seq, eta')
+          // select('*'): includes estado/motivo/report_id once the migration adds them.
+          .select('*')
           .in(
             'route_id',
             routes.map((r) => r.id),
@@ -186,15 +195,24 @@ export function RoutesPage() {
           stops: stops
             .filter((st) => st.route_id === r.id)
             .sort((a, b) => a.seq - b.seq)
-            .map((st) => ({ seq: st.seq, eta: st.eta, poolId: st.pool_id })),
+            .map((st) => ({
+              seq: st.seq,
+              eta: st.eta,
+              poolId: st.pool_id,
+              id: st.id,
+              estado: st.estado,
+              motivo: st.motivo,
+              report_id: st.report_id,
+            })),
         })),
       );
     })();
     return () => {
       active = false;
     };
-    // `history` changes after a plan is saved, so the agenda picks the new route up too.
-  }, [range, history]);
+    // `history` changes after a plan is saved, so the agenda picks the new route up too;
+    // `stopsVersion` after a stop is skipped or reopened.
+  }, [range, history, stopsVersion]);
 
   useEffect(() => {
     void load();
@@ -323,6 +341,17 @@ export function RoutesPage() {
 
   if (loading) return <RoutesSkeleton />;
 
+  /** "2 de 5 hechas · 1 saltada" for a route's stops. */
+  const progressText = (stops: AgendaStop[]) => {
+    const c = stopCounts(stops);
+    return [
+      t('serviceLog.stops.progress', { done: c.hecha, total: stops.length }),
+      c.saltada ? t('serviceLog.stops.progressSkipped', { count: c.saltada }) : null,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+  };
+
   return (
     <div>
       <PageHeader title={t('routes.title')} description={t('routes.subtitle')} />
@@ -448,6 +477,7 @@ export function RoutesPage() {
                       description={[
                         techName(r.technicianId),
                         t('dashboard.stops', { count: r.stops.length }),
+                        progressText(r.stops),
                         r.distance != null ? fmtDistance(r.distance) : null,
                         r.duration != null ? fmtDuration(r.duration) : null,
                       ]
@@ -458,7 +488,7 @@ export function RoutesPage() {
                       {r.stops.map((st) => (
                         <li
                           key={st.seq}
-                          className="flex items-center gap-3 border-b border-border py-2.5 last:border-0"
+                          className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border py-2.5 last:border-0"
                         >
                           <span
                             aria-hidden
@@ -466,7 +496,7 @@ export function RoutesPage() {
                           >
                             {st.seq}
                           </span>
-                          <span className="min-w-0 flex-1 truncate text-sm font-medium text-text">
+                          <span className="min-w-0 flex-1 basis-40 truncate text-sm font-medium text-text">
                             {poolInfo.get(st.poolId)?.denominacion ?? '—'}
                           </span>
                           {st.eta && (
@@ -477,13 +507,14 @@ export function RoutesPage() {
                               {madridTime(st.eta)}
                             </time>
                           )}
-                          {canWrite && (
-                            <Button asChild variant="ghost" size="sm">
-                              <Link to={`/reports/new?poolId=${st.poolId}`}>
-                                {t('routes.startVisit')}
-                              </Link>
-                            </Button>
-                          )}
+                          <StopStatusPill stop={st} />
+                          <StopActions
+                            stop={st}
+                            poolId={st.poolId}
+                            poolName={poolInfo.get(st.poolId)?.denominacion ?? '—'}
+                            canWrite={canWrite}
+                            onChanged={() => setStopsVersion((v) => v + 1)}
+                          />
                         </li>
                       ))}
                     </ol>

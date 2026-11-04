@@ -1,4 +1,4 @@
-import { readingStatus, type ParameterStatus } from '@piscinas/shared';
+import { isExtraParamKey, readingStatus, type ParameterStatus } from '@piscinas/shared';
 import type { ParamCatalog, Visit } from './data.js';
 
 /** A visit's reading lit with the pool's current thresholds (stored status as a fallback). */
@@ -15,9 +15,15 @@ export function visitReadingStatus(
   );
 }
 
-/** True when any reading of the visit is outside the legal range. */
+/**
+ * True when any SILOE reading of the visit is outside the legal range. Readings outside SILOE
+ * (recommended ranges only) never make a visit "fuera de rango".
+ */
 export function visitOutOfRange(visit: Visit, catalog: ParamCatalog): boolean {
   return visit.readings.some(
-    (r) => r.siloeParamId != null && visitReadingStatus(visit, r.siloeParamId, catalog) === 'red',
+    (r) =>
+      r.siloeParamId != null &&
+      !isExtraParamKey(r.siloeParamId) &&
+      visitReadingStatus(visit, r.siloeParamId, catalog) === 'red',
   );
 }

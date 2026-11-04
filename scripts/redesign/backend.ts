@@ -25,6 +25,10 @@ const DEFAULTS: Record<string, Row> = {
   basin: { tipo_vaso: [] },
   treatment: { details: {} },
   report: { status: 'draft' },
+  chemical_product: { activo: true, orden: 0, cantidad_habitual: null },
+  task_def: { activo: true, orden: 0 },
+  route_stop: { estado: 'pendiente', motivo: null, report_id: null },
+  report_task: { hecho: true, nota: null },
   annual_result: { n_iniciales: 0, n_rutina: 0, n_periodicos: 0, punto_muestreo: 2 },
 };
 
@@ -167,6 +171,26 @@ function matches(row: Row, params: URLSearchParams): boolean {
 
 // ── server ────────────────────────────────────────────────────────────────────
 
+/**
+ * Mirror of the route_stop_mark_visited() trigger (migration 20261103130300): a new report
+ * marks its pool's pending stop on a route of the same Madrid day as done. The real trigger is
+ * tested in supabase/tests/service_log.test.sql; this only lets the UI specs see its effect.
+ */
+function markRouteStop(db: Db, report: Row) {
+  const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid' }).format(
+    new Date(String(report.visited_at ?? new Date().toISOString())),
+  );
+  const routes = new Set((db.route ?? []).filter((r) => r.route_date === day).map((r) => r.id));
+  for (const s of db.route_stop ?? []) {
+    if (
+      routes.has(s.route_id) &&
+      s.pool_id === report.pool_id &&
+      (s.estado ?? 'pendiente') === 'pendiente'
+    )
+      Object.assign(s, { estado: 'hecha', report_id: report.id, motivo: null });
+  }
+}
+
 export interface Backend {
   db: Db;
   /** Every write the app made, for assertions: `{ method, table, body }`. */
@@ -268,6 +292,7 @@ export async function serveBackend(page: Page, db: Db, session: Row): Promise<Ba
           ...item,
         };
         db[table].push(row);
+        if (table === 'report') markRouteStop(db, row);
         return row;
       });
       return respond(saved, 201);

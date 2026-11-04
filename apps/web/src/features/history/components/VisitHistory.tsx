@@ -11,6 +11,7 @@ import {
   TriangleAlert,
 } from 'lucide-react';
 import {
+  isExtraParamKey,
   KEY_PARAM_IDS,
   parseVisitFilters,
   writeVisitFilters,
@@ -26,6 +27,13 @@ import { ReportStatusBadge } from '../../../components/ReportStatusBadge.js';
 import type { DbFailure } from '../../../lib/dbError.js';
 import { fetchVisit, type ParamCatalog, type Visit } from '../lib/data.js';
 import { formatDate, formatTime, paramLabel } from '../lib/format.js';
+import {
+  ServiceLogAlert,
+  useVisitLogs,
+  VisitLogDetails,
+  VisitLogIcons,
+  type VisitLog,
+} from '../../service-log/index.js';
 import { VISIT_PARAM } from '../lib/links.js';
 import { visitOutOfRange, visitReadingStatus } from '../lib/visit.js';
 import { useVisitPages } from '../lib/useVisitPages.js';
@@ -95,7 +103,13 @@ export function VisitHistory({
     HISTORY_PAGE_SIZE,
   );
   const [linkFailure, setLinkFailure] = useState<DbFailure | null>(null);
+  // Products and tasks of the visits on screen (a separate query: see service-log README).
   const [pinned, setPinned] = useState<Visit | null>(null);
+  const visitIds = useMemo(
+    () => [...(pinned ? [pinned.id] : []), ...(visits ?? []).map((v) => v.id)],
+    [visits, pinned],
+  );
+  const { logOf, failure: logFailure } = useVisitLogs(visitIds);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(focusId ? [focusId] : []));
 
   // A linked visit that isn't in the loaded pages (older, or filtered out) is fetched on its
@@ -197,6 +211,7 @@ export function VisitHistory({
       </div>
 
       <FailureAlert failure={failure ?? linkFailure} />
+      {visits && visits.length > 0 && <ServiceLogAlert failure={logFailure} />}
 
       {pinned && catalog && (
         <div>
@@ -206,6 +221,7 @@ export function VisitHistory({
           <Card padded={false}>
             <ul>
               <VisitRow
+                log={logOf(pinned.id)}
                 visit={pinned}
                 catalog={catalog}
                 showPool={showPool}
@@ -262,6 +278,7 @@ export function VisitHistory({
               {visits.map((v) => (
                 <VisitRow
                   key={v.id}
+                  log={logOf(v.id)}
                   visit={v}
                   catalog={catalog}
                   showPool={showPool}
@@ -289,6 +306,7 @@ export function VisitHistory({
 }
 
 export function VisitRow({
+  log,
   visit,
   catalog,
   showPool,
@@ -296,6 +314,8 @@ export function VisitRow({
   highlighted = false,
   onToggle,
 }: {
+  /** Products and tasks of this visit (service log); empty while loading. */
+  log: VisitLog;
   visit: Visit;
   catalog: ParamCatalog;
   showPool: boolean;
@@ -355,6 +375,7 @@ export function VisitRow({
               );
             })}
             <VisitIcons visit={visit} openIncidents={openIncidents} />
+            <VisitLogIcons log={log} />
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -393,6 +414,7 @@ export function VisitRow({
                           value={r.value}
                           unit={def?.unit}
                           status={r.siloeParamId != null ? status(r.siloeParamId) : r.status}
+                          recommended={r.siloeParamId != null && isExtraParamKey(r.siloeParamId)}
                         />
                       </dd>
                     </div>
@@ -400,6 +422,9 @@ export function VisitRow({
                 })}
             </dl>
           )}
+          <div className="mt-4 empty:hidden">
+            <VisitLogDetails log={log} />
+          </div>
           {visit.incidents.length > 0 && (
             <div className="mt-4">
               <h4 className="text-xs font-semibold tracking-[0.06em] text-text-muted uppercase">

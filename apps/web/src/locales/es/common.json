@@ -1063,5 +1063,104 @@
       "done_other": "CSV descargado con {{count}} visitas.",
       "failed": "No se ha podido exportar."
     }
+  },
+  "serviceLog": {
+    "title": "Trabajo realizado",
+    "name": "Nombre",
+    "inactive": "Inactivo",
+    "activate": "Activar",
+    "deactivate": "Desactivar",
+    "products": {
+      "title": "Productos añadidos",
+      "pick": "Productos",
+      "none": "Toca un producto para añadirlo con su cantidad.",
+      "emptyCatalogue": "No hay productos en el catálogo. Un administrador puede añadirlos en Ajustes.",
+      "quantityOf": "Cantidad de {{name}}",
+      "remove": "Quitar {{name}}",
+      "quantityRequired": "Indica una cantidad mayor que 0.",
+      "fixQuantities": "Revisa las cantidades de los productos añadidos.",
+      "count_one": "{{count}} producto añadido",
+      "count_other": "{{count}} productos añadidos",
+      "catalogueTitle": "Productos",
+      "catalogueHint": "Los productos que el técnico puede elegir en cada visita.",
+      "add": "Añadir producto",
+      "edit": "Editar producto",
+      "unit": "Unidad",
+      "usualQuantity": "Cantidad habitual",
+      "usualHint": "Opcional. Se rellena al elegir el producto.",
+      "usual": "Habitual: {{amount}}"
+    },
+    "db": {
+      "missing_schema": "Esta parte aún no está disponible: falta aplicar las migraciones del registro de trabajo en la base de datos (se aplican al publicar esta versión).",
+      "missing_function": "Falta una función de la base de datos del registro de trabajo.",
+      "forbidden": "Tu rol no permite esta acción.",
+      "duplicate": "Ya existe uno con ese nombre.",
+      "rule": "La base de datos ha rechazado la operación.",
+      "unknown": "No se ha podido guardar o cargar el registro de trabajo. Inténtalo de nuevo."
+    },
+    "tasks": {
+      "title": "Tareas",
+      "done": "hecha",
+      "notDone": "no hecha",
+      "doneOf": "{{count}} de {{total}} hechas",
+      "count_one": "{{count}} tarea hecha",
+      "count_other": "{{count}} tareas hechas",
+      "emptyList": "No hay tareas en la lista. Un administrador puede añadirlas en Ajustes.",
+      "addNote": "Añadir nota a {{name}}",
+      "noteOf": "Nota de {{name}}",
+      "notePlaceholder": "Nota (opcional)",
+      "listTitle": "Tareas de la visita",
+      "listHint": "La lista que el técnico marca en cada visita, en este orden.",
+      "add": "Añadir tarea",
+      "edit": "Editar tarea",
+      "moveUp": "Subir {{name}}",
+      "moveDown": "Bajar {{name}}"
+    },
+    "params": {
+      "otherTitle": "Otros parámetros (no SILOÉ)",
+      "otherHint": "Alcalinidad, dureza cálcica, sal y fosfatos. No se envían a SILOÉ.",
+      "recommendedRange": "Recomendado: {{range}}",
+      "recommendedBand": "Rango recomendado",
+      "status": {
+        "green": "Recomendado",
+        "amber": "Cerca del límite recomendado",
+        "red": "Fuera de lo recomendado",
+        "unknown": "Sin dato"
+      },
+      "notSiloe": "No SILOÉ · rango recomendado",
+      "outOfRecommended_one": "{{count}} lectura fuera de lo recomendado",
+      "outOfRecommended_other": "{{count}} lecturas fuera de lo recomendado"
+    },
+    "technician": "Técnico",
+    "formerMember": "Antiguo miembro del equipo",
+    "repeat": {
+      "action": "Repetir última visita",
+      "none": "Este vaso no tiene visitas anteriores.",
+      "technician": "técnico",
+      "done": "Copiado de la visita del {{date}}: {{what}}.",
+      "skipped_one": "{{count}} elemento ya no está activo y no se ha copiado.",
+      "skipped_other": "{{count}} elementos ya no están activos y no se han copiado.",
+      "noReadings": "Las lecturas no se copian: mídelas."
+    },
+    "stops": {
+      "estado": {
+        "pendiente": "Pendiente",
+        "hecha": "Hecha",
+        "saltada": "Saltada"
+      },
+      "viewReport": "Ver informe",
+      "skip": "Saltar",
+      "undo": "Deshacer",
+      "skipTitle": "Saltar parada: {{name}}",
+      "quickReasons": "Motivos habituales",
+      "reasons": ["Cliente ausente", "Acceso cerrado", "Lluvia", "Sin tiempo", "Piscina cerrada"],
+      "reason": "Motivo",
+      "reasonHint": "Obligatorio. Elige uno de arriba o escríbelo.",
+      "confirmSkip": "Marcar como saltada",
+      "progress": "{{done}} de {{total}} hechas",
+      "progressSkipped_one": "{{count}} saltada",
+      "progressSkipped_other": "{{count}} saltadas"
+    },
+    "openDraft": "Abrir el borrador"
   }
 }

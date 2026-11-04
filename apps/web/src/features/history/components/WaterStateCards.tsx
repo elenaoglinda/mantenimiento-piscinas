@@ -2,7 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Droplets, Plus, TriangleAlert } from 'lucide-react';
-import { daysSince, latestStateByBasin, type BasinState } from '@piscinas/shared';
+import {
+  daysSince,
+  isExtraParamKey,
+  latestStateByBasin,
+  worstStatus,
+  type BasinState,
+} from '@piscinas/shared';
 import { Button } from '../../../components/ui/Button.js';
 import { Card } from '../../../components/ui/Card.js';
 import { EmptyState } from '../../../components/ui/EmptyState.js';
@@ -133,6 +139,11 @@ function BasinStateCard({
   const { t } = useTranslation();
   const defs = catalog.forRegion(ccaa);
   const headingId = `water-state-${basin.id}`;
+  // The card's verdict is legal (SILOÉ parameters); readings outside SILOÉ only have a
+  // recommended range and are lit on their own row.
+  const legalStatus = worstStatus(
+    state.params.filter((p) => !isExtraParamKey(p.siloeParamId)).map((p) => p.status),
+  );
 
   return (
     <Card aria-labelledby={headingId} role="region">
@@ -156,7 +167,7 @@ function BasinStateCard({
           </p>
         </div>
         {state.params.length > 0 && (
-          <StatusPill tone={state.status}>{t(`history.state.overall.${state.status}`)}</StatusPill>
+          <StatusPill tone={legalStatus}>{t(`history.state.overall.${legalStatus}`)}</StatusPill>
         )}
       </div>
 
@@ -194,6 +205,7 @@ function BasinStateCard({
                     value={p.value}
                     unit={def?.unit}
                     status={p.status}
+                    recommended={isExtraParamKey(p.siloeParamId)}
                     title={formatDateTime(p.visitedAt)}
                   />
                   <time

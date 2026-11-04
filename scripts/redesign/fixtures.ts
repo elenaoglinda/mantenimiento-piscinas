@@ -277,6 +277,23 @@ const parameterDefs = [
     min_ok: null,
     max_ok: 75,
   },
+  // Outside SILOÉ: no SILOÉ id, recommended ranges (service log).
+  ...[
+    ['pd-7', 'alcalinidad_total', 'Alcalinidad total', 'mg/L CaCO3', 80, 120],
+    ['pd-8', 'dureza_calcica', 'Dureza cálcica', 'mg/L CaCO3', 200, 400],
+    ['pd-9', 'sal', 'Sal', 'g/L', 3, 5],
+    ['pd-10', 'fosfatos', 'Fosfatos', 'mg/L', null, 0.1],
+  ].map(([id, clave, name_es, unit, min_ok, max_ok]) => ({
+    ...paramBase,
+    id: id as string,
+    siloe_param_id: null as unknown as number,
+    in_siloe: false,
+    clave,
+    name_es: name_es as string,
+    unit: unit as string,
+    min_ok: min_ok as number | null,
+    max_ok: max_ok as number,
+  })),
 ];
 const reading = (id: string, report: string, def: string, value: number, status: string) => {
   const d = parameterDefs.find((x) => x.id === def)!;
@@ -451,6 +468,9 @@ export const tables: Record<string, Record<string, unknown>[]> = {
       route_id: 'route-1',
       pool_id: 'pool-1',
       seq: 1,
+      estado: 'hecha',
+      report_id: 'rep-1',
+      motivo: null,
       eta: at(9, 15),
       leg_s: 900,
       created_at: iso(1),
@@ -461,6 +481,9 @@ export const tables: Record<string, Record<string, unknown>[]> = {
       route_id: 'route-1',
       pool_id: 'pool-2',
       seq: 2,
+      estado: 'saltada',
+      report_id: null,
+      motivo: 'Cliente ausente',
       eta: at(10, 40),
       leg_s: 1500,
       created_at: iso(1),
@@ -471,6 +494,9 @@ export const tables: Record<string, Record<string, unknown>[]> = {
       route_id: 'route-1',
       pool_id: 'pool-3',
       seq: 3,
+      estado: 'pendiente',
+      report_id: null,
+      motivo: null,
       eta: at(11, 30),
       leg_s: 300,
       created_at: iso(1),
@@ -486,6 +512,86 @@ export const tables: Record<string, Record<string, unknown>[]> = {
     reading('m-5', 'rep-2', 'pd-1', 3.4, 'red'),
     reading('m-6', 'rep-2', 'pd-3', 7.9, 'amber'),
     ...historyReadings(),
+  ],
+  chemical_product: [
+    ['Cloro granulado', 'kg', 0.5],
+    ['Cloro en pastillas', 'pastillas', 2],
+    ['Minorador de pH', 'kg', null],
+    ['Incrementador de pH', 'kg', null],
+    ['Floculante', 'L', 0.25],
+    ['Alguicida', 'L', null],
+    ['Clarificante', 'L', null],
+    ['Sal', 'kg', null],
+  ].map(([nombre, unidad, cantidad], i) => ({
+    id: `chem-${i + 1}`,
+    org_id: ORG,
+    nombre,
+    unidad,
+    cantidad_habitual: cantidad,
+    activo: true,
+    orden: i + 1,
+    created_at: iso(90),
+    updated_at: iso(90),
+  })),
+  task_def: [
+    'Barrido / limpieza de fondo',
+    'Limpieza de paredes y línea de flotación',
+    'Vaciado de skimmers y prefiltro',
+    'Contralavado del filtro',
+    'Limpieza del filtro',
+    'Revisión de bomba y equipos',
+    'Revisión del clorador salino',
+    'Retirada de hojas',
+  ].map((nombre, i) => ({
+    id: `task-${i + 1}`,
+    org_id: ORG,
+    nombre,
+    orden: i + 1,
+    activo: true,
+    created_at: iso(90),
+    updated_at: iso(90),
+  })),
+  report_task: [
+    { id: 'rt-1', org_id: ORG, report_id: 'hist-1', task_id: 'task-1', hecho: true, nota: null },
+    {
+      id: 'rt-2',
+      org_id: ORG,
+      report_id: 'hist-1',
+      task_id: 'task-3',
+      hecho: true,
+      nota: 'Mucha hoja',
+    },
+    { id: 'rt-3', org_id: ORG, report_id: 'hist-1', task_id: 'task-4', hecho: true, nota: null },
+  ],
+  // What was added at the two latest visits to Villa Mar.
+  report_chemical: [
+    {
+      id: 'rc-1',
+      org_id: ORG,
+      report_id: 'hist-1',
+      product_id: 'chem-1',
+      cantidad: 0.5,
+      unidad: 'kg',
+      created_at: iso(4),
+    },
+    {
+      id: 'rc-2',
+      org_id: ORG,
+      report_id: 'hist-1',
+      product_id: 'chem-5',
+      cantidad: 0.25,
+      unidad: 'L',
+      created_at: iso(4),
+    },
+    {
+      id: 'rc-3',
+      org_id: ORG,
+      report_id: 'hist-2',
+      product_id: 'chem-3',
+      cantidad: 1,
+      unidad: 'kg',
+      created_at: iso(9),
+    },
   ],
   incident: [
     {
@@ -635,4 +741,14 @@ for (const m of tables.measurement) {
       status: r.status,
     },
   });
+}
+
+for (const rc of tables.report_chemical) {
+  const p = tables.chemical_product.find((x) => x.id === rc.product_id)!;
+  Object.assign(rc, { chemical_product: { nombre: p.nombre } });
+}
+
+for (const rt of tables.report_task) {
+  const d = tables.task_def.find((x) => x.id === rt.task_id)!;
+  Object.assign(rt, { task_def: { nombre: d.nombre, orden: d.orden } });
 }

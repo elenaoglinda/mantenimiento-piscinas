@@ -42,6 +42,9 @@ export interface RouteStopLite {
   eta: string | null;
   poolName: string;
   clientName?: string | null;
+  /** Service log: whether the stop was done (absent before its migration = pending). */
+  estado?: 'pendiente' | 'hecha' | 'saltada' | null;
+  motivo?: string | null;
 }
 export interface RouteLite {
   id: string;

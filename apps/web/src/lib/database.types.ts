@@ -176,6 +176,50 @@ export type Database = {
           },
         ];
       };
+      chemical_product: {
+        Row: {
+          activo: boolean;
+          cantidad_habitual: number | null;
+          created_at: string;
+          id: string;
+          nombre: string;
+          orden: number;
+          org_id: string;
+          unidad: Database['public']['Enums']['chemical_unit'];
+          updated_at: string;
+        };
+        Insert: {
+          activo?: boolean;
+          cantidad_habitual?: number | null;
+          created_at?: string;
+          id?: string;
+          nombre: string;
+          orden?: number;
+          org_id: string;
+          unidad: Database['public']['Enums']['chemical_unit'];
+          updated_at?: string;
+        };
+        Update: {
+          activo?: boolean;
+          cantidad_habitual?: number | null;
+          created_at?: string;
+          id?: string;
+          nombre?: string;
+          orden?: number;
+          org_id?: string;
+          unidad?: Database['public']['Enums']['chemical_unit'];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'chemical_product_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'org';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       client: {
         Row: {
           archived: boolean;
@@ -339,11 +383,13 @@ export type Database = {
         Row: {
           active: boolean;
           ccaa: string | null;
+          clave: string | null;
           closure_max: number | null;
           closure_min: number | null;
           created_at: string;
           frequency: string | null;
           id: string;
+          in_siloe: boolean;
           mandatory: boolean;
           max_ok: number | null;
           max_warn: number | null;
@@ -351,7 +397,7 @@ export type Database = {
           min_ok: number | null;
           min_warn: number | null;
           name_es: string;
-          siloe_param_id: number;
+          siloe_param_id: number | null;
           unit: string | null;
           updated_at: string;
           warn_margin_ratio: number;
@@ -359,11 +405,13 @@ export type Database = {
         Insert: {
           active?: boolean;
           ccaa?: string | null;
+          clave?: string | null;
           closure_max?: number | null;
           closure_min?: number | null;
           created_at?: string;
           frequency?: string | null;
           id?: string;
+          in_siloe?: boolean;
           mandatory?: boolean;
           max_ok?: number | null;
           max_warn?: number | null;
@@ -371,7 +419,7 @@ export type Database = {
           min_ok?: number | null;
           min_warn?: number | null;
           name_es: string;
-          siloe_param_id: number;
+          siloe_param_id?: number | null;
           unit?: string | null;
           updated_at?: string;
           warn_margin_ratio?: number;
@@ -379,11 +427,13 @@ export type Database = {
         Update: {
           active?: boolean;
           ccaa?: string | null;
+          clave?: string | null;
           closure_max?: number | null;
           closure_min?: number | null;
           created_at?: string;
           frequency?: string | null;
           id?: string;
+          in_siloe?: boolean;
           mandatory?: boolean;
           max_ok?: number | null;
           max_warn?: number | null;
@@ -391,7 +441,7 @@ export type Database = {
           min_ok?: number | null;
           min_warn?: number | null;
           name_es?: string;
-          siloe_param_id?: number;
+          siloe_param_id?: number | null;
           unit?: string | null;
           updated_at?: string;
           warn_margin_ratio?: number;
@@ -482,6 +532,116 @@ export type Database = {
           },
         ];
       };
+      report_chemical: {
+        Row: {
+          cantidad: number;
+          created_at: string;
+          id: string;
+          org_id: string;
+          product_id: string;
+          report_id: string;
+          unidad: Database['public']['Enums']['chemical_unit'];
+          updated_at: string;
+        };
+        Insert: {
+          cantidad: number;
+          created_at?: string;
+          id?: string;
+          org_id: string;
+          product_id: string;
+          report_id: string;
+          unidad: Database['public']['Enums']['chemical_unit'];
+          updated_at?: string;
+        };
+        Update: {
+          cantidad?: number;
+          created_at?: string;
+          id?: string;
+          org_id?: string;
+          product_id?: string;
+          report_id?: string;
+          unidad?: Database['public']['Enums']['chemical_unit'];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'report_chemical_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'org';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'report_chemical_product_id_org_id_fkey';
+            columns: ['product_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'chemical_product';
+            referencedColumns: ['id', 'org_id'];
+          },
+          {
+            foreignKeyName: 'report_chemical_report_id_org_id_fkey';
+            columns: ['report_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'report';
+            referencedColumns: ['id', 'org_id'];
+          },
+        ];
+      };
+      report_task: {
+        Row: {
+          created_at: string;
+          hecho: boolean;
+          id: string;
+          nota: string | null;
+          org_id: string;
+          report_id: string;
+          task_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          hecho?: boolean;
+          id?: string;
+          nota?: string | null;
+          org_id: string;
+          report_id: string;
+          task_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          hecho?: boolean;
+          id?: string;
+          nota?: string | null;
+          org_id?: string;
+          report_id?: string;
+          task_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'report_task_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'org';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'report_task_report_id_org_id_fkey';
+            columns: ['report_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'report';
+            referencedColumns: ['id', 'org_id'];
+          },
+          {
+            foreignKeyName: 'report_task_task_id_org_id_fkey';
+            columns: ['task_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'task_def';
+            referencedColumns: ['id', 'org_id'];
+          },
+        ];
+      };
       siloe_catalog: {
         Row: {
           extra: Json;
@@ -505,6 +665,44 @@ export type Database = {
           siloe_id?: number;
         };
         Relationships: [];
+      };
+      task_def: {
+        Row: {
+          activo: boolean;
+          created_at: string;
+          id: string;
+          nombre: string;
+          orden: number;
+          org_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          activo?: boolean;
+          created_at?: string;
+          id?: string;
+          nombre: string;
+          orden?: number;
+          org_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          activo?: boolean;
+          created_at?: string;
+          id?: string;
+          nombre?: string;
+          orden?: number;
+          org_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'task_def_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'org';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       treatment: {
         Row: {
@@ -1344,33 +1542,45 @@ export type Database = {
       route_stop: {
         Row: {
           created_at: string;
+          estado: Database['public']['Enums']['route_stop_estado'];
           eta: string | null;
           id: string;
           leg_s: number | null;
+          motivo: string | null;
           org_id: string;
           pool_id: string;
+          report_id: string | null;
           route_id: string;
           seq: number;
+          updated_at: string;
         };
         Insert: {
           created_at?: string;
+          estado?: Database['public']['Enums']['route_stop_estado'];
           eta?: string | null;
           id?: string;
           leg_s?: number | null;
+          motivo?: string | null;
           org_id: string;
           pool_id: string;
+          report_id?: string | null;
           route_id: string;
           seq: number;
+          updated_at?: string;
         };
         Update: {
           created_at?: string;
+          estado?: Database['public']['Enums']['route_stop_estado'];
           eta?: string | null;
           id?: string;
           leg_s?: number | null;
+          motivo?: string | null;
           org_id?: string;
           pool_id?: string;
+          report_id?: string | null;
           route_id?: string;
           seq?: number;
+          updated_at?: string;
         };
         Relationships: [
           {
@@ -1378,6 +1588,13 @@ export type Database = {
             columns: ['route_id', 'org_id'];
             isOneToOne: false;
             referencedRelation: 'route';
+            referencedColumns: ['id', 'org_id'];
+          },
+          {
+            foreignKeyName: 'route_stop_report_id_org_id_fkey';
+            columns: ['report_id', 'org_id'];
+            isOneToOne: false;
+            referencedRelation: 'report';
             referencedColumns: ['id', 'org_id'];
           },
         ];
@@ -1506,8 +1723,14 @@ export type Database = {
           updated_at: string;
         };
       };
+      seed_org_catalogues: {
+        Args: { p_org_id: string };
+        Returns: undefined;
+      };
     };
     Enums: {
+      route_stop_estado: 'pendiente' | 'hecha' | 'saltada';
+      chemical_unit: 'kg' | 'g' | 'L' | 'ml' | 'pastillas' | 'uds';
       analysis_type: 'autocontrol' | 'vigilancia';
       attachment_kind: 'photo' | 'lab_pdf';
       basin_class: 'cubierto' | 'descubierto' | 'mixto';

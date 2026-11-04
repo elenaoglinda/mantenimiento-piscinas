@@ -1,11 +1,12 @@
 import {
+  isSiloeParameter,
   hasAnyReading,
   parseExtraction,
   WATER_EXTRACTION_FIELDS,
   type ReadingExtraction,
 } from '@piscinas/shared';
 import { supabase } from './supabase.js';
-import { LAB_PARAM_IDS, type ParameterDefRow } from './parameters.js';
+import { isLabParameter, type ParameterDefRow } from './parameters.js';
 import type { Enums } from './database.types.js';
 
 /**
@@ -132,7 +133,10 @@ export function mapExtractionToDefs(
   defs: ParameterDefRow[],
   extraction: ReadingExtraction,
 ): MappedExtraction {
-  const defsBySiloeId = new Map(defs.map((d) => [d.siloe_param_id, d]));
+  // Only SILOE parameters: the extraction prompt never asks for the others.
+  const defsBySiloeId = new Map(
+    defs.filter(isSiloeParameter).map((d) => [d.siloe_param_id as number, d]),
+  );
   const values: Record<string, MeasurementInput> = {};
   const lowConfidenceDefIds = new Set<string>();
 
@@ -144,7 +148,7 @@ export function mapExtractionToDefs(
     if (reading !== null && reading !== undefined) {
       values[def.id] = {
         value: String(reading),
-        lugar: LAB_PARAM_IDS.has(def.siloe_param_id) ? 'lab' : 'in_situ',
+        lugar: isLabParameter(def) ? 'lab' : 'in_situ',
       };
     }
     if (extraction.lowConfidenceFields.includes(field.key)) {

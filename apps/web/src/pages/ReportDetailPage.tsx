@@ -10,6 +10,8 @@ import { Card, CardHeader } from '../components/ui/Card.js';
 import { PageHeader } from '../components/ui/PageHeader.js';
 import { Skeleton, SkeletonText } from '../components/ui/Skeleton.js';
 import { useRecordCrumb } from '../features/app-shell/index.js';
+import { RecommendedChip, ReportServiceLogCard } from '../features/service-log/index.js';
+import { isSiloeParameter } from '@piscinas/shared';
 import { StatusChip } from '../components/ui/StatusChip.js';
 import { ReportStatusBadge } from '../components/ReportStatusBadge.js';
 import { SignModal } from '../components/SignModal.js';
@@ -22,7 +24,10 @@ type Report = Tables<'report'> & {
   basin: { denominacion: string } | null;
 };
 type Measurement = Tables<'measurement'> & {
-  parameter_def: { name_es: string; unit: string | null } | null;
+  parameter_def: Pick<
+    Tables<'parameter_def'>,
+    'name_es' | 'unit' | 'siloe_param_id' | 'in_siloe' | 'clave'
+  > | null;
 };
 
 export function ReportDetailPage() {
@@ -53,7 +58,8 @@ export function ReportDetailPage() {
         .maybeSingle(),
       supabase
         .from('measurement')
-        .select('*, parameter_def(name_es, unit)')
+        // parameter_def(*): works before and after the migration that adds in_siloe.
+        .select('*, parameter_def(*)')
         .eq('report_id', reportId),
       supabase.from('incident').select('*').eq('report_id', reportId),
     ]);
@@ -88,7 +94,13 @@ export function ReportDetailPage() {
   if (error || !report) return <Alert tone="error">{error ?? t('common.genericError')}</Alert>;
 
   const isSigned = report.status === 'signed';
-  const outOfRange = measurements.filter((m) => m.status === 'red').length;
+  // Legal "out of range" counts SILOÉ parameters only; the others have a recommended range.
+  const isExtra = (m: Measurement) => !!m.parameter_def && !isSiloeParameter(m.parameter_def);
+  const outOfRange = measurements.filter((m) => m.status === 'red' && !isExtra(m)).length;
+  // SILOÉ readings first, in the order they were recorded; then the others.
+  const sortedMeasurements = [...measurements].sort(
+    (a, b) => Number(isExtra(a)) - Number(isExtra(b)),
+  );
 
   return (
     <div>
@@ -158,10 +170,15 @@ export function ReportDetailPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {measurements.map((m) => (
+                    {sortedMeasurements.map((m) => (
                       <tr key={m.id} className="border-b border-border last:border-0">
                         <td className="px-5 py-2.5 text-text sm:px-6">
                           {m.parameter_def?.name_es ?? '—'}
+                          {isExtra(m) && (
+                            <span className="block text-xs text-text-muted">
+                              {t('serviceLog.params.notSiloe')}
+                            </span>
+                          )}
                           {m.parameter_def?.unit && (
                             <span className="ml-1 text-xs text-text-muted">
                               ({m.parameter_def.unit})
@@ -175,7 +192,11 @@ export function ReportDetailPage() {
                           {t(`lugar.${m.lugar}`)}
                         </td>
                         <td className="px-5 py-2.5 text-right sm:px-6">
-                          <StatusChip status={m.status} />
+                          {isExtra(m) ? (
+                            <RecommendedChip status={m.status} />
+                          ) : (
+                            <StatusChip status={m.status} />
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -184,6 +205,8 @@ export function ReportDetailPage() {
               </HScroll>
             )}
           </Card>
+
+          <ReportServiceLogCard reportId={report.id} />
 
           {incidents.length > 0 && (
             <Card>

@@ -32,10 +32,11 @@ export function ExportCsvButton({
       });
       return;
     }
-    // Columns: every active parameter, national names, in SILOÉ order — the same layout every
-    // time, so a spreadsheet built on one export works with the next.
-    const params = [...catalog.forRegion(null).values()].map((d) => ({
-      siloeParamId: d.siloe_param_id,
+    // Columns: every active parameter, national names, SILOÉ ones first in SILOÉ order, then
+    // the readings outside SILOÉ — the same layout every time, so a spreadsheet built on one
+    // export works with the next.
+    const params = [...catalog.forRegion(null).entries()].map(([key, d]) => ({
+      siloeParamId: key,
       label: d.unit && d.unit !== 'pH' ? `${d.name_es} (${d.unit})` : d.name_es,
     }));
     const readings = groupReadingsByVisit(

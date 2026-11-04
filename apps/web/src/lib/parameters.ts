@@ -1,5 +1,5 @@
 import { supabase } from './supabase.js';
-import type { ParameterDef } from '@piscinas/shared';
+import { paramKey, type ParameterDef } from '@piscinas/shared';
 import type { Tables } from './database.types.js';
 
 export type ParameterDefRow = Tables<'parameter_def'>;
@@ -34,9 +34,10 @@ export function toEvaluatorDef(row: ParameterDefRow): ParameterDef {
 }
 
 /**
- * Pick, from all `parameter_def` rows, the active definition of each SILOE parameter for a
- * pool's region, preferring a CCAA-specific override over the national RD 742/2013 default.
- * Ordered by siloe_param_id so forms and tables render parameters in the canonical SILOE order.
+ * Pick, from all `parameter_def` rows, the active definition of each parameter for a pool's
+ * region, preferring a CCAA-specific override over the national RD 742/2013 default.
+ * Parameters are grouped by `paramKey` (the SILOE id, or 101+ for readings outside SILOE) and
+ * ordered by it, so forms list the SILOE parameters in canonical order, then the others.
  */
 export function resolveParameterDefs(
   rows: readonly ParameterDefRow[],
@@ -45,18 +46,24 @@ export function resolveParameterDefs(
   const code = ccaaToCode(ccaa);
   const byParam = new Map<number, ParameterDefRow>();
   for (const row of rows) {
-    if (!row.active) continue;
-    const existing = byParam.get(row.siloe_param_id);
+    const key = paramKey(row);
+    if (!row.active || key == null) continue;
+    const existing = byParam.get(key);
     if (!existing) {
-      byParam.set(row.siloe_param_id, row);
+      byParam.set(key, row);
       continue;
     }
     // Prefer the row whose ccaa matches the region code over the national (null) default.
     if (row.ccaa === code && existing.ccaa !== code) {
-      byParam.set(row.siloe_param_id, row);
+      byParam.set(key, row);
     }
   }
-  return [...byParam.values()].sort((a, b) => a.siloe_param_id - b.siloe_param_id);
+  return [...byParam.entries()].sort((a, b) => a[0] - b[0]).map(([, row]) => row);
+}
+
+/** True for a SILOE parameter analysed in a laboratory (defaults its lugar to 'lab'). */
+export function isLabParameter(row: Pick<ParameterDefRow, 'siloe_param_id'>): boolean {
+  return row.siloe_param_id != null && LAB_PARAM_IDS.has(row.siloe_param_id);
 }
 
 /** Fetch and resolve the active parameter definitions for a pool's region. */

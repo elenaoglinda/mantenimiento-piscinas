@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { evaluate, type ParameterStatus } from '@piscinas/shared';
+import { doneCount, evaluate, isSiloeParameter, type ParameterStatus } from '@piscinas/shared';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../auth/context.js';
 import {
   fetchResolvedParameterDefs,
   toEvaluatorDef,
-  LAB_PARAM_IDS,
+  isLabParameter,
   type ParameterDefRow,
 } from '../lib/parameters.js';
-import { LocateFixed, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, LocateFixed, Plus, Trash2 } from 'lucide-react';
 import { Alert } from '../components/ui/feedback.js';
 import { Button } from '../components/ui/Button.js';
 import { Card } from '../components/ui/Card.js';
@@ -22,8 +22,17 @@ import { StatusPill } from '../components/ui/StatusPill.js';
 import { TextField } from '../components/ui/TextField.js';
 import { SelectField } from '../components/ui/fields.js';
 import { StatusChip } from '../components/ui/StatusChip.js';
-import { cn } from '../components/ui/utils.js';
+import { cn, focusRing } from '../components/ui/utils.js';
 import { useRecordCrumb } from '../features/app-shell/index.js';
+import {
+  fetchTechnicians,
+  ProductsSection,
+  RecommendedChip,
+  RepeatLastVisit,
+  TasksSection,
+  useServiceLogForm,
+  type Technician,
+} from '../features/service-log/index.js';
 import type { Enums } from '../lib/database.types.js';
 import { HScroll } from '../components/ui/HScroll.js';
 
@@ -80,6 +89,21 @@ export function ReportFormPage() {
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
+  // Who did the visit: the signed-in user by default; "Repetir última visita" may change it.
+  const [technicianId, setTechnicianId] = useState(profile?.user.id ?? '');
+  const [technicians, setTechnicians] = useState<Technician[]>([]);
+  useEffect(() => {
+    let active = true;
+    void fetchTechnicians().then((r) => {
+      if (active) setTechnicians(r.data);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Products (and, below, tasks) of this visit: the service log.
+  const log = useServiceLogForm(reportId);
 
   const [defs, setDefs] = useState<ParameterDefRow[]>([]);
   const [values, setValues] = useState<Record<string, MeasurementInput>>({});
@@ -87,6 +111,9 @@ export function ReportFormPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  // Set once a new report's row exists, so a retry after a partial failure updates it
+  // instead of creating a second report.
+  const [savedId, setSavedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [geoMsg, setGeoMsg] = useState<string | null>(null);
 
@@ -120,6 +147,7 @@ export function ReportFormPage() {
           setLat(rep.location_lat);
           setLng(rep.location_lng);
           setNotes(rep.notes ?? '');
+          setTechnicianId(rep.technician_id ?? '');
           const vmap: Record<string, MeasurementInput> = {};
           for (const m of meas ?? [])
             vmap[m.parameter_def_id] = { value: m.value?.toString() ?? '', lugar: m.lugar };
@@ -147,12 +175,12 @@ export function ReportFormPage() {
     if (selectedPool) void loadDefs(selectedPool.ccaa);
   }, [selectedPool, loadDefs]);
 
-  function setValue(defId: string, patch: Partial<MeasurementInput>, siloeId: number) {
+  function setValue(defId: string, patch: Partial<MeasurementInput>, def: ParameterDefRow) {
     setValues((prev) => ({
       ...prev,
       [defId]: {
         value: prev[defId]?.value ?? '',
-        lugar: prev[defId]?.lugar ?? (LAB_PARAM_IDS.has(siloeId) ? 'lab' : 'in_situ'),
+        lugar: prev[defId]?.lugar ?? (isLabParameter(def) ? 'lab' : 'in_situ'),
         ...patch,
       },
     }));
@@ -187,11 +215,16 @@ export function ReportFormPage() {
       setError(t('reports.completedRequiresValues'));
       return;
     }
+    if (!log.validate()) {
+      setError(t('serviceLog.products.fixQuantities'));
+      return;
+    }
 
     setSaving(true);
     setError(null);
 
     const reportPayload = {
+      technician_id: technicianId || null,
       pool_id: poolId,
       basin_id: basinId,
       analysis_type: analysisType,
@@ -203,11 +236,17 @@ export function ReportFormPage() {
       status,
     };
 
-    const { data: saved, error: repErr } = reportId
-      ? await supabase.from('report').update(reportPayload).eq('id', reportId).select('id').single()
+    const existingId = reportId ?? savedId;
+    const { data: saved, error: repErr } = existingId
+      ? await supabase
+          .from('report')
+          .update(reportPayload)
+          .eq('id', existingId)
+          .select('id')
+          .single()
       : await supabase
           .from('report')
-          .insert({ ...reportPayload, org_id: profile.org.id, technician_id: profile.user.id })
+          .insert({ ...reportPayload, org_id: profile.org.id })
           .select('id')
           .single();
 
@@ -217,6 +256,7 @@ export function ReportFormPage() {
       return;
     }
     const rid = saved.id;
+    setSavedId(rid);
 
     // Replace children (simple + correct for online v1).
     await supabase.from('measurement').delete().eq('report_id', rid);
@@ -248,7 +288,13 @@ export function ReportFormPage() {
       }));
     if (incRows.length) await supabase.from('incident').insert(incRows);
 
+    const logFailure = await log.save(rid, profile.org.id);
     setSaving(false);
+    if (logFailure) {
+      // The report is saved; say exactly what wasn't, and stay so it can be retried.
+      setError(t(`serviceLog.db.${logFailure.code}`, { defaultValue: t('serviceLog.db.unknown') }));
+      return;
+    }
     navigate(`/reports/${rid}`);
   }
 
@@ -268,6 +314,88 @@ export function ReportFormPage() {
   const flagged = readings.filter((r) => r.status === 'red' || r.status === 'amber');
   const selectedBasin = selectedPool?.basin.find((b) => b.id === basinId);
   const filledIncidents = incidents.filter((i) => i.description.trim()).length;
+
+  const siloeDefs = defs.filter(isSiloeParameter);
+  const extraDefs = defs.filter((d) => !isSiloeParameter(d));
+
+  /** The readings grid; `recommended` labels ranges and lights as recommended, not legal. */
+  const paramTable = (list: ParameterDefRow[], recommended: boolean, caption: string) => (
+    <HScroll label={caption} className="-mx-1">
+      <table className="w-full min-w-[520px] text-sm">
+        <thead>
+          <tr className="border-b border-border text-left text-xs text-text-muted">
+            <th scope="col" className="px-1 pb-2 font-semibold">
+              {t('reports.parameter')}
+            </th>
+            <th scope="col" className="px-1 pb-2 font-semibold">
+              {t('reports.value')}
+            </th>
+            <th scope="col" className="px-1 pb-2 font-semibold">
+              {t('reports.lugar')}
+            </th>
+            <th scope="col" className="px-1 pb-2 text-right font-semibold">
+              {t('reports.statusFilter')}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {list.map((d) => {
+            const input = values[d.id];
+            const raw = input?.value ?? '';
+            const n = raw.trim() === '' ? null : Number(raw);
+            const status: ParameterStatus = evaluate(n, toEvaluatorDef(d)).status;
+            const lugar = input?.lugar ?? (isLabParameter(d) ? 'lab' : 'in_situ');
+            const range = rangeLabel(d);
+            return (
+              <tr key={d.id} className="border-b border-border last:border-0">
+                <td className="px-1 py-2">
+                  <span className="font-medium text-text">{d.name_es}</span>
+                  {d.unit && <span className="ml-1 text-xs text-text-muted">({d.unit})</span>}
+                  {range && (
+                    <span className="block text-xs text-text-muted">
+                      {recommended
+                        ? t('serviceLog.params.recommendedRange', { range })
+                        : t('reports.range', { range })}
+                    </span>
+                  )}
+                </td>
+                <td className="px-1 py-2">
+                  <input
+                    inputMode="decimal"
+                    value={raw}
+                    onChange={(e) => setValue(d.id, { value: e.target.value }, d)}
+                    className={cn(
+                      'h-9 w-24 rounded-[var(--radius-md)] border bg-surface px-2.5 text-right text-text tabular-nums outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-focus/40',
+                      status === 'red' ? 'border-status-red' : 'border-border',
+                    )}
+                    aria-label={`${d.name_es} ${t('reports.value')}`}
+                  />
+                </td>
+                <td className="px-1 py-2">
+                  <NativeSelect
+                    value={lugar}
+                    onChange={(e) => setValue(d.id, { lugar: e.target.value as Lugar }, d)}
+                    className="h-9 w-32"
+                    aria-label={`${d.name_es} ${t('reports.lugar')}`}
+                  >
+                    <option value="in_situ">{t('lugar.in_situ')}</option>
+                    <option value="lab">{t('lugar.lab')}</option>
+                  </NativeSelect>
+                </td>
+                <td className="px-1 py-2 text-right">
+                  {recommended ? (
+                    <RecommendedChip status={status} />
+                  ) : (
+                    <StatusChip status={status} />
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </HScroll>
+  );
 
   if (loading) return <ReportFormSkeleton />;
 
@@ -373,6 +501,36 @@ export function ReportFormPage() {
               </div>
 
               <div className="grid items-end gap-4 sm:grid-cols-2">
+                <SelectField
+                  label={t('serviceLog.technician')}
+                  value={technicianId}
+                  onChange={(e) => setTechnicianId(e.target.value)}
+                >
+                  <option value="">{t('history.noTechnician')}</option>
+                  {/* Keep a technician who has since left the team selectable for old visits. */}
+                  {technicianId && !technicians.some((u) => u.id === technicianId) && (
+                    <option value={technicianId}>{t('serviceLog.formerMember')}</option>
+                  )}
+                  {technicians.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.label}
+                    </option>
+                  ))}
+                </SelectField>
+                {!reportId && basinId && log.products && log.taskDefs && (
+                  <RepeatLastVisit
+                    basinId={basinId}
+                    products={log.products}
+                    taskDefs={log.taskDefs}
+                    onRepeat={(v) => {
+                      if (v.technicianId) setTechnicianId(v.technicianId);
+                      log.prefill({ chemicals: v.chemicals, tasks: v.tasks });
+                    }}
+                  />
+                )}
+              </div>
+
+              <div className="grid items-end gap-4 sm:grid-cols-2">
                 <TextField
                   label={t('reports.visitedAt')}
                   type="datetime-local"
@@ -403,87 +561,62 @@ export function ReportFormPage() {
             {!basinId ? (
               <p className="text-sm text-text-muted">{t('reports.parametersHint')}</p>
             ) : (
-              <HScroll label={t('reports.parameters')} className="-mx-1">
-                <table className="w-full min-w-[520px] text-sm">
-                  <thead>
-                    <tr className="border-b border-border text-left text-xs text-text-muted">
-                      <th scope="col" className="px-1 pb-2 font-semibold">
-                        {t('reports.parameter')}
-                      </th>
-                      <th scope="col" className="px-1 pb-2 font-semibold">
-                        {t('reports.value')}
-                      </th>
-                      <th scope="col" className="px-1 pb-2 font-semibold">
-                        {t('reports.lugar')}
-                      </th>
-                      <th scope="col" className="px-1 pb-2 text-right font-semibold">
-                        {t('reports.statusFilter')}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {defs.map((d) => {
-                      const input = values[d.id];
-                      const raw = input?.value ?? '';
-                      const n = raw.trim() === '' ? null : Number(raw);
-                      const status: ParameterStatus = evaluate(n, toEvaluatorDef(d)).status;
-                      const lugar =
-                        input?.lugar ?? (LAB_PARAM_IDS.has(d.siloe_param_id) ? 'lab' : 'in_situ');
-                      const range = rangeLabel(d);
-                      return (
-                        <tr key={d.id} className="border-b border-border last:border-0">
-                          <td className="px-1 py-2">
-                            <span className="font-medium text-text">{d.name_es}</span>
-                            {d.unit && (
-                              <span className="ml-1 text-xs text-text-muted">({d.unit})</span>
-                            )}
-                            {range && (
-                              <span className="block text-xs text-text-muted">
-                                {t('reports.range', { range })}
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-1 py-2">
-                            <input
-                              inputMode="decimal"
-                              value={raw}
-                              onChange={(e) =>
-                                setValue(d.id, { value: e.target.value }, d.siloe_param_id)
-                              }
-                              className={cn(
-                                'h-9 w-24 rounded-[var(--radius-md)] border bg-surface px-2.5 text-right text-text tabular-nums outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-focus/40',
-                                status === 'red' ? 'border-status-red' : 'border-border',
-                              )}
-                              aria-label={`${d.name_es} ${t('reports.value')}`}
-                            />
-                          </td>
-                          <td className="px-1 py-2">
-                            <NativeSelect
-                              value={lugar}
-                              onChange={(e) =>
-                                setValue(d.id, { lugar: e.target.value as Lugar }, d.siloe_param_id)
-                              }
-                              className="h-9 w-32"
-                              aria-label={`${d.name_es} ${t('reports.lugar')}`}
-                            >
-                              <option value="in_situ">{t('lugar.in_situ')}</option>
-                              <option value="lab">{t('lugar.lab')}</option>
-                            </NativeSelect>
-                          </td>
-                          <td className="px-1 py-2 text-right">
-                            <StatusChip status={status} />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </HScroll>
+              <div className="flex flex-col gap-4">
+                {paramTable(siloeDefs, false, t('reports.parameters'))}
+                {extraDefs.length > 0 && (
+                  // Readings SILOÉ doesn't ask for: folded away, open when this visit has any.
+                  <details
+                    className="group rounded-[var(--radius-md)] border border-border"
+                    open={extraDefs.some((d) => (values[d.id]?.value ?? '').trim() !== '')}
+                  >
+                    <summary
+                      className={cn(
+                        'flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 text-sm font-medium text-text',
+                        focusRing,
+                      )}
+                    >
+                      <span>
+                        {t('serviceLog.params.otherTitle')}
+                        <span className="block text-xs font-normal text-text-muted">
+                          {t('serviceLog.params.otherHint')}
+                        </span>
+                      </span>
+                      <ChevronDown
+                        aria-hidden
+                        size={16}
+                        className="shrink-0 text-text-muted transition-transform group-open:rotate-180"
+                      />
+                    </summary>
+                    <div className="border-t border-border px-3 py-2">
+                      {paramTable(extraDefs, true, t('serviceLog.params.otherTitle'))}
+                    </div>
+                  </details>
+                )}
+              </div>
             )}
           </Section>
 
+          <Section n={3} title={t('serviceLog.products.title')}>
+            <ProductsSection
+              products={log.products}
+              failure={log.productsFailure}
+              value={log.chemicals}
+              onChange={log.setChemicals}
+              invalid={log.invalidChemicals}
+            />
+          </Section>
+
+          <Section n={4} title={t('serviceLog.tasks.title')}>
+            <TasksSection
+              defs={log.taskDefs}
+              failure={log.tasksFailure}
+              value={log.tasks}
+              onChange={log.setTasks}
+            />
+          </Section>
+
           <Section
-            n={3}
+            n={5}
             title={t('reports.incidents')}
             action={
               <Button
@@ -544,7 +677,7 @@ export function ReportFormPage() {
             )}
           </Section>
 
-          <Section n={4} title={t('reports.notes')}>
+          <Section n={6} title={t('reports.notes')}>
             <Textarea
               aria-label={t('reports.notes')}
               value={notes}
@@ -611,6 +744,16 @@ export function ReportFormPage() {
                   </li>
                 ))}
               </ul>
+            )}
+            {log.tasks && doneCount(log.tasks) > 0 && (
+              <p className="text-sm text-text-muted">
+                {t('serviceLog.tasks.count', { count: doneCount(log.tasks) })}
+              </p>
+            )}
+            {log.chemicals.length > 0 && (
+              <p className="text-sm text-text-muted">
+                {t('serviceLog.products.count', { count: log.chemicals.length })}
+              </p>
             )}
             {filledIncidents > 0 && (
               <p className="text-sm text-text-muted">

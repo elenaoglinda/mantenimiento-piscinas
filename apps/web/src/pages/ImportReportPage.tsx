@@ -1,13 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { evaluate, type ParameterStatus, type ReadingExtraction } from '@piscinas/shared';
+import { ProductsSection, TasksSection, useServiceLogForm } from '../features/service-log/index.js';
+import {
+  evaluate,
+  isSiloeParameter,
+  type ParameterStatus,
+  type ReadingExtraction,
+} from '@piscinas/shared';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../auth/context.js';
 import {
   fetchResolvedParameterDefs,
   toEvaluatorDef,
-  LAB_PARAM_IDS,
+  isLabParameter,
   type ParameterDefRow,
 } from '../lib/parameters.js';
 import {
@@ -80,6 +86,10 @@ export function ImportReportPage() {
   const [visitedAt, setVisitedAt] = useState(toLocalInput(new Date().toISOString()));
   const [notes, setNotes] = useState('');
 
+  // Products and tasks can be added to the draft too (service log); never prefilled from the
+  // photo — only readings are extracted.
+  const log = useServiceLogForm(undefined);
+  const [savedDraftId, setSavedDraftId] = useState<string | null>(null);
   const [defs, setDefs] = useState<ParameterDefRow[]>([]);
   const [values, setValues] = useState<Record<string, MeasurementInput>>({});
   const [lowConfidenceDefIds, setLowConfidenceDefIds] = useState<Set<string>>(new Set());
@@ -101,7 +111,8 @@ export function ImportReportPage() {
   }, []);
 
   const loadDefs = useCallback(async (ccaa: string | null) => {
-    setDefs(await fetchResolvedParameterDefs(ccaa));
+    // Photo import reads SILOE parameters only (the extraction prompt is generated from them).
+    setDefs((await fetchResolvedParameterDefs(ccaa)).filter(isSiloeParameter));
   }, []);
   useEffect(() => {
     if (selectedPool) void loadDefs(selectedPool.ccaa);
@@ -174,12 +185,12 @@ export function ImportReportPage() {
     }
   }
 
-  function setValue(defId: string, value: string, siloeId: number) {
+  function setValue(defId: string, value: string, def: ParameterDefRow) {
     setValues((prev) => ({
       ...prev,
       [defId]: {
         value,
-        lugar: prev[defId]?.lugar ?? (LAB_PARAM_IDS.has(siloeId) ? 'lab' : 'in_situ'),
+        lugar: prev[defId]?.lugar ?? (isLabParameter(def) ? 'lab' : 'in_situ'),
       },
     }));
   }
@@ -187,6 +198,10 @@ export function ImportReportPage() {
   async function saveDraft() {
     if (!profile || !extraction || !poolId || !basinId) {
       setError(t('common.requiredField'));
+      return;
+    }
+    if (!log.validate()) {
+      setError(t('serviceLog.products.fixQuantities'));
       return;
     }
     setSaving(true);
@@ -236,6 +251,16 @@ export function ImportReportPage() {
           };
         }),
       );
+    }
+
+    const logFailure = await log.save(rid, profile.org.id);
+    if (logFailure) {
+      // The draft exists with its readings. Say what failed and offer the draft in the normal
+      // form (saving here again would create a second draft).
+      setSaving(false);
+      setError(t(`serviceLog.db.${logFailure.code}`, { defaultValue: t('serviceLog.db.unknown') }));
+      setSavedDraftId(rid);
+      return;
     }
 
     // The original photo is the audit evidence — attach it, but never lose the report if the
@@ -470,7 +495,7 @@ export function ImportReportPage() {
                       <input
                         inputMode="decimal"
                         value={raw}
-                        onChange={(e) => setValue(d.id, e.target.value, d.siloe_param_id)}
+                        onChange={(e) => setValue(d.id, e.target.value, d)}
                         aria-label={`${d.name_es} ${t('reports.value')}`}
                         className={`h-9 w-24 rounded-[var(--radius-md)] border bg-surface px-2.5 text-right text-text tabular-nums outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-focus/40 ${
                           needsCheck ? 'border-status-amber' : 'border-border'
@@ -487,6 +512,27 @@ export function ImportReportPage() {
           )}
 
           <Card>
+            <CardHeader title={t('serviceLog.products.title')} />
+            <ProductsSection
+              products={log.products}
+              failure={log.productsFailure}
+              value={log.chemicals}
+              onChange={log.setChemicals}
+              invalid={log.invalidChemicals}
+            />
+          </Card>
+
+          <Card>
+            <CardHeader title={t('serviceLog.tasks.title')} />
+            <TasksSection
+              defs={log.taskDefs}
+              failure={log.tasksFailure}
+              value={log.tasks}
+              onChange={log.setTasks}
+            />
+          </Card>
+
+          <Card>
             <TextareaField
               label={t('reports.notes')}
               value={notes}
@@ -495,9 +541,15 @@ export function ImportReportPage() {
           </Card>
 
           <div className="flex flex-col items-end gap-2">
-            <Button onClick={saveDraft} loading={saving} disabled={!poolId || !basinId}>
-              {t('photoImport.saveDraft')}
-            </Button>
+            {savedDraftId ? (
+              <Button asChild>
+                <Link to={`/reports/${savedDraftId}/edit`}>{t('serviceLog.openDraft')}</Link>
+              </Button>
+            ) : (
+              <Button onClick={saveDraft} loading={saving} disabled={!poolId || !basinId}>
+                {t('photoImport.saveDraft')}
+              </Button>
+            )}
             <p className="text-right text-xs text-text-muted">{t('photoImport.draftNote')}</p>
           </div>
         </>
