@@ -1,5 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { EXTRACTION_USER_PROMPT, buildExtractionSystemPrompt } from '@piscinas/shared';
+import {
+  EXTRACTION_USER_PROMPT,
+  buildExtractionSystemPrompt,
+} from '../packages/shared/src/photoImport.js';
 
 /**
  * Claude vision proxy for photo import. POST /api/extract-reading

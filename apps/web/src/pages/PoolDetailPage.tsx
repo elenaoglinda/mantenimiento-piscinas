@@ -14,6 +14,7 @@ import { StatusPill } from '../components/ui/StatusPill.js';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs.js';
 import { useRecordCrumb } from '../features/app-shell/index.js';
 import { TrendPanel, VisitHistory, WaterStateCards } from '../features/history/index.js';
+import { MonthlySummaryCard } from '../features/client-reports/index.js';
 import { PoolFormModal } from '../components/PoolFormModal.js';
 import { BasinFormModal } from '../components/BasinFormModal.js';
 import { TreatmentFormModal } from '../components/TreatmentFormModal.js';
@@ -200,6 +201,7 @@ export function PoolDetailPage() {
             basins={basinRefs}
             canWrite={canWrite}
           />
+          <MonthlySummaryCard poolId={pool.id} poolName={pool.denominacion} />
           <Card>
             <CardHeader title={t('pools.details')} />
             <dl className="grid gap-x-6 gap-y-4 text-sm sm:grid-cols-2">

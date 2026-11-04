@@ -34,10 +34,19 @@ export default tseslint.config(
     },
   },
   {
-    files: ['api/**/*.ts', 'packages/**/*.ts'],
+    files: ['api/**/*.ts', 'packages/**/*.ts', 'scripts/**/*.ts'],
     languageOptions: {
       ecmaVersion: 2022,
       globals: globals.node,
     },
+  },
+  {
+    files: ['scripts/**/*.cjs'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'commonjs',
+      globals: globals.node,
+    },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
 );

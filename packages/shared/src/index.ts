@@ -7,3 +7,4 @@ export * from './siloe/xml.js';
 export * from './siloe/season.js';
 export * from './history/index.js';
 export * from './service-log/index.js';
+export * from './client-reports/share.js';

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase.js';
 import { Card } from './ui/feedback.js';
 import type { Enums, Tables } from '../lib/database.types.js';
+import { savePhotoThumbnail, thumbnailPath } from '../features/client-reports/index.js';
 
 type Attachment = Tables<'attachment'>;
 type Kind = Enums<'attachment_kind'>;
@@ -48,6 +49,8 @@ export function AttachmentsSection({
     const path = `${orgId}/${reportId}/${kind}-${crypto.randomUUID()}-${file.name}`;
     const { error: upErr } = await supabase.storage.from('reports').upload(path, file);
     if (!upErr) {
+      // Small copy for the client PDFs; the photo itself is saved either way.
+      if (kind === 'photo') await savePhotoThumbnail(path, file);
       await supabase
         .from('attachment')
         .insert({ org_id: orgId, report_id: reportId, kind, storage_path: path });
@@ -58,7 +61,13 @@ export function AttachmentsSection({
 
   async function remove(item: Resolved) {
     if (!window.confirm(t('common.confirmDelete'))) return;
-    await supabase.storage.from('reports').remove([item.storage_path]);
+    await supabase.storage
+      .from('reports')
+      .remove(
+        item.kind === 'photo'
+          ? [item.storage_path, thumbnailPath(item.storage_path)]
+          : [item.storage_path],
+      );
     await supabase.from('attachment').delete().eq('id', item.id);
     await load();
   }

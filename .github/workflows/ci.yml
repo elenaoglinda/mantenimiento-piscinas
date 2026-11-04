@@ -23,6 +23,10 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      # Build every /api function with Vercel's builder and load it: catches functions that
+      # compile but crash on Vercel (and checks the 250 MB size limit).
+      - name: /api functions build and load like on Vercel
+        run: node scripts/check-api.cjs
 
   e2e:
     runs-on: ubuntu-latest
@@ -52,7 +56,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       # Against the harness's fake Supabase backend (scripts/redesign): no secrets needed.
-      - run: npx playwright test -c scripts/redesign/playwright.config.ts a11y overflow keyboard flow history service-log
+      - run: npx playwright test -c scripts/redesign/playwright.config.ts a11y overflow keyboard flow history service-log client-reports
         env:
           SHOT_DIR: ci
       - if: failure()
@@ -113,3 +117,25 @@ jobs:
           done
           psql -v ON_ERROR_STOP=1 -tA -d app -c \
             "select count(*) from public.parameter_def where not in_siloe" | grep -qx 4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Local seed (supabase/seed.sql) loads on an empty database, and only there
+        run: |
+          psql -d postgres -c 'create database seedcheck'
+          # Roles are server-wide and already exist from the first database; the rest is per database.
+          grep -v '^create role' supabase/tests/_local_supabase_stubs.sql | psql -v ON_ERROR_STOP=1 -q -d seedcheck
+          for f in $(ls supabase/migrations/*.sql | sort); do
+            psql -v ON_ERROR_STOP=1 -q -d seedcheck -f "$f"
+          done
+          psql -v ON_ERROR_STOP=1 -q -d seedcheck -f supabase/seed.sql
+          psql -v ON_ERROR_STOP=1 -tA -d seedcheck -c \
+            "select count(*) > 20 from public.report where org_id = 'd0000000-0000-4000-8000-000000000002'" | grep -qx t
+          # A second run must change nothing.
+          before=$(psql -tA -d seedcheck -c 'select count(*) from public.report')
+          psql -v ON_ERROR_STOP=1 -q -d seedcheck -f supabase/seed.sql
+          [ "$(psql -tA -d seedcheck -c 'select count(*) from public.report')" = "$before" ]
+      - name: Demo seed data satisfies the schema; reset touches only the demo org
+        run: bash scripts/demo/ci-check.sh

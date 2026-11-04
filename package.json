@@ -17,8 +17,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "npm run typecheck --workspaces --if-present && tsc -p api/tsconfig.json",
-    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc -p api/tsconfig.json && tsc -p scripts/demo/tsconfig.json",
+    "test": "npm run test --workspaces --if-present && vitest run -c vitest.root.config.ts",
     "e2e": "playwright test"
   },
   "devDependencies": {
@@ -31,6 +31,7 @@
     "eslint-plugin-react-refresh": "^0.4.16",
     "globals": "^15.14.0",
     "prettier": "^3.4.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.1"
   },
@@ -41,5 +42,8 @@
       "ajv": "^8.18.0"
     },
     "vite": "^6.4.5"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.47.10"
   }
 }
