@@ -291,7 +291,7 @@ Routing is in `apps/web/src/App.tsx`. Guards live in `apps/web/src/auth/guards.t
 - `PublicOnly` (login/signup, redirects if already authed) → `LoginPage`, `SignupPage`
 - `RequireAuth` → `OnboardingPage`, then `RequireOnboarded` →
   - `AppShell` (`features/app-shell`: sidebar, top bar, ⌘K, bell) wraps the authed pages:
-    - `/` `DashboardPage` · `/pools` `PoolsPage` · `/pools/:poolId` `PoolDetailPage` (tabs
+    - `/` `DashboardPage` (from `features/dashboard`) · `/pools` `PoolsPage` · `/pools/:poolId` `PoolDetailPage` (tabs
       Resumen, Vasos, Historial, Evolución, SILOÉ; the monthly summary card is on Resumen)
     - `/reports` `ReportsPage` · `/reports/new` & `/reports/:id/edit` `ReportFormPage` ·
       `/reports/import` `ImportReportPage` (photo import) · `/reports/:id` `ReportDetailPage`
@@ -362,8 +362,8 @@ Rules:
 Existing non-feature code (`pages/`, `components/`) is left alone. Move it only when you are
 already changing it — a migration for its own sake buys nothing and makes review harder.
 
-Feature folders today: `app-shell`, `history`, `service-log`, `invoicing`, `client-reports`,
-`design`; shared counterparts in `packages/shared/src/{history,service-log,invoicing,client-reports,siloe}`.
+Feature folders today: `app-shell`, `dashboard`, `history`, `service-log`, `invoicing`,
+`client-reports`, `design`; shared counterparts in `packages/shared/src/{history,service-log,invoicing,client-reports,siloe}`.
 
 ---
 
@@ -499,6 +499,9 @@ PDF from the server (today the technician's own mail app / WhatsApp sends the li
 - **`database.types.ts` is generated** — regenerate after migrations; keep `Relationships` intact.
 - **Embedded selects with composite FKs** need the FK-constraint name to disambiguate, e.g.
   `select('*, client!pool_client_id_org_id_fkey(name)')` — plain `client(...)` won't type-resolve.
+  Name the **table**, never the column: `client:client_id!pool_client_id_org_id_fkey(name)` is
+  rejected by PostgREST (PGRST200) and returns no rows. That made the live dashboard show 0 pools
+  until November 2026; `lib/embeds.test.ts` now fails on it and the ui fake backend rejects it.
 - **Mapbox optimization** only supports open routes with both ends fixed; we use a **round trip**
   from the start. Don't switch to `roundtrip=false` without also fixing `destination`.
 - **`/api` isn't available under `npm run dev`** — use `vercel dev` to test geocoding/routing locally.

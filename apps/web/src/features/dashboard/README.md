@@ -6,11 +6,18 @@ recent visit), the planned-routes calendar, recent reports and the onboarding ch
 
 ```
 pages/DashboardPage.tsx         the page
+lib/data.ts                     every query, with its error read (loadDashboard, loadRoutesBetween)
 components/OnboardingChecklist  first-steps card (dismissable per org)
 components/RoutesCalendar       month grid of planned routes
 ```
 
 ## Things that will bite you
+
+- **A failed query never becomes a number.** `loadDashboard()` returns `data: null` on the first
+  failed query and the page shows an error with "Reintentar", "—" on the stat cards and "No
+  disponible" in the cards that would otherwise say there is nothing to do. Partial results are
+  not shown: a dashboard that says "0 piscinas" or "Todo en orden" because one query failed is
+  worse than one that says it couldn't load. Keep it that way when adding a card.
 
 - **The pure helpers stay in `src/lib/dashboard.ts`.** Madrid dates (`madridDateString`,
   `madridTime`), `stalePools`, `monthGrid` and `ACTIVITY_WINDOW_DAYS` are also used by the app
