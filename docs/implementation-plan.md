@@ -165,7 +165,7 @@ in the order below.
 | 🟡 8.1 | This plan in the repo (phases 8–11 with status)                                                                                          | `docs: …phases 8–11`                 | The repo is the source of truth for the plan                             |
 | 🟡 8.2 | Dashboard: "Piscinas activas" 0 and "Todo en orden" with 7 unvisited pools. Root cause: invalid embeds on composite keys; errors ignored | `fix(dashboard): …`                  | Real counts; a failed query shows an error, never zeros                  |
 | 🟡 8.3 | SILOÉ badge green only when the installation and every active vaso have codes; otherwise says what's missing                             | `fix(pools): …`                      | Arkana-shaped pool (one uncoded vaso) shows amber with the reason        |
-| ⬜ 8.4 | Comunidad Autónoma from a fixed list, filled from the address (postcode → province → community); safe backfill                           | `feat(pools): …` (**adds a column**) | `ccaaToCode()` gives `CT` for every Catalan pool; backfill is idempotent |
+| 🟡 8.4 | Comunidad Autónoma from a fixed list, filled from the address (postcode → province → community); safe backfill                           | `feat(pools): …` (**adds a column**) | `ccaaToCode()` gives `CT` for every Catalan pool; backfill is idempotent |
 | 🟡 8.5 | cloro.app copy: only promise what ships; FAQ checked against RD 742/2013                                                                 | elenaoglinda/cloro-app#1             | Elena approves the copy; published from Lovable                          |
 
 ## Phase 9 — RD 742/2013 and SILOÉ correctness
