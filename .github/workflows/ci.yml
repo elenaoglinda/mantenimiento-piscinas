@@ -117,6 +117,8 @@ jobs:
           done
           psql -v ON_ERROR_STOP=1 -tA -d app -c \
             "select count(*) from public.parameter_def where not in_siloe" | grep -qx 4
+      - name: Comunidad Autónoma backfill (rolls back, re-applies, checks precedence and tenancy)
+        run: psql -v ON_ERROR_STOP=1 -d app -f supabase/tests/pool_ccaa_code.test.sql
       - uses: actions/setup-node@v4
         with:
           node-version: 20
