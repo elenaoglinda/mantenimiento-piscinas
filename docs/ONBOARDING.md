@@ -461,6 +461,10 @@ Built and live: **Phases 0–3, 5, 6** (foundations, auth/tenancy, core domain, 
 export, routing) and invoicing (docs/INVOICING.md). See `implementation-plan.md` for the
 per-task table.
 
+**Next: Phases 8–11** (competitor review, Nov 2026), in `implementation-plan.md`: 8 fixes what's
+broken, 9 makes RD 742/2013 and SILOÉ exactly right, 10 is what's needed before selling, 11 (the
+WhatsApp agent) waits for Elena's go. Each phase has a plan in `docs/plans/`.
+
 In review (PRs into each other, merge in order): the panel redesign (#11), the role fix (#12),
 service history (#13: Historial, Evolución, client page, CSV, dashboard alerts), the service log
 (#14: products, tasks, readings outside SILOÉ, route-stop states; **adds tables**), and client
