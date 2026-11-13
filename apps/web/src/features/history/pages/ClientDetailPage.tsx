@@ -16,6 +16,7 @@ import { ClientFormModal, type Client } from '../../../components/ClientFormModa
 import { useRecordCrumb } from '../../app-shell/index.js';
 import { supabase } from '../../../lib/supabase.js';
 import { toDbFailure, type DbFailure } from '../../../lib/dbError.js';
+import { poolRegion } from '../../../lib/parameters.js';
 import { VisitHistory } from '../components/VisitHistory.js';
 import { FailureAlert } from '../components/FailureAlert.js';
 import { fetchRecentActivity, type RecentActivity } from '../lib/data.js';
@@ -27,6 +28,8 @@ interface ClientPool {
   id: string;
   denominacion: string;
   ccaa: string | null;
+  /** Absent before the pool_ccaa_code migration. */
+  ccaa_code?: string | null;
   municipio: string | null;
   localidad: string | null;
   archived: boolean;
@@ -59,7 +62,8 @@ export function ClientDetailPage() {
       supabase
         .from('pool')
         .select(
-          'id, denominacion, ccaa, municipio, localidad, archived, basin!basin_pool_id_org_id_fkey(id, denominacion)',
+          // `*` so ccaa_code comes along once its migration has run.
+          '*, basin!basin_pool_id_org_id_fkey(id, denominacion)',
         )
         .eq('client_id', clientId)
         .order('denominacion'),
@@ -97,7 +101,7 @@ export function ClientDetailPage() {
     for (const p of pools) {
       const states = latestStateByBasin(
         activity.readings.filter((r) => r.poolId === p.id),
-        catalog.evaluatorDefs(p.ccaa),
+        catalog.evaluatorDefs(poolRegion(p)),
       );
       out.set(p.id, worstStatus([...states.values()].map((s) => s.status)));
     }

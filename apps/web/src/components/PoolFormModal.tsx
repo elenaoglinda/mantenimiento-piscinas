@@ -1,5 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  CCAA,
+  CCAA_CODES,
+  ccaaFromPostcode,
+  isCcaaCode,
+  resolveCcaa,
+  type CcaaCode,
+} from '@piscinas/shared';
 import { supabase } from '../lib/supabase.js';
 import { Modal } from './ui/Modal.js';
 import { Button } from './ui/Button.js';
@@ -15,6 +23,9 @@ type PoolType = Enums<'pool_type'>;
 
 const POOL_TYPES: PoolType[] = ['tipo_1', 'tipo_2', 'tipo_3a'];
 const WATER_SOURCES: WaterSource[] = ['red_publica', 'mar', 'captacion_propia'];
+
+/** The 19 communities in alphabetical order, for the select. */
+const CCAA_OPTIONS = [...CCAA_CODES].sort((a, b) => CCAA[a].localeCompare(CCAA[b], 'es'));
 
 interface ClientOption {
   id: string;
@@ -46,7 +57,12 @@ export function PoolFormModal({
   const [localidad, setLocalidad] = useState(pool?.localidad ?? '');
   const [municipio, setMunicipio] = useState(pool?.municipio ?? '');
   const [provincia, setProvincia] = useState(pool?.provincia ?? '');
-  const [ccaa, setCcaa] = useState(pool?.ccaa ?? '');
+  // Prefilled from the saved code, else from the address and the old free text. Once the user
+  // picks one, the address never changes it again.
+  const [ccaaCode, setCcaaCode] = useState<CcaaCode | ''>(() =>
+    pool ? (isCcaaCode(pool.ccaa_code) ? pool.ccaa_code : (resolveCcaa(pool) ?? '')) : '',
+  );
+  const [ccaaChosen, setCcaaChosen] = useState(isCcaaCode(pool?.ccaa_code));
   const [lat, setLat] = useState(pool?.lat?.toString() ?? '');
   const [lng, setLng] = useState(pool?.lng?.toString() ?? '');
   const [siloeCodP, setSiloeCodP] = useState(pool?.siloe_cod_p ?? '');
@@ -80,6 +96,8 @@ export function PoolFormModal({
     if (s.cp) setCp(s.cp);
     if (s.localidad) setLocalidad(s.localidad);
     if (s.provincia) setProvincia(s.provincia);
+    const fromAddress = resolveCcaa({ cp: s.cp, provincia: s.provincia });
+    if (!ccaaChosen && fromAddress) setCcaaCode(fromAddress);
     setLat(s.lat.toFixed(8));
     setLng(s.lng.toFixed(8));
   }
@@ -92,7 +110,7 @@ export function PoolFormModal({
     }
     setSaving(true);
     setError(null);
-    const payload = {
+    const base = {
       client_id: clientId,
       denominacion: denominacion.trim(),
       pool_type: poolType || null,
@@ -102,19 +120,28 @@ export function PoolFormModal({
       localidad: localidad.trim() || null,
       municipio: municipio.trim() || null,
       provincia: provincia.trim() || null,
-      ccaa: ccaa.trim() || null,
+      // Expand step: the name also goes in the old text field, which older app versions read.
+      ccaa: ccaaCode ? CCAA[ccaaCode] : (pool?.ccaa ?? null),
       lat: lat ? Number(lat) : null,
       lng: lng ? Number(lng) : null,
       siloe_cod_p: siloeCodP.trim() || null,
       observaciones: observaciones.trim() || null,
     };
-    const { data, error } = pool
-      ? await supabase.from('pool').update(payload).eq('id', pool.id).select('id').single()
-      : await supabase
-          .from('pool')
-          .insert({ ...payload, org_id: orgId })
-          .select('id')
-          .single();
+    const payload = { ...base, ccaa_code: ccaaCode || null };
+    const save = (row: typeof base) =>
+      pool
+        ? supabase.from('pool').update(row).eq('id', pool.id).select('id').single()
+        : supabase
+            .from('pool')
+            .insert({ ...row, org_id: orgId })
+            .select('id')
+            .single();
+    let { data, error } = await save(payload);
+    // Until the pool_ccaa_code migration has run (previews use the production database), the
+    // column doesn't exist: save without it; the name is still in `ccaa`.
+    if (error?.code === 'PGRST204' && error.message.includes('ccaa_code')) {
+      ({ data, error } = await save(base));
+    }
     setSaving(false);
     if (error || !data) {
       setError(t('common.genericError'));
@@ -195,7 +222,15 @@ export function PoolFormModal({
         />
         <p className="-mt-2 text-xs text-text-muted">{t('pools.addressManualHint')}</p>
         <div className="grid grid-cols-2 gap-3">
-          <TextField label={t('pools.cp')} value={cp} onChange={(e) => setCp(e.target.value)} />
+          <TextField
+            label={t('pools.cp')}
+            value={cp}
+            onChange={(e) => {
+              setCp(e.target.value);
+              const fromCp = ccaaFromPostcode(e.target.value);
+              if (!ccaaChosen && fromCp) setCcaaCode(fromCp);
+            }}
+          />
           <TextField
             label={t('pools.localidad')}
             value={localidad}
@@ -212,7 +247,22 @@ export function PoolFormModal({
             onChange={(e) => setProvincia(e.target.value)}
           />
         </div>
-        <TextField label={t('pools.ccaa')} value={ccaa} onChange={(e) => setCcaa(e.target.value)} />
+        <SelectField
+          label={t('pools.ccaa')}
+          hint={t('pools.ccaaHint')}
+          value={ccaaCode}
+          onChange={(e) => {
+            setCcaaCode(isCcaaCode(e.target.value) ? e.target.value : '');
+            setCcaaChosen(e.target.value !== '');
+          }}
+        >
+          <option value="">{t('pools.ccaaNone')}</option>
+          {CCAA_OPTIONS.map((code) => (
+            <option key={code} value={code}>
+              {CCAA[code]}
+            </option>
+          ))}
+        </SelectField>
 
         <div className="grid grid-cols-2 gap-3">
           <TextField

@@ -18,3 +18,14 @@ components/SiloeBadge   "ready for SILOÉ?" pill on the Piscinas list and the po
   (the Piscinas list embeds `basin!basin_pool_id_org_id_fkey(denominacion, siloe_cod_v, fecha_baja)`).
 - **Checked by** `scripts/redesign/siloe-badge.spec.ts` (ready, missing installation code, one
   uncoded vaso, retired vaso ignored, no active vasos) in the CI ui job.
+- **The Comunidad Autónoma is a code** (`pool.ccaa_code`, one of 19, `CT` = Cataluña) and
+  decides which regional thresholds apply. `PoolFormModal` shows a select prefilled from the
+  postcode and the address suggestion (`resolveCcaa` in `packages/shared/src/territory/`); once
+  someone picks one by hand, the address no longer changes it. The form also writes the
+  community's name into the old `pool.ccaa` text, which older app versions read (expand step).
+- **Code that reads a pool's region selects `*`, not `ccaa_code`,** and goes through
+  `poolRegion()` in `lib/parameters.ts`, so it works before and after the migration (previews use
+  the production database). The form retries without `ccaa_code` if PostgREST answers PGRST204
+  for it. Both workarounds go when `pool.ccaa` is dropped (contract step, Phase 9 at the earliest).
+- **Checked by** `scripts/redesign/ccaa.spec.ts` (postcode prefill, manual choice sticks, saved
+  name, "Sin indicar", saving before the migration) and `supabase/tests/pool_ccaa_code.test.sql`.
