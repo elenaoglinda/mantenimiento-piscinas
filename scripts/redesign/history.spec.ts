@@ -230,7 +230,14 @@ test('client → pool → vaso → three visits → every history screen', async
   await page.keyboard.press('Control+k');
   const palette = page.getByRole('combobox', { name: 'Ir a una página' });
   await expect(palette).toBeFocused();
-  await page.keyboard.type('Dunas');
+  // fill() sets the whole query at once: typed keystrokes could be lost while the dialog was
+  // still settling (CI once saw only "s"). Then wait for the client lookup before choosing.
+  const clientLookup = page.waitForResponse(
+    (r) => r.url().includes('/rest/v1/client?') && r.url().includes('Dunas'),
+  );
+  await palette.fill('Dunas');
+  await expect(palette).toHaveValue('Dunas');
+  await clientLookup;
   await page.getByRole('option', { name: 'Comunidad Las Dunas' }).click();
   await expect(page).toHaveURL(clientUrl);
 
