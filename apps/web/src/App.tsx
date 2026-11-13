@@ -18,7 +18,7 @@ import { showDesignPage } from './features/design/visibility.js';
 const page = <K extends string>(load: () => Promise<Record<K, React.ComponentType>>, name: K) =>
   lazy(() => load().then((m) => ({ default: m[name] })));
 
-const DashboardPage = page(() => import('./pages/DashboardPage.js'), 'DashboardPage');
+const DashboardPage = page(() => import('./features/dashboard/index.js'), 'DashboardPage');
 const TeamPage = page(() => import('./pages/TeamPage.js'), 'TeamPage');
 const ClientsPage = page(() => import('./pages/ClientsPage.js'), 'ClientsPage');
 const ClientDetailPage = page(() => import('./features/history/index.js'), 'ClientDetailPage');

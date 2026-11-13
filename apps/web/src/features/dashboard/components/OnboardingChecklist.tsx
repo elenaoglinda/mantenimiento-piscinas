@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import * as Collapsible from '@radix-ui/react-collapsible';
 import { Check, ChevronDown } from 'lucide-react';
-import { Card } from '../ui/Card.js';
-import { Button } from '../ui/Button.js';
-import { ProgressBar } from '../ui/ProgressBar.js';
-import { cn } from '../ui/utils.js';
-import type { Checklist, ChecklistStep } from '../../lib/dashboard.js';
+import { Card } from '../../../components/ui/Card.js';
+import { Button } from '../../../components/ui/Button.js';
+import { ProgressBar } from '../../../components/ui/ProgressBar.js';
+import { cn } from '../../../components/ui/utils.js';
+import type { Checklist, ChecklistStep } from '../../../lib/dashboard.js';
 
 interface OnboardingChecklistProps {
   checklist: Checklist;

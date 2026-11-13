@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Card } from '../ui/Card.js';
-import { cn, focusRing } from '../ui/utils.js';
-import { madridTime, monthGrid, type RouteLite } from '../../lib/dashboard.js';
+import { Card } from '../../../components/ui/Card.js';
+import { cn, focusRing } from '../../../components/ui/utils.js';
+import { madridTime, monthGrid, type RouteLite } from '../../../lib/dashboard.js';
 
 interface RoutesCalendarProps {
   year: number;

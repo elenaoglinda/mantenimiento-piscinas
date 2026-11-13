@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { supabase } from '../lib/supabase.js';
-import { useAuth } from '../auth/context.js';
+import { supabase } from '../../../lib/supabase.js';
+import { useAuth } from '../../../auth/context.js';
 import {
   CalendarCheck,
   ClipboardList,
@@ -12,16 +12,16 @@ import {
   TriangleAlert,
   Waves,
 } from 'lucide-react';
-import { Card, CardHeader } from '../components/ui/Card.js';
-import { Button } from '../components/ui/Button.js';
-import { EmptyState } from '../components/ui/EmptyState.js';
-import { PageHeader } from '../components/ui/PageHeader.js';
-import { ProgressBar } from '../components/ui/ProgressBar.js';
-import { SkeletonText } from '../components/ui/Skeleton.js';
-import { StatCard } from '../components/ui/StatCard.js';
-import { ReportStatusBadge } from '../components/ReportStatusBadge.js';
-import { OnboardingChecklist } from '../components/dashboard/OnboardingChecklist.js';
-import { RoutesCalendar } from '../components/dashboard/RoutesCalendar.js';
+import { Card, CardHeader } from '../../../components/ui/Card.js';
+import { Button } from '../../../components/ui/Button.js';
+import { EmptyState } from '../../../components/ui/EmptyState.js';
+import { PageHeader } from '../../../components/ui/PageHeader.js';
+import { ProgressBar } from '../../../components/ui/ProgressBar.js';
+import { SkeletonText } from '../../../components/ui/Skeleton.js';
+import { StatCard } from '../../../components/ui/StatCard.js';
+import { ReportStatusBadge } from '../../../components/ReportStatusBadge.js';
+import { OnboardingChecklist } from '../components/OnboardingChecklist.js';
+import { RoutesCalendar } from '../components/RoutesCalendar.js';
 import {
   ACTIVITY_WINDOW_DAYS,
   bucketRoutesByDate,
@@ -36,11 +36,11 @@ import {
   type RouteLite,
   type RouteStopLite,
   type StalePool,
-} from '../lib/dashboard.js';
-import type { Enums } from '../lib/database.types.js';
-import { historyLink } from '../features/history/index.js';
-import { fetchLegalRedReadings } from '../lib/legalAlerts.js';
-import { StopStatusPill } from '../features/service-log/index.js';
+} from '../../../lib/dashboard.js';
+import type { Enums } from '../../../lib/database.types.js';
+import { historyLink } from '../../history/index.js';
+import { fetchLegalRedReadings } from '../../../lib/legalAlerts.js';
+import { StopStatusPill } from '../../service-log/index.js';
 import { stopCounts } from '@piscinas/shared';
 
 interface RecentReport {
