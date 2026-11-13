@@ -27,6 +27,11 @@ clients' pools). Everything is **multi-tenant** and **Spanish-only** (i18n-ready
 **Live:** production runs at **https://panel.cloro.app** and **https://mantenimiento-piscinas.vercel.app**
 (same deployment; `panel.cloro.app` is the custom domain).
 
+The public website **https://cloro.app** is a different project: a Lovable site (TanStack Start,
+served through Cloudflare) whose code is in **`elenaoglinda/cloro-app`**. Its copy must only
+promise what this app does. A PR merged there syncs into Lovable; it goes live when someone
+presses Publish in Lovable.
+
 ---
 
 ## 2. Tech stack & why
@@ -536,7 +541,8 @@ PDF from the server (today the technician's own mail app / WhatsApp sends the li
 
 ## 13. Access / accounts a new dev will need
 
-- **GitHub:** repo `SaraBon/mantenimiento-piscinas` (you have this).
+- **GitHub:** repo `elenaoglinda/mantenimiento-piscinas` (transferred from
+  `SaraBon/mantenimiento-piscinas`, whose URLs still redirect). The website is `elenaoglinda/cloro-app`.
 - **Supabase:** invite to the `Mantenimiento Piscina` project (for dashboard, SQL editor, auth
   config, migrations, type generation).
 - **Vercel:** invite to `sarabons-projects/mantenimiento-piscinas` (for env vars, domains, deploy
