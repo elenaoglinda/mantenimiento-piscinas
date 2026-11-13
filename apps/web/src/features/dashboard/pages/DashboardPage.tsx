@@ -113,9 +113,7 @@ export function DashboardPage() {
       supabase.from('client').select('id', { count: 'exact', head: true }).eq('archived', false),
       supabase
         .from('pool')
-        .select(
-          'id, denominacion, created_at, archived, client:client_id!pool_client_id_org_id_fkey(name)',
-        )
+        .select('id, denominacion, created_at, archived, client!pool_client_id_org_id_fkey(name)')
         .order('denominacion'),
       supabase.from('basin').select('id', { count: 'exact', head: true }),
       supabase
@@ -125,7 +123,7 @@ export function DashboardPage() {
       supabase
         .from('report')
         .select(
-          'id, pool_id, visited_at, status, pool:pool_id!report_pool_id_org_id_fkey(denominacion), basin:basin_id!report_basin_id_org_id_fkey(denominacion)',
+          'id, pool_id, visited_at, status, pool!report_pool_id_org_id_fkey(denominacion), basin!report_basin_id_org_id_fkey(denominacion)',
         )
         .order('visited_at', { ascending: false })
         .limit(100),
