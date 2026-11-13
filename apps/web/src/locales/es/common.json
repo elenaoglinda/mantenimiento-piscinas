@@ -125,7 +125,10 @@
     "attentionEmptyHint": "Sin lecturas fuera de rango ni piscinas pendientes de visita.",
     "outOfRangeOf_one": "En {{count}} informe de los últimos {{days}} días",
     "outOfRangeOf_other": "De {{count}} informes en los últimos {{days}} días",
-    "statOutOfRangeReadings": "Lecturas fuera de rango"
+    "statOutOfRangeReadings": "Lecturas fuera de rango",
+    "loadError": "No se ha podido cargar el panel. Las cifras no se muestran para no dar datos falsos.",
+    "loadErrorSchema": "Falta aplicar una migración de la base de datos.",
+    "unavailable": "No disponible mientras el panel no cargue."
   },
   "checklist": {
     "title": "Primeros pasos",

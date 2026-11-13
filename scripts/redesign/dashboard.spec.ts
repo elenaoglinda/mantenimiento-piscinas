@@ -1,6 +1,8 @@
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { serveBackend, type Db } from './backend';
 import { appUser, session } from './fixtures';
+import { SUPABASE_HOST } from './target';
 
 /**
  * The dashboard counts what is really there, and says so when it can't.
@@ -62,4 +64,35 @@ test('counts active pools and lists the ones never visited', async ({ page }) =>
   await expect(page.getByText('Todo en orden. No hay avisos.')).toHaveCount(0);
   await expect(page.getByRole('alert')).toHaveCount(0);
   expect(errors).toEqual([]);
+});
+
+test('a failed query shows an error, never zeros or "Todo en orden"', async ({ page }) => {
+  await serveBackend(page, seed(), session);
+  // Registered after the backend, so it answers first: the pools query fails.
+  await page.route(`${SUPABASE_HOST}/rest/v1/pool?**`, (route) =>
+    route.fulfill({
+      status: 500,
+      contentType: 'application/json',
+      headers: { 'access-control-allow-origin': '*' },
+      body: JSON.stringify({ code: 'XX000', message: 'boom' }),
+    }),
+  );
+  await page.goto('/');
+
+  const alert = page.getByRole('alert');
+  await expect(alert).toContainText('No se ha podido cargar el panel');
+  await expect(statValue(page, 'Piscinas activas')).toHaveText('—');
+  await expect(page.getByText('Todo en orden. No hay avisos.')).toHaveCount(0);
+  const axe = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  expect(
+    axe.violations.flatMap((v) => v.nodes.map((n) => `${v.id}: ${n.target} ${n.failureSummary}`)),
+  ).toEqual([]);
+
+  // Retrying after the failure clears loads the real numbers.
+  await page.unroute(`${SUPABASE_HOST}/rest/v1/pool?**`);
+  await alert.getByRole('button', { name: 'Reintentar' }).click();
+  await expect(statValue(page, 'Piscinas activas')).toHaveText('7');
+  await expect(page.getByRole('alert')).toHaveCount(0);
 });
