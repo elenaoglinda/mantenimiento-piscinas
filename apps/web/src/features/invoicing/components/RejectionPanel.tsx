@@ -37,7 +37,7 @@ export function RejectionPanel({
       <Alert tone="error">
         <span className="block">{errorMessage ?? t('invoicing.rejection.noMessage')}</span>
         {errorCode && (
-          <span className="mt-1 block font-mono text-xs opacity-80">
+          <span className="mt-1 block font-mono text-xs">
             {t('invoicing.rejection.code')}: {errorCode}
           </span>
         )}
