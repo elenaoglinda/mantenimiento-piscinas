@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { supabase } from '../lib/supabase.js';
-import { useAuth } from '../auth/context.js';
+import { supabase } from '../../../lib/supabase.js';
+import { useAuth } from '../../../auth/context.js';
 import {
   CalendarCheck,
   ClipboardList,
@@ -12,16 +12,17 @@ import {
   TriangleAlert,
   Waves,
 } from 'lucide-react';
-import { Card, CardHeader } from '../components/ui/Card.js';
-import { Button } from '../components/ui/Button.js';
-import { EmptyState } from '../components/ui/EmptyState.js';
-import { PageHeader } from '../components/ui/PageHeader.js';
-import { ProgressBar } from '../components/ui/ProgressBar.js';
-import { SkeletonText } from '../components/ui/Skeleton.js';
-import { StatCard } from '../components/ui/StatCard.js';
-import { ReportStatusBadge } from '../components/ReportStatusBadge.js';
-import { OnboardingChecklist } from '../components/dashboard/OnboardingChecklist.js';
-import { RoutesCalendar } from '../components/dashboard/RoutesCalendar.js';
+import { Card, CardHeader } from '../../../components/ui/Card.js';
+import { Button } from '../../../components/ui/Button.js';
+import { EmptyState } from '../../../components/ui/EmptyState.js';
+import { Alert } from '../../../components/ui/feedback.js';
+import { PageHeader } from '../../../components/ui/PageHeader.js';
+import { ProgressBar } from '../../../components/ui/ProgressBar.js';
+import { SkeletonText } from '../../../components/ui/Skeleton.js';
+import { StatCard } from '../../../components/ui/StatCard.js';
+import { ReportStatusBadge } from '../../../components/ReportStatusBadge.js';
+import { OnboardingChecklist } from '../components/OnboardingChecklist.js';
+import { RoutesCalendar } from '../components/RoutesCalendar.js';
 import {
   ACTIVITY_WINDOW_DAYS,
   bucketRoutesByDate,
@@ -32,29 +33,18 @@ import {
   monthGrid,
   stalePools,
   type Checklist,
-  type PoolLite,
   type RouteLite,
   type RouteStopLite,
   type StalePool,
-} from '../lib/dashboard.js';
-import type { Enums } from '../lib/database.types.js';
-import { historyLink } from '../features/history/index.js';
-import { fetchLegalRedReadings } from '../lib/legalAlerts.js';
-import { StopStatusPill } from '../features/service-log/index.js';
+} from '../../../lib/dashboard.js';
+import type { DbFailure } from '../../../lib/dbError.js';
+import { historyLink } from '../../history/index.js';
+import { StopStatusPill } from '../../service-log/index.js';
 import { stopCounts } from '@piscinas/shared';
+import { loadDashboard, loadRoutesBetween, type PoolInfo, type RecentReport } from '../lib/data.js';
 
-interface RecentReport {
-  id: string;
-  pool_id: string;
-  visited_at: string;
-  status: Enums<'report_status'>;
-  pool: { denominacion: string } | null;
-  basin: { denominacion: string } | null;
-}
-
-interface PoolInfo extends PoolLite {
-  archived: boolean;
-}
+/** Shown instead of a number when the dashboard couldn't load: unknown must look unknown. */
+const UNKNOWN = '—';
 
 export function DashboardPage() {
   const { t, i18n } = useTranslation();
@@ -64,6 +54,8 @@ export function DashboardPage() {
   const today = madridDateString();
 
   const [loading, setLoading] = useState(true);
+  /** Any failed query. While set, nothing on the page claims a count or "all clear". */
+  const [failure, setFailure] = useState<DbFailure | null>(null);
   const [checklist, setChecklist] = useState<Checklist | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [reportsWindow, setReportsWindow] = useState(0);
@@ -94,82 +86,21 @@ export function DashboardPage() {
 
   const load = useCallback(async () => {
     if (!profile) return;
+    setLoading(true);
+    setFailure(null);
     const windowCutoff = Date.now() - ACTIVITY_WINDOW_DAYS * 86_400_000;
+    const { data, failure: loadFailure } = await loadDashboard({ today, siloeYear });
+    if (!data) {
+      setFailure(loadFailure);
+      setLoading(false);
+      return;
+    }
 
-    const [
-      { count: clientCount },
-      { data: poolData },
-      { count: basinCount },
-      { data: visitData },
-      { data: recentData },
-      { data: redData },
-      { count: memberCount },
-      { count: routeCount },
-      { count: exportCount },
-      { data: nextRoute },
-      { data: siloeRows },
-      { data: siloeExport },
-    ] = await Promise.all([
-      supabase.from('client').select('id', { count: 'exact', head: true }).eq('archived', false),
-      supabase
-        .from('pool')
-        .select(
-          'id, denominacion, created_at, archived, client:client_id!pool_client_id_org_id_fkey(name)',
-        )
-        .order('denominacion'),
-      supabase.from('basin').select('id', { count: 'exact', head: true }),
-      supabase
-        .from('report')
-        .select('pool_id, visited_at')
-        .order('visited_at', { ascending: false }),
-      supabase
-        .from('report')
-        .select(
-          'id, pool_id, visited_at, status, pool:pool_id!report_pool_id_org_id_fkey(denominacion), basin:basin_id!report_basin_id_org_id_fkey(denominacion)',
-        )
-        .order('visited_at', { ascending: false })
-        .limit(100),
-      fetchLegalRedReadings(),
-      supabase.from('app_user').select('id', { count: 'exact', head: true }),
-      supabase.from('route').select('id', { count: 'exact', head: true }),
-      supabase.from('xml_export').select('id', { count: 'exact', head: true }),
-      supabase
-        .from('route')
-        .select('route_date')
-        .gte('route_date', today)
-        .order('route_date', { ascending: true })
-        .limit(1),
-      supabase.from('annual_result').select('basin_id').eq('year', siloeYear),
-      supabase
-        .from('xml_export')
-        .select('created_at')
-        .eq('kind', 'resultado_anual')
-        .eq('period_year', siloeYear)
-        .order('created_at', { ascending: false })
-        .limit(1),
-    ]);
-
-    const pools: PoolInfo[] = (
-      (poolData ?? []) as unknown as Array<{
-        id: string;
-        denominacion: string;
-        created_at: string;
-        archived: boolean;
-        client: { name: string } | null;
-      }>
-    ).map((p) => ({
-      id: p.id,
-      denominacion: p.denominacion,
-      created_at: p.created_at,
-      archived: p.archived,
-      clientName: p.client?.name ?? null,
-    }));
-    setPoolMap(new Map(pools.map((p) => [p.id, p])));
-
-    const activePools = pools.filter((p) => !p.archived);
+    setPoolMap(new Map(data.pools.map((p) => [p.id, p])));
+    const activePools = data.pools.filter((p) => !p.archived);
     setPoolCount(activePools.length);
 
-    const visits = (visitData ?? []) as { pool_id: string; visited_at: string }[];
+    const { visits } = data;
     setReportsWindow(visits.filter((r) => Date.parse(r.visited_at) >= windowCutoff).length);
     const allStale = stalePools(activePools, lastVisitByPool(visits), today);
     setStale(allStale.slice(0, 5));
@@ -178,34 +109,30 @@ export function DashboardPage() {
       visits.filter((r) => madridDateString(new Date(r.visited_at)) === today).length,
     );
     setSiloe({
-      ready: new Set(((siloeRows ?? []) as { basin_id: string }[]).map((r) => r.basin_id)).size,
-      basins: basinCount ?? 0,
-      exportedAt: (siloeExport?.[0] as { created_at: string } | undefined)?.created_at ?? null,
+      ready: data.siloeReadyBasins,
+      basins: data.basinCount,
+      exportedAt: data.siloeExportedAt,
     });
 
-    const recent = (recentData ?? []) as unknown as RecentReport[];
-    setKeyReports(recent.slice(0, 5));
-    const redReportIds = new Set(
-      ((redData ?? []) as { report_id: string }[]).map((m) => m.report_id),
-    );
+    setKeyReports(data.recent.slice(0, 5));
     setAttention(
-      recent
-        .filter((r) => redReportIds.has(r.id) && Date.parse(r.visited_at) >= windowCutoff)
+      data.recent
+        .filter((r) => data.redReportIds.has(r.id) && Date.parse(r.visited_at) >= windowCutoff)
         .slice(0, 5),
     );
 
-    setNextRouteDate(nextRoute?.[0]?.route_date ?? null);
+    setNextRouteDate(data.nextRouteDate);
 
     setChecklist(
       buildChecklist({
         isCompany: !!isCompany,
-        clientCount: clientCount ?? 0,
+        clientCount: data.clientCount,
         poolCount: activePools.length,
-        basinCount: basinCount ?? 0,
+        basinCount: data.basinCount,
         reportCount: visits.length,
-        exportCount: exportCount ?? 0,
-        routeCount: routeCount ?? 0,
-        memberCount: memberCount ?? 0,
+        exportCount: data.exportCount,
+        routeCount: data.routeCount,
+        memberCount: data.memberCount,
       }),
     );
     setLoading(false);
@@ -215,46 +142,32 @@ export function DashboardPage() {
     void load();
   }, [load]);
 
+  const failed = failure !== null;
+
   // Fetch the viewed month's planned routes and assemble calendar entries from the pool map.
   useEffect(() => {
-    if (loading) return;
+    if (loading || failed) return;
     let active = true;
     void (async () => {
       // Bound by the visible grid's real first/last dates (covers adjacent-month cells and
       // avoids invalid literals like YYYY-02-31).
       const grid = monthGrid(viewYear, viewMonth, today);
-      const gridStart = grid[0].date;
-      const gridEnd = grid[grid.length - 1].date;
-      const { data: routeData } = await supabase
-        .from('route')
-        .select('id, route_date')
-        .gte('route_date', gridStart)
-        .lte('route_date', gridEnd);
-      const routes = (routeData ?? []) as { id: string; route_date: string }[];
-      if (routes.length === 0) {
-        if (active) setRoutesByDate(new Map());
+      const { data, failure: routesFailure } = await loadRoutesBetween(
+        grid[0].date,
+        grid[grid.length - 1].date,
+      );
+      if (!active) return;
+      if (!data) {
+        setFailure(routesFailure);
         return;
       }
-      const { data: stopData } = await supabase
-        .from('route_stop')
-        .select('route_id, pool_id, seq, eta')
-        .in(
-          'route_id',
-          routes.map((r) => r.id),
-        );
-      const stops = (stopData ?? []) as {
-        route_id: string;
-        pool_id: string;
-        seq: number;
-        eta: string | null;
-      }[];
-      const byRoute = new Map<string, typeof stops>();
-      for (const s of stops) {
+      const byRoute = new Map<string, typeof data.stops>();
+      for (const s of data.stops) {
         const list = byRoute.get(s.route_id);
         if (list) list.push(s);
         else byRoute.set(s.route_id, [s]);
       }
-      const assembled: RouteLite[] = routes.map((r) => ({
+      const assembled: RouteLite[] = data.routes.map((r) => ({
         id: r.id,
         route_date: r.route_date,
         stops: (byRoute.get(r.id) ?? []).map((s) => ({
@@ -264,53 +177,41 @@ export function DashboardPage() {
           clientName: poolMap.get(s.pool_id)?.clientName ?? null,
         })),
       }));
-      if (active) setRoutesByDate(bucketRoutesByDate(assembled));
+      setRoutesByDate(bucketRoutesByDate(assembled));
     })();
     return () => {
       active = false;
     };
-  }, [loading, viewYear, viewMonth, poolMap, today]);
+  }, [loading, failed, viewYear, viewMonth, poolMap, today]);
 
   // Today's stops, independent of the month the calendar is showing.
   useEffect(() => {
-    if (loading) return;
+    if (loading || failed) return;
     let active = true;
     void (async () => {
-      const { data: routeData } = await supabase.from('route').select('id').eq('route_date', today);
-      const ids = ((routeData ?? []) as { id: string }[]).map((r) => r.id);
-      if (ids.length === 0) {
-        if (active) setTodayStops([]);
+      const { data, failure: stopsFailure } = await loadRoutesBetween(today, today);
+      if (!active) return;
+      if (!data) {
+        setFailure(stopsFailure);
         return;
       }
-      const { data: stopData } = await supabase
-        .from('route_stop')
-        // select('*'): includes estado/motivo once the service-log migration adds them.
-        .select('*')
-        .in('route_id', ids);
-      const stops = (
-        (stopData ?? []) as {
-          pool_id: string;
-          seq: number;
-          eta: string | null;
-          estado?: RouteStopLite['estado'];
-          motivo?: string | null;
-        }[]
-      )
-        .map((st) => ({
-          seq: st.seq,
-          eta: st.eta,
-          poolName: poolMap.get(st.pool_id)?.denominacion ?? '—',
-          clientName: poolMap.get(st.pool_id)?.clientName ?? null,
-          estado: st.estado,
-          motivo: st.motivo,
-        }))
-        .sort((a, b) => a.seq - b.seq);
-      if (active) setTodayStops(stops);
+      setTodayStops(
+        data.stops
+          .map((st) => ({
+            seq: st.seq,
+            eta: st.eta,
+            poolName: poolMap.get(st.pool_id)?.denominacion ?? '—',
+            clientName: poolMap.get(st.pool_id)?.clientName ?? null,
+            estado: st.estado,
+            motivo: st.motivo,
+          }))
+          .sort((a, b) => a.seq - b.seq),
+      );
     })();
     return () => {
       active = false;
     };
-  }, [loading, poolMap, today]);
+  }, [loading, failed, poolMap, today]);
 
   function shiftMonth(delta: number) {
     const next = viewMonth + delta;
@@ -376,60 +277,89 @@ export function DashboardPage() {
         }
       />
 
-      {showChecklist && checklist && (
+      {failure && (
+        <Alert tone="error">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span>
+              {t('dashboard.loadError')}
+              {failure.code === 'missing_schema' && (
+                <span className="block">{t('dashboard.loadErrorSchema')}</span>
+              )}
+              {failure.code === 'unknown' && failure.detail && (
+                <span className="mt-1 block font-mono text-xs">{failure.detail}</span>
+              )}
+            </span>
+            <Button variant="secondary" size="sm" onClick={() => void load()}>
+              {t('common.retry')}
+            </Button>
+          </div>
+        </Alert>
+      )}
+
+      {!failed && showChecklist && checklist && (
         <OnboardingChecklist checklist={checklist} onDismiss={() => void dismiss()} />
       )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label={t('dashboard.statPools')}
-          value={poolCount}
+          value={failed ? UNKNOWN : poolCount}
           icon={<Waves size={16} />}
           to="/pools"
-          loading={loading}
+          loading={loading && !failed}
           hint={
-            staleCount > 0
-              ? t('dashboard.statPoolsStale', { count: staleCount })
-              : t('dashboard.statPoolsFresh')
+            failed
+              ? undefined
+              : staleCount > 0
+                ? t('dashboard.statPoolsStale', { count: staleCount })
+                : t('dashboard.statPoolsFresh')
           }
         />
         <StatCard
           label={t('dashboard.statVisitsToday')}
-          value={todayStops?.length ?? 0}
+          value={failed ? UNKNOWN : (todayStops?.length ?? 0)}
           icon={<CalendarCheck size={16} />}
           to="/routes"
-          loading={loading || todayStops === null}
-          hint={t('dashboard.statReportsToday', { count: reportsToday })}
+          loading={!failed && (loading || todayStops === null)}
+          hint={failed ? undefined : t('dashboard.statReportsToday', { count: reportsToday })}
         />
         <StatCard
           label={t('dashboard.statOutOfRangeReadings')}
-          value={attention.length}
+          value={failed ? UNKNOWN : attention.length}
           icon={<TriangleAlert size={16} />}
           to="/reports"
-          loading={loading}
-          tone={attention.length > 0 ? 'alert' : 'default'}
-          hint={t('dashboard.outOfRangeOf', { count: reportsWindow, days: ACTIVITY_WINDOW_DAYS })}
+          loading={loading && !failed}
+          tone={!failed && attention.length > 0 ? 'alert' : 'default'}
+          hint={
+            failed
+              ? undefined
+              : t('dashboard.outOfRangeOf', { count: reportsWindow, days: ACTIVITY_WINDOW_DAYS })
+          }
         />
         <StatCard
           label={t('dashboard.statSiloe', { year: siloeYear })}
-          value={`${siloe.ready} / ${siloe.basins}`}
+          value={failed ? UNKNOWN : `${siloe.ready} / ${siloe.basins}`}
           icon={<ShieldCheck size={16} />}
           to="/siloe"
-          loading={loading}
+          loading={loading && !failed}
           hint={
-            siloe.exportedAt
-              ? t('dashboard.siloeExported', {
-                  date: new Date(siloe.exportedAt).toLocaleDateString('es-ES'),
-                })
-              : t('dashboard.siloeHint')
+            failed
+              ? undefined
+              : siloe.exportedAt
+                ? t('dashboard.siloeExported', {
+                    date: new Date(siloe.exportedAt).toLocaleDateString('es-ES'),
+                  })
+                : t('dashboard.siloeHint')
           }
         >
-          <ProgressBar
-            value={siloe.ready}
-            max={siloe.basins}
-            tone={siloe.exportedAt ? 'green' : 'accent'}
-            label={t('dashboard.siloeProgress', { year: siloeYear })}
-          />
+          {!failed && (
+            <ProgressBar
+              value={siloe.ready}
+              max={siloe.basins}
+              tone={siloe.exportedAt ? 'green' : 'accent'}
+              label={t('dashboard.siloeProgress', { year: siloeYear })}
+            />
+          )}
         </StatCard>
       </div>
 
@@ -451,7 +381,9 @@ export function DashboardPage() {
               </Button>
             }
           />
-          {loading || todayStops === null ? (
+          {failed ? (
+            <Unavailable />
+          ) : loading || todayStops === null ? (
             <SkeletonText />
           ) : todayStops.length === 0 ? (
             <EmptyState
@@ -504,7 +436,9 @@ export function DashboardPage() {
 
         <Card>
           <CardHeader title={t('dashboard.alertsTitle')} />
-          {loading ? (
+          {failed ? (
+            <Unavailable />
+          ) : loading ? (
             <SkeletonText />
           ) : stale.length === 0 && attention.length === 0 ? (
             <EmptyState
@@ -570,14 +504,21 @@ export function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <RoutesCalendar
-          year={viewYear}
-          month0={viewMonth}
-          today={today}
-          routesByDate={routesByDate}
-          onPrev={() => shiftMonth(-1)}
-          onNext={() => shiftMonth(1)}
-        />
+        {failed ? (
+          <Card>
+            <CardHeader title={t('dashboard.calendarTitle')} />
+            <Unavailable />
+          </Card>
+        ) : (
+          <RoutesCalendar
+            year={viewYear}
+            month0={viewMonth}
+            today={today}
+            routesByDate={routesByDate}
+            onPrev={() => shiftMonth(-1)}
+            onNext={() => shiftMonth(1)}
+          />
+        )}
 
         <Card>
           <CardHeader
@@ -588,7 +529,9 @@ export function DashboardPage() {
               </Button>
             }
           />
-          {loading ? (
+          {failed ? (
+            <Unavailable />
+          ) : loading ? (
             <SkeletonText lines={5} />
           ) : keyReports.length === 0 ? (
             <EmptyState
@@ -629,4 +572,10 @@ export function DashboardPage() {
       </div>
     </div>
   );
+}
+
+/** In place of a card's content while the dashboard failed to load (see the error above). */
+function Unavailable() {
+  const { t } = useTranslation();
+  return <p className="py-2 text-sm text-text-muted">{t('dashboard.unavailable')}</p>;
 }

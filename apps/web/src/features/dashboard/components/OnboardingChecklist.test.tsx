@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
-import '../../i18n.js';
+import '../../../i18n.js';
 import { OnboardingChecklist } from './OnboardingChecklist.js';
-import { buildChecklist } from '../../lib/dashboard.js';
+import { buildChecklist } from '../../../lib/dashboard.js';
 
 describe('OnboardingChecklist', () => {
   const checklist = buildChecklist({

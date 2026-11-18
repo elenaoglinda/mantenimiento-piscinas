@@ -80,6 +80,23 @@ function parseSelect(s: string): Node[] {
   });
 }
 
+/**
+ * PostgREST refuses an embed that names a foreign-key COLUMN when the key is composite: our
+ * tenant keys are `(x_id, org_id)`, so `client:client_id!pool_client_id_org_id_fkey(name)` fails
+ * with PGRST200 and the whole request returns no rows (the dashboard showed 0 pools for months
+ * because of this). The real server is the reference; this keeps the fake from being kinder.
+ * Returns the offending embed, or null.
+ */
+function compositeColumnEmbed(nodes: Node[]): Node | null {
+  for (const n of nodes) {
+    if (!n.children) continue;
+    if (n.name.endsWith('_id') && n.hint?.endsWith('_org_id_fkey')) return n;
+    const inner = compositeColumnEmbed(n.children);
+    if (inner) return inner;
+  }
+  return null;
+}
+
 /** Which table an embed name points at: `org_id` → org, `invoice_series` → invoice_series. */
 function embedTable(db: Db, name: string): string {
   if (db[name]) return name;
@@ -232,6 +249,18 @@ export async function serveBackend(page: Page, db: Db, session: Row): Promise<Ba
     const table = path.slice('/rest/v1/'.length);
     db[table] ??= [];
     const nodes = parseSelect(url.searchParams.get('select') ?? '*');
+    const badEmbed = compositeColumnEmbed(nodes);
+    if (badEmbed) {
+      return json(
+        {
+          code: 'PGRST200',
+          details: `Searched for a foreign key relationship between '${table}' and '${badEmbed.name}' using the hint '${badEmbed.hint}'`,
+          hint: null,
+          message: `Could not find a relationship between '${table}' and '${badEmbed.name}' in the schema cache`,
+        },
+        400,
+      );
+    }
     const single = (req.headers()['accept'] ?? '').includes('vnd.pgrst.object');
     let total: number | null = null;
     const respond = (rows: Row[], status = 200) => {

@@ -6,7 +6,7 @@ need no credentials and never touch a real database. Used for the panel redesign
 to see every page at once and to catch layout, accessibility and keyboard regressions.
 
 Separate from `e2e/` (which runs against a real build with real env). CI's `ui` job runs
-`a11y overflow keyboard flow history` on every pull request.
+`a11y overflow keyboard flow history service-log client-reports dashboard` on every pull request.
 
 ```
 playwright.config.ts  builds the app against https://mock.supabase.co and serves it on :4174
@@ -23,6 +23,7 @@ overflow.spec.ts      fails if any page scrolls sideways at 390px
 a11y.spec.ts          axe-core WCAG 2.1 A/AA on every page and on open overlays → _axe.json
 keyboard.spec.ts      skip link, palette, focus traps and focus return, tables, tabs, tooltips
 flow.spec.ts          client → pool → vaso → report → SILOÉ XML download, through the UI
+dashboard.spec.ts     7 unvisited pools counted and listed; a failed query shows an error, not zeros
 history.spec.ts       client → pool → vaso → 3 visits → last state, Historial, Evolución, client
                       page, Informes filters + CSV, alert/bell/⌘K links; and a 35-visit pool
 lighthouse.spec.ts    Lighthouse accessibility per page (opt-in, LIGHTHOUSE=1) → _lighthouse.json
