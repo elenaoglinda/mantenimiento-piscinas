@@ -1,5 +1,5 @@
 import { supabase } from './supabase.js';
-import { paramKey, type ParameterDef } from '@piscinas/shared';
+import { isCcaaCode, paramKey, type ParameterDef } from '@piscinas/shared';
 import type { Tables } from './database.types.js';
 
 export type ParameterDefRow = Tables<'parameter_def'>;
@@ -11,12 +11,26 @@ export type ParameterDefRow = Tables<'parameter_def'>;
 export const LAB_PARAM_IDS = new Set([11, 12, 13]);
 
 /**
- * Map a free-text CCAA (as typed on the pool) to the code used in parameter_def overrides.
- * v1 launches with Cataluña only; extend as more regions are seeded. See spec §13.3.
+ * The region a pool's thresholds come from: its community code (`pool.ccaa_code`) once set,
+ * else the old free text (`pool.ccaa`). Pools are loaded with `*` so this works before and after
+ * the migration that adds the code.
  */
-export function ccaaToCode(ccaa: string | null | undefined): string | null {
-  if (!ccaa) return null;
-  if (/catal/i.test(ccaa)) return 'CT';
+export function poolRegion(
+  pool: { ccaa_code?: string | null; ccaa?: string | null } | null | undefined,
+): string | null {
+  return pool?.ccaa_code || pool?.ccaa || null;
+}
+
+/**
+ * Map a pool's region (see `poolRegion`) to the code used in parameter_def overrides: a
+ * community code as is, else the old free-text rule (anything with "catal" is Cataluña).
+ * Only Cataluña has override rows so far. See spec §13.3.
+ */
+export function ccaaToCode(region: string | null | undefined): string | null {
+  if (!region) return null;
+  const trimmed = region.trim();
+  if (isCcaaCode(trimmed)) return trimmed;
+  if (/catal/i.test(trimmed)) return 'CT';
   return null;
 }
 

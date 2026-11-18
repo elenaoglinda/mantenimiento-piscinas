@@ -10,6 +10,7 @@ import {
 import { supabase } from '../../../lib/supabase.js';
 import { toDbFailure, type DbFailure } from '../../../lib/dbError.js';
 import {
+  poolRegion,
   resolveParameterDefs,
   toEvaluatorDef,
   type ParameterDefRow,
@@ -57,6 +58,7 @@ export interface Visit {
   clientId: string | null;
   clientName: string | null;
   clientIsSelf: boolean;
+  /** The pool's region for thresholds (`poolRegion`): community code, else the old text. */
   ccaa: string | null;
   basinId: string;
   basinName: string | null;
@@ -71,7 +73,7 @@ export interface Visit {
 // Composite foreign keys need the constraint name (docs/ONBOARDING.md §12).
 const VISIT_SELECT =
   'id, visited_at, status, analysis_type, signed_at, pool_id, basin_id, technician_id, ' +
-  'pool!report_pool_id_org_id_fkey(denominacion, client_id, ccaa, client!pool_client_id_org_id_fkey(name, is_self)), ' +
+  'pool!report_pool_id_org_id_fkey(*, client!pool_client_id_org_id_fkey(name, is_self)), ' +
   'basin!report_basin_id_org_id_fkey(denominacion), ' +
   'technician:app_user!report_technician_id_fkey(full_name, email), ' +
   'measurement!measurement_report_id_org_id_fkey(value, status, parameter_def_id), ' +
@@ -91,6 +93,8 @@ interface RawVisit {
     denominacion: string;
     client_id: string;
     ccaa: string | null;
+    /** Absent before the pool_ccaa_code migration. */
+    ccaa_code?: string | null;
     client: { name: string; is_self: boolean } | null;
   } | null;
   basin: { denominacion: string } | null;
@@ -162,7 +166,7 @@ export function toVisit(raw: RawVisit, catalog: ParamCatalog): Visit {
     clientId: raw.pool?.client_id ?? null,
     clientName: raw.pool?.client?.name ?? null,
     clientIsSelf: raw.pool?.client?.is_self ?? false,
-    ccaa: raw.pool?.ccaa ?? null,
+    ccaa: poolRegion(raw.pool),
     basinId: raw.basin_id,
     basinName: raw.basin?.denominacion ?? null,
     technicianId: raw.technician_id,

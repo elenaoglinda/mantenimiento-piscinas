@@ -398,7 +398,9 @@ manual's expectations.
 Tenant tables (all `org_id` + RLS, composite `(id, org_id)` foreign keys):
 
 - **Tenancy:** `org`, `app_user`, `invitation`.
-- **Installations:** `client` → `pool` → `basin` (vaso) → `treatment`.
+- **Installations:** `client` → `pool` → `basin` (vaso) → `treatment`. `pool.ccaa_code` is the
+  Comunidad Autónoma (ISO code, `CT` = Cataluña) that picks regional thresholds; `pool.ccaa`
+  (old free text) still gets the community's name until the contract step drops it.
 - **Visits:** `report` (one visit to one vaso) → `measurement`, `incident`, `attachment`,
   `report_chemical` (products added), `report_task` (tasks done). Children of a report follow
   `report_is_editable()`: once signed, nothing about the visit can change.
@@ -486,8 +488,9 @@ PDF from the server (today the technician's own mail app / WhatsApp sends the li
    input on the export screen.
 3. **Exact Cataluña thresholds** — `parameter_def` is seeded with RD 742/2013 national defaults +
    a Cataluña scaffold (only free chlorine overridden, marked provisional). Confirm and seed the
-   real Catalan values. The resolver maps a pool's free-text CCAA to a code in `lib/parameters.ts`
-   (`ccaaToCode`), currently only recognizing Cataluña → `CT`.
+   real Catalan values. The resolver uses `pool.ccaa_code` (picked from a list, prefilled from the
+   postcode; `packages/shared/src/territory/`) and falls back to the old free text (`/catal/i` →
+   `CT`) via `poolRegion` + `ccaaToCode` in `lib/parameters.ts`.
 4. **Google OAuth**: credentials are configured in Supabase; if it breaks, check the Supabase
    Site URL / Redirect URLs (see §5.3).
 

@@ -12,6 +12,7 @@ import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../auth/context.js';
 import {
   fetchResolvedParameterDefs,
+  poolRegion,
   toEvaluatorDef,
   isLabParameter,
   type ParameterDefRow,
@@ -42,6 +43,8 @@ interface PoolOption {
   id: string;
   denominacion: string;
   ccaa: string | null;
+  /** Absent before the pool_ccaa_code migration. */
+  ccaa_code?: string | null;
   basin: { id: string; denominacion: string }[];
 }
 
@@ -104,7 +107,7 @@ export function ImportReportPage() {
     void (async () => {
       const { data } = await supabase
         .from('pool')
-        .select('id, denominacion, ccaa, basin(id, denominacion)')
+        .select('*, basin(id, denominacion)') // `*`: ccaa_code once its migration has run
         .eq('archived', false)
         .order('denominacion');
       setPools((data as PoolOption[]) ?? []);
@@ -116,7 +119,7 @@ export function ImportReportPage() {
     setDefs((await fetchResolvedParameterDefs(ccaa)).filter(isSiloeParameter));
   }, []);
   useEffect(() => {
-    if (selectedPool) void loadDefs(selectedPool.ccaa);
+    if (selectedPool) void loadDefs(poolRegion(selectedPool));
   }, [selectedPool, loadDefs]);
 
   // Prefill the parameter grid once the pool's thresholds are known.

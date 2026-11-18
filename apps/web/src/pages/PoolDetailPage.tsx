@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../auth/context.js';
+import { CCAA, isCcaaCode } from '@piscinas/shared';
 import { Pencil, Plus, ShieldCheck, Trash2, Waves } from 'lucide-react';
 import { Alert } from '../components/ui/feedback.js';
 import { Button } from '../components/ui/Button.js';
@@ -19,6 +20,7 @@ import { SiloeBadge } from '../features/pools/index.js';
 import { PoolFormModal } from '../components/PoolFormModal.js';
 import { BasinFormModal } from '../components/BasinFormModal.js';
 import { TreatmentFormModal } from '../components/TreatmentFormModal.js';
+import { poolRegion } from '../lib/parameters.js';
 import type { Tables } from '../lib/database.types.js';
 
 type Pool = Tables<'pool'> & { client: { name: string; is_self: boolean } | null };
@@ -192,7 +194,7 @@ export function PoolDetailPage() {
           </div>
           <WaterStateCards
             poolId={pool.id}
-            ccaa={pool.ccaa}
+            ccaa={poolRegion(pool)}
             basins={basinRefs}
             canWrite={canWrite}
           />
@@ -210,7 +212,14 @@ export function PoolDetailPage() {
                   .filter(Boolean)
                   .join(', ')}
               />
-              <Info label={t('pools.ccaa')} value={pool.ccaa} />
+              <Info
+                label={t('pools.ccaa')}
+                value={
+                  isCcaaCode(pool.ccaa_code)
+                    ? CCAA[pool.ccaa_code]
+                    : pool.ccaa || t('pools.ccaaMissing')
+                }
+              />
               <Info
                 label={t('pools.waterSource')}
                 value={
@@ -372,7 +381,7 @@ export function PoolDetailPage() {
                 <EmptyState compact icon={<Waves size={20} />} title={t('basins.empty')} />
               </Card>
             ) : (
-              <TrendPanel poolId={pool.id} ccaa={pool.ccaa} basins={basinRefs} />
+              <TrendPanel poolId={pool.id} ccaa={poolRegion(pool)} basins={basinRefs} />
             ))}
         </TabsContent>
 

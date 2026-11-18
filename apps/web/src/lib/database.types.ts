@@ -453,6 +453,7 @@ export type Database = {
           agua_alimentacion: Database['public']['Enums']['water_source'][];
           archived: boolean;
           ccaa: string | null;
+          ccaa_code: string | null;
           client_id: string;
           cp: string | null;
           created_at: string;
@@ -475,6 +476,7 @@ export type Database = {
           agua_alimentacion?: Database['public']['Enums']['water_source'][];
           archived?: boolean;
           ccaa?: string | null;
+          ccaa_code?: string | null;
           client_id: string;
           cp?: string | null;
           created_at?: string;
@@ -497,6 +499,7 @@ export type Database = {
           agua_alimentacion?: Database['public']['Enums']['water_source'][];
           archived?: boolean;
           ccaa?: string | null;
+          ccaa_code?: string | null;
           client_id?: string;
           cp?: string | null;
           created_at?: string;
@@ -1647,9 +1650,13 @@ export type Database = {
           updated_at: string;
         };
       };
+      ccaa_from_postcode: { Args: { p_cp: string }; Returns: string };
+      ccaa_from_province: { Args: { p_name: string }; Returns: string };
+      ccaa_from_text: { Args: { p_text: string }; Returns: string };
       current_org_id: { Args: never; Returns: string };
       current_user_can_write: { Args: never; Returns: boolean };
       current_user_role: { Args: never; Returns: Database['public']['Enums']['user_role'] };
+      fold_place: { Args: { t: string }; Returns: string };
       get_invitation: {
         Args: { p_token: string };
         Returns: {

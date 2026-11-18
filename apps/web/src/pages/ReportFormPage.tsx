@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../auth/context.js';
 import {
   fetchResolvedParameterDefs,
+  poolRegion,
   toEvaluatorDef,
   isLabParameter,
   type ParameterDefRow,
@@ -43,6 +44,8 @@ interface PoolOption {
   id: string;
   denominacion: string;
   ccaa: string | null;
+  /** Absent before the pool_ccaa_code migration. */
+  ccaa_code?: string | null;
   basin: { id: string; denominacion: string }[];
 }
 
@@ -125,7 +128,7 @@ export function ReportFormPage() {
     void (async () => {
       const { data: poolData } = await supabase
         .from('pool')
-        .select('id, denominacion, ccaa, basin(id, denominacion)')
+        .select('*, basin(id, denominacion)') // `*`: ccaa_code once its migration has run
         .eq('archived', false)
         .order('denominacion');
       if (!active) return;
@@ -172,7 +175,7 @@ export function ReportFormPage() {
     setDefs(await fetchResolvedParameterDefs(ccaa));
   }, []);
   useEffect(() => {
-    if (selectedPool) void loadDefs(selectedPool.ccaa);
+    if (selectedPool) void loadDefs(poolRegion(selectedPool));
   }, [selectedPool, loadDefs]);
 
   function setValue(defId: string, patch: Partial<MeasurementInput>, def: ParameterDefRow) {

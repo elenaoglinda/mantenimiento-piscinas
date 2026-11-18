@@ -171,7 +171,7 @@ for approval; after merge she presses Publish in Lovable.
 
 ```sh
 npm run format && npm run typecheck && npm run lint && npm test          # all green
-npx playwright test -c scripts/redesign/playwright.config.ts a11y overflow keyboard flow history service-log client-reports dashboard siloe-badge
+npx playwright test -c scripts/redesign/playwright.config.ts a11y overflow keyboard flow history service-log client-reports dashboard siloe-badge ccaa
 # PR 4 only: database lifecycle locally (Postgres 16), as CI does
 ```
 
