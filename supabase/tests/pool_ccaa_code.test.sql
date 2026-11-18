@@ -67,6 +67,9 @@ begin
     (a_org, a_client, 'text: CAT',          null,    null,        'CAT'),
     (a_org, a_client, 'text: Catalunya',    '',      '',          'Catalunya'),
     (a_org, a_client, 'text: C. de Madrid', null,    null,        'Comunidad de Madrid'),
+    (a_org, a_client, 'text: Cataluña',     null,    null,        'Cataluña'),
+    (a_org, a_client, 'text: País Vasco',   null,    null,        'País Vasco'),
+    (a_org, a_client, 'text: C-La Mancha',  null,    null,        'Castilla-La Mancha'),
     (a_org, a_client, 'Ceuta',              '51001', null,        null),
     (a_org, a_client, 'unknown',            '99999', 'Marbella',  'España'),
     (a_org, a_client, 'nothing',            null,    null,        null);
@@ -90,6 +93,10 @@ select pg_temp.check(pg_temp.code('text: Barcelona') = 'CT', 'typed "Barcelona" 
 select pg_temp.check(pg_temp.code('text: CAT') = 'CT', 'typed "CAT" → CT');
 select pg_temp.check(pg_temp.code('text: Catalunya') = 'CT', 'typed "Catalunya" → CT');
 select pg_temp.check(pg_temp.code('text: C. de Madrid') = 'MD', 'typed "Comunidad de Madrid" → MD');
+-- Official names that are also listed as aliases: one row each, or the backfill errors.
+select pg_temp.check(pg_temp.code('text: Cataluña') = 'CT', 'typed "Cataluña" → CT');
+select pg_temp.check(pg_temp.code('text: País Vasco') = 'PV', 'typed "País Vasco" → PV');
+select pg_temp.check(pg_temp.code('text: C-La Mancha') = 'CM', 'typed "Castilla-La Mancha" → CM');
 select pg_temp.check(pg_temp.code('Ceuta') = 'CE', 'Ceuta (51) → CE');
 select pg_temp.check(pg_temp.code('unknown') is null, 'nothing recognisable stays null');
 select pg_temp.check(pg_temp.code('nothing') is null, 'no address stays null');

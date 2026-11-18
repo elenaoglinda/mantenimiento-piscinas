@@ -82,7 +82,7 @@ as $$
     ('pontevedra', 'GA'), ('salamanca', 'CL'), ('santa cruz de tenerife', 'CN'), ('tenerife', 'CN'),
     ('cantabria', 'CB'), ('segovia', 'CL'), ('sevilla', 'AN'), ('soria', 'CL'),
     ('tarragona', 'CT'), ('teruel', 'AR'), ('toledo', 'CM'), ('valencia', 'VC'),
-    ('valencia', 'VC'), ('valladolid', 'CL'), ('bizkaia', 'PV'), ('vizcaya', 'PV'),
+    ('valladolid', 'CL'), ('bizkaia', 'PV'), ('vizcaya', 'PV'),
     ('zamora', 'CL'), ('zaragoza', 'AR'), ('ceuta', 'CE'), ('melilla', 'ML')
     ) as v(name, ccaa)
    where v.name = regexp_replace(public.fold_place(p_name), '^provincia de ', '')
@@ -108,13 +108,14 @@ as $$
     ('comunidad de madrid', 'MD'), ('region de murcia', 'MC'), ('comunidad foral de navarra', 'NC'), ('pais vasco', 'PV'),
     ('la rioja', 'RI'), ('ceuta', 'CE'), ('melilla', 'ML'), ('asturias', 'AS'),
     ('baleares', 'IB'), ('islas baleares', 'IB'), ('balears', 'IB'), ('islas canarias', 'CN'),
-    ('castilla leon', 'CL'), ('castilla la mancha', 'CM'), ('catalunya', 'CT'), ('cataluna', 'CT'),
+    ('castilla leon', 'CL'), ('catalunya', 'CT'),
     ('catalonia', 'CT'), ('comunidad valenciana', 'VC'), ('valenciana', 'VC'), ('madrid', 'MD'),
-    ('murcia', 'MC'), ('navarra', 'NC'), ('euskadi', 'PV'), ('pais vasco', 'PV'),
+    ('murcia', 'MC'), ('navarra', 'NC'), ('euskadi', 'PV'),
     ('rioja', 'RI')
          ) as v(name, ccaa)
         where v.name = regexp_replace(public.fold_place(p_text),
-                         '^(comunidad autonoma de|comunidad de|region de) ', '')),
+                         '^(comunidad autonoma de|comunidad de|region de) ', '')
+        limit 1),
       public.ccaa_from_province(p_text))
   end
 $$;
