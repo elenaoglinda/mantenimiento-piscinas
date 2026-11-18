@@ -10,7 +10,7 @@ export function FailureAlert({ failure }: { failure: DbFailure | null }) {
     <Alert tone="error">
       <span>{t(`history.db.${failure.code}`, { defaultValue: t('history.db.unknown') })}</span>
       {failure.code === 'unknown' && failure.detail && (
-        <span className="mt-1 block font-mono text-xs opacity-80">{failure.detail}</span>
+        <span className="mt-1 block font-mono text-xs">{failure.detail}</span>
       )}
     </Alert>
   );

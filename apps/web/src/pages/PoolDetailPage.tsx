@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs.
 import { useRecordCrumb } from '../features/app-shell/index.js';
 import { TrendPanel, VisitHistory, WaterStateCards } from '../features/history/index.js';
 import { MonthlySummaryCard } from '../features/client-reports/index.js';
+import { SiloeBadge } from '../features/pools/index.js';
 import { PoolFormModal } from '../components/PoolFormModal.js';
 import { BasinFormModal } from '../components/BasinFormModal.js';
 import { TreatmentFormModal } from '../components/TreatmentFormModal.js';
@@ -139,13 +140,7 @@ export function PoolDetailPage() {
             </Link>
           ) : undefined
         }
-        badges={
-          pool.siloe_cod_p ? (
-            <StatusPill tone="green">{t('pools.siloeReady')}</StatusPill>
-          ) : (
-            <StatusPill tone="amber">{t('pools.siloeMissing')}</StatusPill>
-          )
-        }
+        badges={<SiloeBadge pool={pool} basins={basins} />}
         actions={
           canWrite && (
             <>

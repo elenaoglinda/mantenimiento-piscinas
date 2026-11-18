@@ -5,6 +5,7 @@ export * from './siloe/catalogs.js';
 export * from './siloe/aggregate.js';
 export * from './siloe/xml.js';
 export * from './siloe/season.js';
+export * from './siloe/readiness.js';
 export * from './history/index.js';
 export * from './service-log/index.js';
 export * from './client-reports/share.js';

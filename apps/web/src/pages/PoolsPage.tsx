@@ -10,12 +10,17 @@ import { Card } from '../components/ui/Card.js';
 import { DataTable, TableToolbar, type Column } from '../components/ui/DataTable.js';
 import { EmptyState } from '../components/ui/EmptyState.js';
 import { PageHeader } from '../components/ui/PageHeader.js';
-import { StatusPill } from '../components/ui/StatusPill.js';
 import { fold } from '../components/ui/utils.js';
 import { PoolFormModal } from '../components/PoolFormModal.js';
 import type { Tables } from '../lib/database.types.js';
+import { SiloeBadge } from '../features/pools/index.js';
+import { madridDateString } from '../lib/dashboard.js';
+import { siloeReadiness } from '@piscinas/shared';
 
-type PoolRow = Tables<'pool'> & { client: { name: string; is_self: boolean } | null };
+type PoolRow = Tables<'pool'> & {
+  client: { name: string; is_self: boolean } | null;
+  basin: Pick<Tables<'basin'>, 'denominacion' | 'siloe_cod_v' | 'fecha_baja'>[];
+};
 
 export function PoolsPage() {
   const { t } = useTranslation();
@@ -30,13 +35,16 @@ export function PoolsPage() {
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [query, setQuery] = useState('');
+  const today = madridDateString();
 
   const load = useCallback(async () => {
     setLoading(true);
     const [{ data, error }, { count }] = await Promise.all([
       supabase
         .from('pool')
-        .select('*, client!pool_client_id_org_id_fkey(name, is_self)')
+        .select(
+          '*, client!pool_client_id_org_id_fkey(name, is_self), basin!basin_pool_id_org_id_fkey(denominacion, siloe_cod_v, fecha_baja)',
+        )
         .eq('archived', false)
         .order('denominacion'),
       supabase.from('client').select('id', { count: 'exact', head: true }).eq('archived', false),
@@ -110,13 +118,8 @@ export function PoolsPage() {
     {
       id: 'siloe',
       header: 'SILOÉ',
-      cell: (p) =>
-        p.siloe_cod_p ? (
-          <StatusPill tone="green">{t('pools.siloeReady')}</StatusPill>
-        ) : (
-          <StatusPill tone="amber">{t('pools.siloeMissing')}</StatusPill>
-        ),
-      sortValue: (p) => (p.siloe_cod_p ? 1 : 0),
+      cell: (p) => <SiloeBadge pool={p} basins={p.basin} />,
+      sortValue: (p) => (siloeReadiness(p, p.basin, today).ready ? 1 : 0),
       hideBelow: 'sm',
     },
   ];

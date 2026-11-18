@@ -283,8 +283,8 @@ export function SiloeExportPage() {
           <ul className="mt-1 flex flex-col gap-1">
             {errors.map((e, i) => (
               <li key={i}>
-                <span className="font-mono text-xs opacity-80">{e.code}</span> · {e.message}
-                {e.context && <span className="opacity-80"> ({e.context})</span>}
+                <span className="font-mono text-xs">{e.code}</span> · {e.message}
+                {e.context && <span> ({e.context})</span>}
               </li>
             ))}
           </ul>

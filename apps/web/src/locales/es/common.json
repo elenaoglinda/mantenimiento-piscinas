@@ -296,7 +296,16 @@
     "siloeTitle": "Códigos SILOÉ",
     "siloeHint": "La exportación anual necesita el código de la instalación y el de cada vaso.",
     "siloeCodV": "Código SILOÉ (vaso)",
-    "addCode": "Añadir código"
+    "addCode": "Añadir código",
+    "siloe": {
+      "ready": "Códigos SILOÉ completos",
+      "missingPool": "Falta el código de la instalación",
+      "missingBasins_one": "Falta el código de {{count}} vaso",
+      "missingBasins_other": "Falta el código de {{count}} vasos",
+      "missingBoth_one": "Faltan el código de la instalación y de {{count}} vaso",
+      "missingBoth_other": "Faltan el código de la instalación y de {{count}} vasos",
+      "noBasins": "Sin vasos activos"
+    }
   },
   "poolType": {
     "tipo_1": "Tipo 1 — uso principal (públicas, ocio, spa)",
