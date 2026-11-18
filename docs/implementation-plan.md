@@ -1,10 +1,11 @@
 # Implementation Plan — Pool Maintenance & SILOE App
 
-Companion to [technical-spec.md](./technical-spec.md). Work is grouped into **8 phases**.
+Companion to [technical-spec.md](./technical-spec.md). The original build plan is **Phases 0–7**;
+**Phases 8–11** come from the competitor review of November 2026 (see below).
 Each phase has small, independently reviewable tasks with a clear deliverable and
 acceptance check. Phases are mostly sequential; some tasks within a phase parallelize.
 
-**Status legend:** ⬜ not started · 🔲 needs external input · ✅ done
+**Status legend:** ⬜ not started · 🟡 in progress / in review · 🔲 needs external input or a decision · ⛔ blocked · ✅ done
 
 ---
 
@@ -91,7 +92,7 @@ Offline support (drafts in the field) comes in Phase 4.
 | 4.5 | Sync status UI (pending/synced/error) + conflict surfacing                                                 | Status indicators  | States visible per record              |
 
 **Phase 4 exit:** a technician with no coverage can do a full visit; data syncs when back online.
-**Status:** ⏭️ SKIPPED for now (Sara's call) — revisit after Phase 5+.
+**Status:** ⏭️ SKIPPED for now (Sara's call) — revisit after Phase 5+. Now planned as **10.1**.
 
 ---
 
@@ -140,6 +141,70 @@ waits for Phase 4 (PWA), which was skipped.
 | 7.5 | Docs: user guide (es) + deploy runbook                                                                                 | Docs        | Handover-ready                |
 
 **Phase 7 exit:** v1 feature-complete, tested, accessible, documented.
+**Status:** 7.2 and 7.3 partly done (dashboard alerts, bell, axe at 0 in CI). The e-mail part of
+7.1 continues as **10.3**, 7.4 as **10.7**.
+
+---
+
+# Competitor-review plan (November 2026): Phases 8–11
+
+From Elena's development plan of 13 Nov 2026: a review of ClorAqua, ManageMart and VisitPro, a
+check of the live panel, `main` as of 4 Nov and cloro.app. In that plan these are "Phase 0" to
+"Phase 3"; they are numbered 8–11 here because 0–7 are taken. Cloro's edge is **RD 742/2013 +
+SILOÉ correctness, a real treatments log and signed reports**, so anything legal must be exactly
+right and tested, citing the BOE text (BOE-A-2013-10580, Anexos I, II, III and V). Each phase
+ends with a summary and waits for its PRs to be merged before the next one starts.
+
+## Phase 8 — Fix what's broken
+
+Plan: [`plans/phase-8-fix-whats-broken.md`](./plans/phase-8-fix-whats-broken.md). PRs are stacked
+in the order below.
+
+| #      | Task                                                                                                                                     | PR                                   | Acceptance                                                               |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------ |
+| 🟡 8.1 | This plan in the repo (phases 8–11 with status)                                                                                          | `docs: …phases 8–11`                 | The repo is the source of truth for the plan                             |
+| ⬜ 8.2 | Dashboard: "Piscinas activas" 0 and "Todo en orden" with 7 unvisited pools. Root cause: invalid embeds on composite keys; errors ignored | `fix(dashboard): …`                  | Real counts; a failed query shows an error, never zeros                  |
+| ⬜ 8.3 | SILOÉ badge green only when the installation and every active vaso have codes; otherwise says what's missing                             | `fix(pools): …`                      | Arkana-shaped pool (one uncoded vaso) shows amber with the reason        |
+| ⬜ 8.4 | Comunidad Autónoma from a fixed list, filled from the address (postcode → province → community); safe backfill                           | `feat(pools): …` (**adds a column**) | `ccaaToCode()` gives `CT` for every Catalan pool; backfill is idempotent |
+| 🟡 8.5 | cloro.app copy: only promise what ships; FAQ checked against RD 742/2013                                                                 | elenaoglinda/cloro-app#1             | Elena approves the copy; published from Lovable                          |
+
+## Phase 9 — RD 742/2013 and SILOÉ correctness
+
+Every legal value is checked against the BOE text before seeding and cited (anexo) in code
+comments and tests. Nothing may change signed reports or past SILOÉ exports: the demo seed and a
+SILOÉ export are compared before and after.
+
+| #      | Task                                                                                                                                                                                                                                                                                                            | Acceptance                                                                                  |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| ⬜ 9.1 | Closure limits (Anexo I/III situations that force closing the vaso; to verify: free chlorine >5 mg/L, combined >3, bromine >10, CYA >150, turbidity >20 UNF, bottom drain not visible, E. coli present). A distinct closure status "Cerrar el vaso" in the form, report detail, dashboard, bell and client PDFs | Each limit tested at, just below and just above the value (mutation-tested)                 |
+| ⬜ 9.2 | Closure and reopening recorded per vaso and fed into SILOÉ (motivo, días de cierre)                                                                                                                                                                                                                             | XML carries the closures; golden test updated deliberately                                  |
+| ⬜ 9.3 | Per-vaso flags (heated, hydromassage/aerosol, stabilised chlorine, disinfection system) decide which parameters are shown and mandatory; "Marcar como completo" requires the mandatory set                                                                                                                      | Legionella only heated + aerosol; CYA only stabilised; redox only without chlorine/bromine… |
+| ⬜ 9.4 | Range fixes: CO₂ ≤500 ppm above outdoor air (not mg/m³); air temperature 1–2 °C above water; Langelier index (−0.5 to +0.5) when pH is out of range; Cataluña override values confirmed                                                                                                                         | Values cite the anexo; Cataluña source documented                                           |
+| ⬜ 9.5 | Ficha técnica for SILOÉ Anexo IV: tipo 3B (SILOÉ off); vaso type from the SILOÉ catalogue; structured treatment fields (filter, surface, speed, disinfection, flocculant, pH corrector, pump, flow, skimmers, returns); optional shape and dimensions → volume and surface                                      | Typed treatment details instead of free `jsonb`; expand → migrate → contract on live tables |
+| ⬜ 9.6 | Cadence per pool type and contract (daily routine control before opening for public pools, monthly periodic, initial control) replaces the fixed 30-day overdue rule; alerts for missing controls and lab analyses due                                                                                          | Madrid dates; tested across DST changes                                                     |
+| ⬜ 9.7 | SILOÉ Excel per vaso from the same aggregation as the XML                                                                                                                                                                                                                                                       | Same figures as the XML for the same season                                                 |
+| 🔲 9.8 | Pool-registration XML                                                                                                                                                                                                                                                                                           | Blocked on the SILOÉ registration catalogues (§13.1)                                        |
+
+## Phase 10 — Before selling (unblocked parts only)
+
+| #       | Task                                                                                                                                                                               | Acceptance                                       |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| ⬜ 10.1 | Field app: offline capture (reports, photos, signature) with sync. Supersedes Phase 4                                                                                              | A full visit without coverage syncs on reconnect |
+| ⬜ 10.2 | Before/after photos with time and GPS, optional company "required" setting; check-in and check-out on site; mobile pass of the report form                                         | UI checks at 390 px, axe at 0                    |
+| ⬜ 10.3 | Visit PDF e-mailed automatically when a report is completed; client signature by link. Supersedes the e-mail part of 7.1                                                           | Sent from the server, logged                     |
+| ⬜ 10.4 | Stock per van from the products logged per visit, with a restock warning                                                                                                           | Stock moves with each visit's products           |
+| ⬜ 10.5 | Plans and usage limits per organisation, set by hand (no payments)                                                                                                                 | Limits enforced in the database                  |
+| ⬜ 10.6 | Invoicing (Verifacti test environment): invoice from a completed visit with its products as lines; invoice PDF with the AEAT QR; recurring monthly/annual invoices with bulk issue | docs/INVOICING.md updated                        |
+| ⬜ 10.7 | Playwright happy path: sign up → pool → vaso → report → sign → SILOÉ export → invoice. Supersedes 7.4                                                                              | Green in CI                                      |
+| ⛔ 10.8 | Stripe subscriptions; per-organisation Verifacti production keys and the modelo de representación                                                                                  | Blocked until the company is incorporated        |
+
+## Phase 11 — WhatsApp agent
+
+| #       | Task           | Acceptance                     |
+| ------- | -------------- | ------------------------------ |
+| 🔲 11.1 | WhatsApp agent | Not started without Elena's go |
+
+No client portal: not wanted for now.
 
 ---
 
@@ -158,3 +223,4 @@ waits for Phase 4 (PWA), which was skipped.
 ## Suggested build order
 
 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7. Phases 5 and 6 can overlap once Phase 3 is done if capacity allows.
+Then 8 → 9 → 10 → (11 on Elena's go); Phase 4 is folded into 10.1.

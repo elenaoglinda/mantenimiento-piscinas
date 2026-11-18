@@ -27,6 +27,11 @@ clients' pools). Everything is **multi-tenant** and **Spanish-only** (i18n-ready
 **Live:** production runs at **https://panel.cloro.app** and **https://mantenimiento-piscinas.vercel.app**
 (same deployment; `panel.cloro.app` is the custom domain).
 
+The public website **https://cloro.app** is a different project: a Lovable site (TanStack Start,
+served through Cloudflare) whose code is in **`elenaoglinda/cloro-app`**. Its copy must only
+promise what this app does. A PR merged there syncs into Lovable; it goes live when someone
+presses Publish in Lovable.
+
 ---
 
 ## 2. Tech stack & why
@@ -456,6 +461,10 @@ Built and live: **Phases 0–3, 5, 6** (foundations, auth/tenancy, core domain, 
 export, routing) and invoicing (docs/INVOICING.md). See `implementation-plan.md` for the
 per-task table.
 
+**Next: Phases 8–11** (competitor review, Nov 2026), in `implementation-plan.md`: 8 fixes what's
+broken, 9 makes RD 742/2013 and SILOÉ exactly right, 10 is what's needed before selling, 11 (the
+WhatsApp agent) waits for Elena's go. Each phase has a plan in `docs/plans/`.
+
 In review (PRs into each other, merge in order): the panel redesign (#11), the role fix (#12),
 service history (#13: Historial, Evolución, client page, CSV, dashboard alerts), the service log
 (#14: products, tasks, readings outside SILOÉ, route-stop states; **adds tables**), and client
@@ -536,7 +545,8 @@ PDF from the server (today the technician's own mail app / WhatsApp sends the li
 
 ## 13. Access / accounts a new dev will need
 
-- **GitHub:** repo `SaraBon/mantenimiento-piscinas` (you have this).
+- **GitHub:** repo `elenaoglinda/mantenimiento-piscinas` (transferred from
+  `SaraBon/mantenimiento-piscinas`, whose URLs still redirect). The website is `elenaoglinda/cloro-app`.
 - **Supabase:** invite to the `Mantenimiento Piscina` project (for dashboard, SQL editor, auth
   config, migrations, type generation).
 - **Vercel:** invite to `sarabons-projects/mantenimiento-piscinas` (for env vars, domains, deploy
