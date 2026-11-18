@@ -36,15 +36,15 @@ presses Publish in Lovable.
 
 ## 2. Tech stack & why
 
-| Layer         | Choice                                                        | Why                                                                                                                                     |
-| ------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Frontend      | **React 19 + TypeScript + Vite**                              | Fast, standard SPA tooling.                                                                                                             |
-| Styling       | **Tailwind v4** with a **design-token** layer                 | Palette is swappable from one file (client asked for this).                                                                             |
-| i18n          | **react-i18next**, `es-ES` only                               | All UI strings externalized so languages can be added with no component changes.                                                        |
-| Backend data  | **Supabase** (Postgres + RLS + Auth + Storage), **eu-west-1** | Managed Postgres with row-level security does the multi-tenant heavy lifting; EU region for GDPR.                                       |
-| Serverless    | **Vercel functions** in `/api` (Node)                         | Only for work that needs a **server-side secret or library**: Mapbox, Claude (photo import), Veri\*Factu, the client PDFs (§6).         |
-| Hosting/CI/CD | **Vercel** (Git integration)                                  | `git push` → auto build + deploy.                                                                                                       |
-| Shared logic  | **`packages/shared`** (pure TS, unit-tested)                  | Domain logic reused by the app and `/api`: traffic lights, SILOE aggregation + XML, history, service log, invoicing, client-PDF layout. |
+| Layer         | Choice                                                                                               | Why                                                                                                                                     |
+| ------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend      | **React 19 + TypeScript + Vite**                                                                     | Fast, standard SPA tooling.                                                                                                             |
+| Styling       | **Tailwind v4** with a **design-token** layer                                                        | Palette is swappable from one file (client asked for this).                                                                             |
+| i18n          | **react-i18next**, `es-ES` only                                                                      | All UI strings externalized so languages can be added with no component changes.                                                        |
+| Backend data  | **Supabase** (Postgres + RLS + Auth + Storage), **eu-west-1**                                        | Managed Postgres with row-level security does the multi-tenant heavy lifting; EU region for GDPR.                                       |
+| Serverless    | **Vercel functions** in `/api` (Node), region **dub1** (Dublin, next to the database; `vercel.json`) | Only for work that needs a **server-side secret or library**: Mapbox, Claude (photo import), Veri\*Factu, the client PDFs (§6).         |
+| Hosting/CI/CD | **Vercel** (Git integration)                                                                         | `git push` → auto build + deploy.                                                                                                       |
+| Shared logic  | **`packages/shared`** (pure TS, unit-tested)                                                         | Domain logic reused by the app and `/api`: traffic lights, SILOE aggregation + XML, history, service log, invoicing, client-PDF layout. |
 
 **No native app.** It's a plain web app. (A PWA/offline phase was planned but **skipped** — see §11.)
 
