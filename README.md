@@ -1,6 +1,6 @@
 # Mantenimiento de Piscinas
 
-Web app for Spanish public-pool operators to record RD 742/2013 water-quality maintenance and
+**Loro** (meetloro.com) — web app for Spanish public-pool operators to record RD 742/2013 water-quality maintenance and
 export the XML files SILOÉ accepts.
 
 **New here? Start with [docs/ONBOARDING.md](docs/ONBOARDING.md)** — how everything is set up

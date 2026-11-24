@@ -55,7 +55,7 @@
       "point1": "Informes de visita en minutos, también desde la foto del parte.",
       "point2": "Avisos cuando un parámetro sale de rango.",
       "point3": "Exportación a SILOÉ y facturas Veri*Factu en el mismo sitio.",
-      "footer": "Cloro · panel de gestión"
+      "footer": "Loro · panel de gestión"
     }
   },
   "onboarding": {
@@ -864,8 +864,8 @@
     "noResults": "Nada coincide con tu búsqueda",
     "noResultsHint": "Prueba con otra palabra, por ejemplo «SILOÉ», «firma» o «factura».",
     "moreTitle": "¿No encuentras lo que buscas?",
-    "moreBody": "Escríbenos desde la web de Cloro y te ayudamos.",
-    "moreAction": "Ir a cloro.app",
+    "moreBody": "Escríbenos desde la web de Loro y te ayudamos.",
+    "moreAction": "Ir a meetloro.com",
     "sections": {
       "start": {
         "title": "Primeros pasos",
@@ -1241,7 +1241,7 @@
       "signedAt": "el {{date}} a las {{time}}.",
       "notSigned": "Informe completado, pendiente de firma.",
       "legend": "Correcto: dentro del rango legal del RD 742/2013. Atención: dentro del rango pero cerca del límite. Fuera de rango: no cumple el valor legal. Los parámetros que no se comunican a SILOÉ se comparan con un rango recomendado, no legal.",
-      "footer": "{{company}} · Generado con Cloro",
+      "footer": "{{company}} · Generado con Loro",
       "page": "Página {{page}} de {{pages}}",
       "monthly": {
         "title": "Resumen mensual",

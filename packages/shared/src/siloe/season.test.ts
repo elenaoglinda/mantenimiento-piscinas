@@ -4,7 +4,7 @@ import { formatSpanishDate, buildAnnualResultsXml, type XmlMuestreo } from './xm
 import { summarizeSeason, type SeasonMeasurement, type SeasonReport } from './season.js';
 
 /**
- * The SILOE annual-results XML must not change when Cloro starts recording things SILOE
+ * The SILOE annual-results XML must not change when Loro starts recording things SILOE
  * doesn't ask for (products, tasks, alkalinity, hardness, salt, phosphates). These tests pin
  * the XML for a fixed season byte for byte, and show that adding non-SILOE readings to the
  * same season produces exactly the same bytes.
