@@ -39,12 +39,15 @@ tints the pills use. So: `bg-status-red/15 text-status-red-text`, never `text-st
 
 ## Brand rule
 
-Every brand hue sits between **186° and 215°** (cyan → blue). The old teal sat near 175°, which is
+The palette is the Loro brand from meetloro.com: navy `#0b3c5d` (`navy-800`: primary buttons, text,
+logo) and the parrot's aqua `#22b8cf` (`brand-400`: decorative only, it is 2.4:1 on white). Links
+and active states use `brand-700`, the website's darker aqua. Every brand hue sits between
+**186° and 215°** (cyan → blue). The old teal sat near 175°, which is
 why it read green. Don't add anything below 185°. The computed contrast for every pair is in
 [`docs/redesign/AUDIT.md`](../../../../docs/redesign/AUDIT.md).
 
 ## Type
 
-DM Sans (body) and Space Grotesk (headings, figures) are **self-hosted** through `@fontsource`,
-imported in `main.tsx` — no font CDN. Tables and `<time>` use tabular figures so ppm, pH, € and
+Manrope (the meetloro.com typeface, weights 400–700) is **self-hosted** through `@fontsource`,
+imported in `main.tsx` — no font CDN. Headings and figures differ from body text by weight only. Tables and `<time>` use tabular figures so ppm, pH, € and
 dates line up in columns.

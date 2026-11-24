@@ -4,13 +4,13 @@
  * them drifts from `apps/web/src/styles/tokens.css`. Change the token, then this file.
  */
 export const PDF_TOKENS = {
-  '--text': '#00161c',
-  '--text-muted': '#506169',
-  '--border': '#dce6ea',
-  '--surface-muted': '#eef4f6',
+  '--text': '#0b3c5d',
+  '--text-muted': '#435b70',
+  '--border': '#d2dce4',
+  '--surface-muted': '#e6ecf1',
   '--primary-contrast': '#ffffff',
-  '--navy-800': '#00303b',
-  '--brand-700': '#006b79',
+  '--navy-800': '#0b3c5d',
+  '--brand-700': '#006e87',
   '--status-green': '#16a34a',
   '--status-green-bg': '#dcfce7',
   '--status-green-text': '#166534',
