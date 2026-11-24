@@ -2,7 +2,7 @@
 
 What a technician does at a visit beyond the SILOÉ readings: the **products added**, the
 **tasks done**, the **readings private pools care about** (alkalinity, hardness, salt,
-phosphates), and whether each **route stop** was done. Before this, Cloro stored readings and
+phosphates), and whether each **route stop** was done. Before this, Loro stored readings and
 incidents only.
 
 | Piece          | Tables                                                                 | Where it shows                                                                     |

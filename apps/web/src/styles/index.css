@@ -84,8 +84,8 @@ body {
 }
 
 /*
- * Type: Space Grotesk for headings (and KPI numbers, via `font-display`); DM Sans everywhere
- * else. Same pairing as cloro.app.
+ * Type: Manrope everywhere, like meetloro.com. Headings (and KPI numbers, via `font-display`)
+ * stand out by weight; `--font-heading` stays a separate token so they can diverge later.
  */
 h1,
 h2,
@@ -168,7 +168,7 @@ time {
 }
 
 /* react-day-picker, themed with our tokens (see components/ui/DatePicker.tsx). */
-.cloro-calendar .rdp-root {
+.loro-calendar .rdp-root {
   --rdp-accent-color: var(--accent);
   --rdp-accent-background-color: var(--accent-soft);
   --rdp-today-color: var(--accent);
@@ -181,23 +181,23 @@ time {
   --rdp-nav_button-width: 2rem;
   font-size: 0.875rem;
 }
-.cloro-calendar .rdp-caption_label {
+.loro-calendar .rdp-caption_label {
   font-family: var(--font-heading);
   font-size: 0.9375rem;
   font-weight: 600;
   text-transform: capitalize;
 }
-.cloro-calendar .rdp-weekday {
+.loro-calendar .rdp-weekday {
   font-size: 0.75rem;
   color: var(--text-muted);
   opacity: 1;
 }
-.cloro-calendar .rdp-selected .rdp-day_button {
+.loro-calendar .rdp-selected .rdp-day_button {
   background: var(--primary);
   border-color: var(--primary);
   color: var(--primary-contrast);
 }
-.cloro-calendar .rdp-day_button:focus-visible {
+.loro-calendar .rdp-day_button:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 1px;
 }

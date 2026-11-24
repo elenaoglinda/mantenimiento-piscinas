@@ -172,7 +172,7 @@ test('client → pool → vaso → three visits → every history screen', async
   await expect(page).toHaveURL(/\/clients\/[^/]+$/);
   const clientUrl = page.url();
   await expect(page.getByRole('heading', { level: 1, name: 'Comunidad Las Dunas' })).toBeVisible();
-  await expect(page).toHaveTitle('Cloro · Comunidad Las Dunas');
+  await expect(page).toHaveTitle('Loro · Comunidad Las Dunas');
   await expect(page.getByRole('link', { name: '600 123 456' })).toBeVisible();
   await expect(page.getByRole('link', { name: /^Las Dunas · Piscina/ })).toContainText('ayer');
   await expect(page.getByRole('link', { name: /Skimmer roto/ })).toBeVisible();

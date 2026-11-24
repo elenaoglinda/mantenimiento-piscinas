@@ -48,8 +48,8 @@ export async function renderPdf(input: RenderInput): Promise<RenderResult> {
   const doc = await PDFDocument.create({ updateMetadata: false });
   doc.setTitle(input.title, { showInWindowTitleBar: true });
   doc.setLanguage('es-ES');
-  doc.setCreator('Cloro');
-  doc.setProducer('Cloro');
+  doc.setCreator('Loro');
+  doc.setProducer('Loro');
 
   const regular = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);

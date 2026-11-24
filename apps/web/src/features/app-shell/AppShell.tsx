@@ -38,11 +38,11 @@ function ShellLayout() {
   // Navigation closes the drawer.
   useEffect(() => setDrawerOpen(false), [pathname]);
 
-  // Every page gets "Cloro · {Page}", or "Cloro · {Record}" once a detail page names it.
+  // Every page gets "Loro · {Page}", or "Loro · {Record}" once a detail page names it.
   useEffect(() => {
     const { item, subKey } = resolveRoute(pathname);
     const page = recordLabel ?? (subKey ? t(subKey) : item ? t(item.labelKey) : null);
-    document.title = page ? `Cloro · ${page}` : 'Cloro';
+    document.title = page ? `Loro · ${page}` : 'Loro';
   }, [pathname, recordLabel, t]);
 
   useEffect(() => {

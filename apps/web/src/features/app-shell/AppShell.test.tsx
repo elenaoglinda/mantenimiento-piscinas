@@ -141,7 +141,7 @@ describe('AppShell mobile drawer', () => {
 describe('AppShell top bar', () => {
   it('sets the document title from the route', () => {
     renderShell({ path: '/reports/new' });
-    expect(document.title).toBe('Cloro · Nuevo informe');
+    expect(document.title).toBe('Loro · Nuevo informe');
   });
 
   it('builds the breadcrumb from group, page and sub-page', () => {
@@ -176,7 +176,7 @@ describe('AppShell record names', () => {
       'href',
       '/pools',
     );
-    expect(document.title).toBe('Cloro · Villa Mar');
+    expect(document.title).toBe('Loro · Villa Mar');
   });
 
   it('falls back to "Detalle" while the record is unnamed', () => {

@@ -27,10 +27,13 @@ clients' pools). Everything is **multi-tenant** and **Spanish-only** (i18n-ready
 **Live:** production runs at **https://panel.cloro.app** and **https://mantenimiento-piscinas.vercel.app**
 (same deployment; `panel.cloro.app` is the custom domain).
 
-The public website **https://cloro.app** is a different project: a Lovable site (TanStack Start,
-served through Cloudflare) whose code is in **`elenaoglinda/cloro-app`**. Its copy must only
-promise what this app does. A PR merged there syncs into Lovable; it goes live when someone
-presses Publish in Lovable.
+**Brand:** the product is **Loro** (Spanish for parrot; formerly Cloro). Its website is
+**https://meetloro.com**, a Lovable project ("Loro Pool Operations"). The old **https://cloro.app**
+site was the Lovable project whose code is in **`elenaoglinda/cloro-app`**. Either way, the
+website's copy must only promise what this app does, and a Lovable site goes live only when someone
+presses Publish in Lovable. The panel takes its palette, logo and font (Manrope) from the website;
+see [`apps/web/src/styles/README.md`](../apps/web/src/styles/README.md). The panel's own domain is
+still `panel.cloro.app` until a `meetloro.com` subdomain is attached in Vercel and Supabase Auth.
 
 ---
 

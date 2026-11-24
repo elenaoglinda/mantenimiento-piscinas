@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 
+// Kept from the Cloro days on purpose: renaming it would reset everyone's saved choice.
 const KEY = 'cloro.sidebar.collapsed';
 
 /**

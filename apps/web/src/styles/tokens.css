@@ -4,29 +4,29 @@
  * Everything visual references these custom properties (mapped into Tailwind via @theme in
  * index.css). To re-skin the app, change values here only — no component edits needed.
  *
- * Palette: "clean pool water", taken from cloro.app. Every brand hue sits between 186° and
- * 215° (cyan → blue). The previous teal sat near 175°, which is why it read as green — like a
- * pool that needs shocking. Nothing below 185°. See docs/redesign/PLAN.md §2 and the contrast
- * audit in docs/redesign/AUDIT.md.
+ * Palette: the Loro brand from meetloro.com — deep navy (#0b3c5d) plus the parrot's aqua wing
+ * (#22b8cf). Every brand hue sits between 186° and 215° (cyan → blue). The old teal sat near
+ * 175°, which is why it read as green — like a pool that needs shocking. Nothing below 185°.
+ * Contrast for every pair is in docs/redesign/AUDIT.md.
  */
 
 :root {
-  /* Aqua-blue — clean pool water */
-  --brand-50: #eef9fc;
-  --brand-100: #d5f1f7;
-  --brand-200: #aee3ef;
-  --brand-300: #74cde2;
-  --brand-400: #36b0ce;
-  --brand-500: #1394b5;
-  --brand-600: #007a96;
-  --brand-700: #006b79; /* website primary — links, active states */
-  --brand-800: #0a5566;
-  --brand-900: #0b4252;
+  /* Aqua — the parrot's wing */
+  --brand-50: #eefbff;
+  --brand-100: #d2f2fb; /* website accent (eyebrow pills, highlights) */
+  --brand-200: #a2e4f6;
+  --brand-300: #6acee8;
+  --brand-400: #22b8cf; /* logo aqua — decorative only, 2.4:1 on white */
+  --brand-500: #009dbb;
+  --brand-600: #0087a3; /* website focus ring */
+  --brand-700: #006e87; /* website "aqua-dark" — links, active states */
+  --brand-800: #005568;
+  --brand-900: #00404f;
 
-  /* Marine navy — primary buttons, sidebar active text */
-  --navy-700: #0e4a66;
-  --navy-800: #00303b; /* website deep navy */
-  --navy-900: #00161c; /* website ink */
+  /* Loro navy — primary buttons, text, the logo */
+  --navy-700: #225176;
+  --navy-800: #0b3c5d; /* logo navy, website primary and text */
+  --navy-900: #062942;
 
   /* Semantic roles */
   --primary: var(--navy-800); /* primary buttons, like "Prueba gratis" on the website */
@@ -35,24 +35,24 @@
   --accent: var(--brand-700); /* links, active nav, selected tabs, progress */
   --accent-soft: var(--brand-50); /* active nav background, selected rows */
   /*
-   * Deviation from the plan's brand-400: that shade is 2.4:1 against the page background and
-   * fails WCAG's 3:1 minimum for UI elements. brand-500 is the nearest passing shade (3.3:1).
+   * Same shade as the website's focus ring. brand-400/500 are under WCAG's 3:1 minimum for UI
+   * elements against the page background; brand-600 is 3.8:1.
    */
-  --focus-ring: var(--brand-500);
+  --focus-ring: var(--brand-600);
 
   /* Surfaces & text */
-  --bg: #f5f9fa; /* cool, very light aqua-grey */
+  --bg: #f0f4f7; /* website "mist" */
   --surface: #ffffff;
-  --surface-muted: #eef4f6;
-  --sidebar-bg: #f8fbfc;
-  --text: #00161c;
-  --text-muted: #506169; /* website slate */
-  --border: #dce6ea;
+  --surface-muted: #e6ecf1;
+  --sidebar-bg: #f7f9fb;
+  --text: #0b3c5d; /* = navy-800: the website sets all text in navy */
+  --text-muted: #435b70; /* website muted text */
+  --border: #d2dce4; /* website border */
 
-  /* cloro.app hero gradient: light aqua into warm white (auth screens' brand panel). */
+  /* Auth screens' brand panel: light aqua into white, like the meetloro.com hero. */
   --hero-from: var(--brand-100);
   --hero-via: var(--brand-50);
-  --hero-to: #fbf7f1;
+  --hero-to: #ffffff;
 
   /*
    * Status (traffic-light) — kept apart from brand so "OK" never looks like brand.
@@ -95,9 +95,10 @@
   --radius-full: 9999px;
 
   /* Elevation */
-  --shadow-card: 0 1px 2px rgb(0 22 28 / 0.04), 0 1px 3px rgb(0 22 28 / 0.06);
+  --shadow-card: 0 1px 2px rgb(6 41 66 / 0.04), 0 1px 3px rgb(6 41 66 / 0.06);
 
   /* Type — self-hosted via @fontsource, imported in main.tsx */
-  --font-body: 'DM Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-heading: 'Space Grotesk', 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  /* Manrope everywhere, like meetloro.com; headings differ by weight, not family. */
+  --font-body: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-heading: var(--font-body);
 }

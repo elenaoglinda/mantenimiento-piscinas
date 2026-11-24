@@ -102,3 +102,25 @@ the same (richer) fake data, so before/after compare like with like.
 Pre-existing gap surfaced by the flow test: there is **no UI to enter a basin's SILOÉ code**
 (`basin.siloe_cod_v`), which the XML export requires. The flow spec sets it directly; it is listed
 as a follow-up in the PR.
+
+## Loro rebrand (24 Nov 2026)
+
+The product is now **Loro** (meetloro.com). Only the brand layer changed: tokens, logo, favicon,
+font and copy. Layout, components and flows are as before. The palette comes from the website's
+`styles.css` and logo: navy `#0b3c5d`, aqua `#22b8cf`, darker aqua `#006e87` for links, mist
+`#f0f4f7` page background, muted text `#435b70`, border `#d2dce4`. The font is Manrope.
+
+Contrast of the new values, computed against bg, surface, surface-muted, sidebar and accent-soft:
+
+| Pair                                        | Ratio       |                                          |
+| ------------------------------------------- | ----------- | ---------------------------------------- |
+| text (navy-800)                             | 9.7 – 11.5  | pass                                     |
+| text-muted                                  | 5.9 – 7.1   | pass                                     |
+| accent (brand-700, links)                   | 4.9 – 5.9   | pass                                     |
+| white on primary navy-800 / navy-900        | 11.5 / 15.0 | pass                                     |
+| focus ring (brand-600)                      | 3.5 – 4.2   | pass (UI, 3:1)                           |
+| status-\*-text (green, amber, red, unknown) | ≥ 4.8       | pass                                     |
+| brand-400 logo aqua on white                | 2.4         | decorative only, never text or a UI edge |
+
+The focus ring moved from brand-500 to **brand-600** because the new brand-500 is 2.9:1 on the
+slightly darker page background.

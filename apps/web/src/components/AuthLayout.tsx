@@ -5,7 +5,7 @@ import { Logo } from './brand/Logo.js';
 
 /**
  * Login / sign-up / onboarding / invite: the form on the right, and from 1024px a brand panel on
- * the left with the same clear-water gradient as the cloro.app hero. Phones get the form only,
+ * the left with the same clear-water gradient as the meetloro.com hero. Phones get the form only,
  * with the logo above it.
  */
 export function AuthLayout({ children }: { children: ReactNode }) {

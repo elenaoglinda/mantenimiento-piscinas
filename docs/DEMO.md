@@ -1,6 +1,6 @@
 # Demo de 10 minutos
 
-Guion para enseñar Cloro a una empresa de mantenimiento de piscinas, con la cuenta
+Guion para enseñar Loro a una empresa de mantenimiento de piscinas, con la cuenta
 **«Piscinas Mediterráneo (demo)»**: 3 clientes, 8 piscinas, 11 vasos y 90 días de historial.
 
 ## Antes de la demo (2 minutos, el mismo día)

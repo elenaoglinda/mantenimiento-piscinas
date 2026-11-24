@@ -58,7 +58,7 @@ export function DatePicker({
         </span>
       </PopoverTrigger>
       {name && <input type="hidden" name={name} value={value} />}
-      <PopoverContent className="cloro-calendar p-3">
+      <PopoverContent className="loro-calendar p-3">
         <DayPicker
           mode="single"
           locale={es}

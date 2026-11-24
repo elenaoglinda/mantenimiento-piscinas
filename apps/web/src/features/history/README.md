@@ -1,6 +1,6 @@
 # Service history
 
-Shows back what Cloro already stores about a pool's visits — readings, incidents, photos,
+Shows back what Loro already stores about a pool's visits — readings, incidents, photos,
 signatures — so nobody has to open reports one by one to know how a pool is doing.
 
 | Screen                     | Where                                            | What it answers                                                                         |

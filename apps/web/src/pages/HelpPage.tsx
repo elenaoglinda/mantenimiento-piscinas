@@ -108,7 +108,7 @@ export function HelpPage() {
           <p className="text-sm text-text-muted">{t('help.moreBody')}</p>
         </div>
         <Button asChild variant="secondary">
-          <a href="https://cloro.app" target="_blank" rel="noreferrer">
+          <a href="https://meetloro.com" target="_blank" rel="noreferrer">
             <ExternalLink aria-hidden size={16} />
             {t('help.moreAction')}
           </a>

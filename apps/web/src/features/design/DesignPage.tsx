@@ -195,7 +195,7 @@ export function DesignPage() {
   const [query, setQuery] = useState('');
 
   useEffect(() => {
-    document.title = 'Cloro · Sistema de diseño';
+    document.title = 'Loro · Sistema de diseño';
   }, []);
 
   const rows = POOLS.filter((p) =>
@@ -253,7 +253,7 @@ export function DesignPage() {
 
         <Section
           title="Tipografía"
-          note="Space Grotesk para títulos y cifras; DM Sans para el resto."
+          note="Manrope en todo: títulos y cifras en seminegrita, el resto en regular."
         >
           <div className="flex flex-col gap-3">
             <p className="font-display text-2xl leading-8 font-semibold">Título de página 24/32</p>
