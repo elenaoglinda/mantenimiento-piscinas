@@ -1,8 +1,10 @@
 # Brand
 
-`Logo.tsx` — the Cloro mark (lucide `Waves`, white on a `navy-800` rounded square, radius 8) plus
-the "Cloro" wordmark in Space Grotesk. `markOnly` drops the wordmark for tight spaces such as the
-collapsed sidebar rail; it keeps an `sr-only` label so the mark is never anonymous.
+`Logo.tsx` — the Loro logo: the parrot mark (navy head, aqua wing, navy eye) plus the lowercase
+"loro" wordmark, both as SVG outlines copied from the meetloro.com website. Colours come from the
+`navy-800` and `brand-400` tokens. `markOnly` drops the wordmark for tight spaces such as the
+collapsed sidebar rail; the SVG keeps `aria-label="Loro"` so the mark is never anonymous.
 
-The favicon (`apps/web/public/favicon.svg`) is the same mark drawn by hand with the path data
-copied from `lucide-react`, so the two can't drift apart visually. If the mark changes, change both.
+The favicon (`apps/web/public/favicon.svg`) is the website's app icon: the same mark in white and
+aqua on a navy rounded square. It can't read CSS variables, so its hex values (`#0b3c5d`,
+`#22b8cf`) are copied from `styles/tokens.css`. If the mark changes, change both.
